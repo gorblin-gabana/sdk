@@ -34,3 +34,7 @@ export function buildToken2022Extension(args: any): TransactionInstruction {
   // TODO: Implement Token-2022 extension builder
   return {} as TransactionInstruction;
 }
+
+import { decodeMintAccount, DecodedMintAccount, TLVExtension, TokenMetadataExtension } from './decodeMintAccount';
+
+export { decodeMintAccount, DecodedMintAccount, TLVExtension, TokenMetadataExtension };

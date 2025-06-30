@@ -65,3 +65,7 @@ export function buildCloseAccount(args: any): TransactionInstruction {
   // TODO: Implement SPL Token closeAccount instruction builder
   return {} as TransactionInstruction;
 }
+
+import { decodeMintAccount, DecodedMintAccount, TLVExtension, TokenMetadataExtension } from './decodeMintAccount';
+
+export { decodeMintAccount, DecodedMintAccount, TLVExtension, TokenMetadataExtension };

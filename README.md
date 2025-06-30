@@ -85,6 +85,75 @@ console.log(result);
 
 ---
 
+## 🔑 Transaction Helpers
+
+Create, sign, send, and simulate transactions using Solana RPC or backend API:
+
+```ts
+import {
+  createTransaction,
+  createRawTransaction,
+  signTransaction,
+  sendTransaction,
+  simulateTransaction
+} from '@gorbchain-xyz/chaindecode';
+
+// Create a transaction
+const tx = await createTransaction([instruction1, instruction2], payerPublicKey);
+
+// Sign
+const signed = await signTransaction(tx, payerKeypair);
+
+// Send
+const sig = await sendTransaction(connection, signed, [payerKeypair]);
+
+// Simulate
+const sim = await simulateTransaction(connection, signed);
+```
+
+- You can use these helpers in browser or Node.js (requires `@solana/web3.js`).
+- For backend or API-based workflows, use the Gor API endpoints for transaction submission and simulation.
+
+---
+
+## ⚙️ SDK Configuration
+
+Set backend, RPC, and program addresses at runtime:
+
+```ts
+import { setGorbchainConfig, getGorbchainConfig, PROGRAM_IDS } from '@gorbchain-xyz/chaindecode';
+
+setGorbchainConfig({
+  backendUrl: 'https://gorbscan.com',
+  rpcUrl: 'https://rpc.gorbchain.xyz',
+  programIds: {
+    token2022: '...',
+    ata: '...',
+    metaplex: '...'
+  }
+});
+
+console.log(getGorbchainConfig());
+console.log(PROGRAM_IDS.token2022);
+```
+
+---
+
+## 🧩 Exports
+
+- **Decoders:**
+  - `decodeMintAccount`, `fetchAndDecodeMintAccount`, all SPL/Token2022/Metaplex/Swap/NameService decoders
+- **Transaction helpers:**
+  - `createTransaction`, `createRawTransaction`, `signTransaction`, `sendTransaction`, `simulateTransaction`
+- **Config:**
+  - `setGorbchainConfig`, `getGorbchainConfig`, `PROGRAM_IDS`
+- **Registry:**
+  - `DecoderRegistry`, plugin system
+- **React:**
+  - `useDecodedInstructions` (for explorer UIs)
+
+---
+
 ## 🧮 API Reference
 
 ### `DecoderRegistry`
@@ -96,6 +165,32 @@ console.log(result);
 | `registerSPLTokenDecoders()`                                                                                             | Includes mint, transfer, setAuthority, etc.           |
 | `registerToken2022Decoders()`                                                                                            | Includes Token‑2022 extensions, metadata pointers     |
 | `registerMetadataDecoders()`                                                                                             | Required for `@solana-program/token-metadata` support |
+
+---
+
+## 🧩 Mint Account Decoding (SPL Token & Token-2022)
+
+Decode any mint account buffer, base64, or base58 string, including all TLV extensions (Token Metadata, etc):
+
+```ts
+import { decodeMintAccount } from '@gorbchain-xyz/chaindecode';
+
+// Buffer, base64, or base58 string
+const decoded = decodeMintAccount(mintAccountData, { encoding: 'base64' });
+console.log(decoded.name, decoded.symbol, decoded.tokenMetadata, decoded.tlvExtensions);
+```
+
+Or fetch and decode directly from the Gor API:
+
+```ts
+import { fetchAndDecodeMintAccount } from '@gorbchain-xyz/chaindecode';
+
+const mintInfo = await fetchAndDecodeMintAccount('So11111111111111111111111111111111111111112');
+console.log(mintInfo?.tokenMetadata?.name, mintInfo?.tlvExtensions);
+```
+
+- Returns all canonical mint fields, plus all TLV extensions (type, length, hex, and parsed Token Metadata if present).
+- Works for both SPL Token and Token-2022 mints.
 
 ---
 
@@ -156,27 +251,19 @@ The respective library verifies `ix.programId.equals(programId)` internally.
 
 ---
 
-## 📚 Examples
+## 🧪 Running Tests
 
-* `examples/react-app/` – UI demo decoding transactions
-* `examples/cli/` – Simple CLI to decode recent block
+```bash
+npm install
+npm test
+```
 
----
+- All decoders, helpers, and config are covered by tests in `/test`.
+- Transaction helpers require `@solana/web3.js` installed in your project.
 
-## 📖 Roadmap
+## 🤝 Contributing
 
-* Add custom plugin support for user programs
-* Plugin system for Anchor + custom IDLs
-* Hooks: `useInstructionParser`, `useForkDecoder`
-
----
-
-## 📝 Contributing
-
-1. Fork the repo
-2. Create your feature branch
-3. Run `npm test`
-4. Submit PR!
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
 ---
 
@@ -187,6 +274,20 @@ The respective library verifies `ix.programId.equals(programId)` internally.
 
 ---
 
+## ⚠️ Note
+
+- Transaction helpers require `@solana/web3.js` as a peer dependency.
+- For backend or API-based workflows, use the Gor API endpoints for transaction submission and simulation.
+
+---
+
 ## ℹ️ License
 
 MIT © 2025 **gorbchain-xyz**
+
+[1]: https://solana-kit-docs.vercel.app
+[2]: https://www.reddit.com/r/solana/comments/pxxg6v/solana_sdk_kit_is_now_live/
+[3]: https://solana-kit-docs.vercel.app/getting-started/installation
+[4]: https://www.reddit.com/r/solana/comments/qz8j8u/announcing_solanasdk_kit_a_new_way_to_build_on/
+[5]: https://solanakite.org
+[6]: https://mcprepository.com

@@ -1,5 +1,63 @@
 # Usage Guide: ChainDecode SDK
 
+## 🧑‍💻 How to Use: Quick Examples
+
+### 1. Decode a Mint Account (SPL Token or Token-2022)
+
+```ts
+import { decodeMintAccount, fetchAndDecodeMintAccount } from '@gorbchain-xyz/chaindecode';
+
+// Decode from buffer or base64 string
+const decoded = decodeMintAccount(mintAccountData, { encoding: 'base64' });
+console.log(decoded.tokenMetadata?.name, decoded.tlvExtensions);
+
+// Or fetch and decode from backend
+const mintInfo = await fetchAndDecodeMintAccount('So11111111111111111111111111111111111111112');
+console.log(mintInfo?.tokenMetadata?.name);
+```
+
+### 2. Create, Sign, and Send a Transaction
+
+```ts
+import {
+  createTransaction,
+  signTransaction,
+  sendTransaction,
+  simulateTransaction
+} from '@gorbchain-xyz/chaindecode';
+
+const tx = await createTransaction([ix1, ix2], payerPublicKey);
+const signed = await signTransaction(tx, payerKeypair);
+const sig = await sendTransaction(connection, signed, [payerKeypair]);
+const sim = await simulateTransaction(connection, signed);
+```
+
+### 3. Configure SDK (Backend, RPC, Program IDs)
+
+```ts
+import { setGorbchainConfig, getGorbchainConfig, PROGRAM_IDS } from '@gorbchain-xyz/chaindecode';
+
+setGorbchainConfig({
+  backendUrl: 'https://gorbscan.com',
+  rpcUrl: 'https://rpc.gorbchain.xyz',
+  programIds: { token2022: '...', ata: '...', metaplex: '...' }
+});
+
+console.log(getGorbchainConfig());
+console.log(PROGRAM_IDS.token2022);
+```
+
+### 4. Use the Decoder Registry
+
+```ts
+import { DecoderRegistry } from '@gorbchain-xyz/chaindecode';
+const registry = new DecoderRegistry();
+registry.register('myCustomIx', (ix) => ({ type: 'myCustomIx', data: ix }));
+const decoded = registry.decode('myCustomIx', { foo: 1 });
+```
+
+---
+
 ## Decoding SPL Token Instructions
 
 ```ts
@@ -128,3 +186,7 @@ const registerNameIx = buildRegisterName({ /* name service fields */ });
 ```
 
 // ... Add similar usage for custom program registration as you implement them ...
+
+---
+
+For more, see the [API reference](./api.md), [usage guide](./usage.md), and [plugin docs](./plugins.md).
