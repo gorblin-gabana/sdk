@@ -4,16 +4,27 @@
 type TransactionInstruction = any;
 type PublicKey = any;
 
+// Add support for registering custom programs with IDL/schemas
 export class DecoderRegistry {
-  private decoders = new Map<string, (ix: TransactionInstruction, programId?: PublicKey) => any>();
+  private decoders = new Map<string, (ix: any, programId?: any) => any>();
+  private customPrograms = new Map<string, { idl: any; types: any[]; label: string }>();
 
-  register(name: string, fn: (ix: TransactionInstruction, programId?: PublicKey) => any) {
+  register(name: string, fn: (ix: any, programId?: any) => any) {
     this.decoders.set(name, fn);
   }
 
-  decode(name: string, ix: TransactionInstruction, programId?: PublicKey) {
+  decode(name: string, ix: any, programId?: any) {
     const fn = this.decoders.get(name);
     if (!fn) throw new Error(`No decoder for ${name}`);
     return fn(ix, programId);
+  }
+
+  registerProgram(opts: { programId: any; idl: any; label: string; types?: any[] }) {
+    this.customPrograms.set(opts.label, {
+      idl: opts.idl,
+      types: opts.types ?? [],
+      label: opts.label,
+    });
+    // TODO: Optionally auto-generate decoders/builders from IDL/types
   }
 }

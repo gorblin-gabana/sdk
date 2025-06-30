@@ -17,3 +17,5 @@ Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./splToken"), exports);
 __exportStar(require("./token2022"), exports);
 __exportStar(require("./metadata"), exports);
+__exportStar(require("./swap"), exports);
+__exportStar(require("./nameService"), exports);
