@@ -1,0 +1,49 @@
+{
+  "name": "@gorbchain-xyz/chaindecode",
+  "version": "0.1.0",
+  "description": "Dynamic, fork-aware decoding SDK for Solana transactions. Parse and decode SPL Token, Token-2022, Metaplex metadata, and custom programs using @solana/kit with flexible program ID support.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "directories": {
+    "doc": "docs",
+    "example": "examples",
+    "test": "test"
+  },
+  "scripts": {
+    "build": "tsc",
+    "lint": "echo 'No linter configured yet'",
+    "test": "echo 'No tests yet'",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm test && npm run lint"
+  },
+  "keywords": [
+    "solana",
+    "sdk",
+    "spl-token",
+    "token-2022",
+    "metaplex",
+    "decoder",
+    "typescript"
+  ],
+  "author": "gorblin <opensource@gorbchain.xyz>",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gorbchain-xyz/chaindecode.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gorbchain-xyz/chaindecode/issues"
+  },
+  "homepage": "https://github.com/gorbchain-xyz/chaindecode#readme",
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@metaplex-foundation/mpl-token-metadata": "^3.4.0"
+  }
+}

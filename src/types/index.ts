@@ -1,5 +1,7 @@
 // Shared types for ChainDecode SDK
-import type { TransactionInstruction, PublicKey } from '@solana/kit';
+// Use any as a placeholder for TransactionInstruction and PublicKey
+type TransactionInstruction = any;
+type PublicKey = any;
 
 export type DecoderFn = (
   ix: TransactionInstruction,

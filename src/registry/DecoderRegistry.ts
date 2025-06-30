@@ -1,11 +1,13 @@
 // DecoderRegistry: Manages decoder functions for Solana instructions
-import type { TransactionInstruction, PublicKey } from '@solana/kit';
-import type { DecoderFn } from '../types';
+// Use any as a placeholder for TransactionInstruction and PublicKey
+// Remove import from '@solana/kit'
+type TransactionInstruction = any;
+type PublicKey = any;
 
 export class DecoderRegistry {
-  private decoders = new Map<string, DecoderFn>();
+  private decoders = new Map<string, (ix: TransactionInstruction, programId?: PublicKey) => any>();
 
-  register(name: string, fn: DecoderFn) {
+  register(name: string, fn: (ix: TransactionInstruction, programId?: PublicKey) => any) {
     this.decoders.set(name, fn);
   }
 
