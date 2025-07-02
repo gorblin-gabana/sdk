@@ -1,7 +1,8 @@
-// SDK helper to fetch and decode a mint account using Gor API
-// Usage: await fetchAndDecodeMintAccount(mintAddress)
+import { decodeMintAccount, DecodedMintAccount } from '../utils/decodeMintAccount.js';
+export { decodeMintAccount, DecodedMintAccount };
 
-import { decodeMintAccount, DecodedMintAccount } from './decodeMintAccount.js';
+// SDK helper to fetch and decode a mint account using Gor API
+// Moved to utils as a private helper, not exported from decoders
 
 export async function fetchAndDecodeMintAccount(mint: string): Promise<DecodedMintAccount | null> {
   const res = await fetch(`https://gorbscan.com/api/account/${mint}/info`);
@@ -20,3 +21,5 @@ export async function fetchAndDecodeMintAccount(mint: string): Promise<DecodedMi
     }
   }
 }
+
+// Add decodeAndMintAccount here as well if needed

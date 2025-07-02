@@ -3,11 +3,8 @@
 ## Main Exports
 
 - `DecoderRegistry` — Registry for all decoders and custom program registration
-- SPL Token decoders/builders: `decodeMintInstruction`, `buildMintToken`, etc.
-- Token-2022 decoders/builders: `decodeToken2022Mint`, `buildToken2022Mint`, etc.
-- Metaplex/Metadata decoders/builders: `decodeCreateMetadata`, `buildCreateMetadata`, etc.
-- Swap/DEX decoders/builders: `decodeSwap`, `buildSwap`, etc.
-- Name Service decoders/builders: `decodeRegisterName`, `buildRegisterName`, etc.
+- SPL Token decoders/builders: `decodeMintInstruction`, `decodeTransferInstruction`, etc.
+- Account decoders: `decodeMintAccount`, `fetchAndDecodeMintAccount`
 - React hook: `useDecodedInstructions`
 - Node utility: `createBlockDecoder`
 
@@ -17,7 +14,9 @@
 import {
   DecoderRegistry,
   decodeMintInstruction,
-  buildMintToken,
+  decodeTransferInstruction,
+  decodeMintAccount,
+  fetchAndDecodeMintAccount,
   useDecodedInstructions,
   createBlockDecoder
 } from '@gorbchain-xyz/chaindecode';

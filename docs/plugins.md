@@ -18,6 +18,10 @@ registry.registerProgram({
 
 ## Writing a Custom Decoder
 
+To register a custom decoder, use the `register` method of the `DecoderRegistry` instance. This method takes two arguments: the name of the instruction you want to decode, and a decoding function.
+
+The decoding function receives the instruction data and the program ID as arguments. It should return an object containing at least a `type` field, which will be used to identify the decoded instruction, and a `data` field, which contains the decoded data.
+
 ```ts
 registry.register('myCustomInstruction', (ix, programId) => {
   // Custom decode logic

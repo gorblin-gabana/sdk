@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { DecoderRegistry } from './DecoderRegistry';
 import { useDecodedInstructions } from './useDecodedInstructions';
 import { PROGRAM_IDS } from './gorbchainConfig';
+// Import from SDK root, which now only exposes public API
 import {
-  fetchAndDecodeMintAccount,
-  decodeMintAccount,
+  fetchMintAccountFromRpc,
+  fetchProgramAccount,
   base64ToHex,
   base58ToBytes,
   bytesToBase58,
@@ -48,13 +49,13 @@ function tryDecodeInstructionData(data: string, setLogs: (fn: (logs: string[]) =
 
 // Helper to fetch token metadata (decode as base64 only, with buffer checks)
 async function fetchTokenMetadata(mint: string, setLogs: (fn: (logs: string[]) => string[]) => void) {
-  setLogs(logs => [...logs, `Fetching mint info using SDK for: ${mint}`]);
-  const meta = await fetchAndDecodeMintAccount(mint);
+  setLogs(logs => [...logs, `Fetching mint info from RPC for: ${mint}`]);
+  const meta = await fetchMintAccountFromRpc(mint);
   if (!meta) {
-    setLogs(logs => [...logs, `Mint info not found or could not be decoded.`]);
+    setLogs(logs => [...logs, `Mint info not found or could not be decoded from RPC.`]);
     return null;
   }
-  setLogs(logs => [...logs, `Mint info decoded via SDK: supply=${meta.supply}, decimals=${meta.decimals}, isInitialized=${meta.isInitialized}`]);
+  setLogs(logs => [...logs, `Mint info decoded via RPC: supply=${meta.supply}, decimals=${meta.decimals}, isInitialized=${meta.isInitialized}`]);
   return meta;
 }
 
