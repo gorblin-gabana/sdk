@@ -1,6 +1,6 @@
 // React hook: useInstructionParser
 import { useMemo } from 'react';
-import { DecoderRegistry } from '../registry';
+import { DecoderRegistry } from '../registry/index.js';
 
 export function useInstructionParser(registry: DecoderRegistry, overrides?: Record<string, any>) {
   return useMemo(() => {

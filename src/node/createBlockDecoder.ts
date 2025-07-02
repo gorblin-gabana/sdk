@@ -1,5 +1,5 @@
 // Node utility: createBlockDecoder
-import { DecoderRegistry } from '../registry';
+import { DecoderRegistry } from '../registry/index.js';
 
 export function createBlockDecoder(registry: DecoderRegistry, overrides?: Record<string, any>) {
   return function decodeBlock(block: { instructions: any[] }) {

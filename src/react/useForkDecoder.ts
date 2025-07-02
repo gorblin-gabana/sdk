@@ -1,6 +1,6 @@
 // React hook: useForkDecoder
 import { useMemo } from 'react';
-import { DecoderRegistry } from '../registry';
+import { DecoderRegistry } from '../registry/index.js';
 
 export function useForkDecoder(forkProgramIds: Record<string, string>, registry: DecoderRegistry) {
   return useMemo(() => {

@@ -1,2 +1,3 @@
-export * from './useInstructionParser';
-export * from './useForkDecoder';
+export * from './useInstructionParser.js';
+export * from './useForkDecoder.js';
+export * from './useDecodedInstructions.js';

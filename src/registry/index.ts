@@ -1,1 +1,1 @@
-export * from './DecoderRegistry';
+export * from './DecoderRegistry.js';

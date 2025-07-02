@@ -1,6 +1,6 @@
 // React hook: useDecodedInstructions
 import { useEffect, useState } from 'react';
-import { DecoderRegistry } from '../registry';
+import { DecoderRegistry } from '../registry/index.js';
 
 export function useDecodedInstructions(
   instructions: any[],

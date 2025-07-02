@@ -1,9 +1,6 @@
 // Unified mint account decoder for SPL Token and Token-2022
-// Exports: decodeMintAccount (buffer or base64/base58 string, options)
+// Exports: decodeMintAccount (buffer or base64/base58/hex string, options)
 // Handles canonical fields and TLV extensions (Token Metadata, etc)
-
-import { MintLayout } from '@solana/spl-token';
-import { Buffer } from 'buffer';
 
 export interface TokenMetadataExtension {
   name: string;
@@ -25,8 +22,10 @@ export interface DecodedMintAccount {
   isInitialized: boolean;
   mintAuthorityOption: number;
   mintAuthority: string;
+  mintAuthorityBase58?: string;
   freezeAuthorityOption: number;
   freezeAuthority: string;
+  freezeAuthorityBase58?: string;
   raw: string;
   tokenMetadata?: TokenMetadataExtension | null;
   tlvExtensions: TLVExtension[];
@@ -63,6 +62,28 @@ function readBigUInt64LE(bytes: Uint8Array, offset = 0): string {
   var lo = bytes[offset] + bytes[offset + 1] * 2 ** 8 + bytes[offset + 2] * 2 ** 16 + bytes[offset + 3] * 2 ** 24;
   var hi = bytes[offset + 4] + bytes[offset + 5] * 2 ** 8 + bytes[offset + 6] * 2 ** 16 + bytes[offset + 7] * 2 ** 24;
   return (hi * 4294967296 + lo).toString();
+}
+
+// Minimal base58 encode/decode for browser
+function bytesToBase58(bytes: Uint8Array): string {
+  const ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+  let digits = [0];
+  for (let i = 0; i < bytes.length; ++i) {
+    let carry = bytes[i];
+    for (let j = 0; j < digits.length; ++j) {
+      carry += digits[j] << 8;
+      digits[j] = carry % 58;
+      carry = (carry / 58) | 0;
+    }
+    while (carry) {
+      digits.push(carry % 58);
+      carry = (carry / 58) | 0;
+    }
+  }
+  let result = '';
+  for (let k = 0; k < bytes.length && bytes[k] === 0; ++k) result += '1';
+  for (let q = digits.length - 1; q >= 0; --q) result += ALPHABET[digits[q]];
+  return result;
 }
 
 export function decodeMintAccount(
@@ -105,7 +126,23 @@ export function decodeMintAccount(
   } else {
     buf = input;
   }
-  const decoded = MintLayout.decode(Buffer.from(buf));
+  // SPL Mint layout (82 bytes):
+  // 0: supply (u64 LE)
+  // 8: decimals (u8)
+  // 9: isInitialized (u8)
+  // 10: mintAuthorityOption (u32 LE)
+  // 14: mintAuthority (32 bytes)
+  // 46: freezeAuthorityOption (u32 LE)
+  // 50: freezeAuthority (32 bytes)
+  const supply = readBigUInt64LE(buf, 0);
+  const decimals = buf[8];
+  const isInitialized = buf[9] !== 0;
+  const mintAuthorityOption = buf[10] | (buf[11] << 8) | (buf[12] << 16) | (buf[13] << 24);
+  const mintAuthority = Array.from(buf.slice(14, 46)).map(x => x.toString(16).padStart(2, '0')).join('');
+  const mintAuthorityBase58 = bytesToBase58(buf.slice(14, 46));
+  const freezeAuthorityOption = buf[46] | (buf[47] << 8) | (buf[48] << 16) | (buf[49] << 24);
+  const freezeAuthority = Array.from(buf.slice(50, 82)).map(x => x.toString(16).padStart(2, '0')).join('');
+  const freezeAuthorityBase58 = bytesToBase58(buf.slice(50, 82));
   let metadataExt: TokenMetadataExtension | null = null;
   let allExtensions: TLVExtension[] = [];
   if (buf.length > 82) {
@@ -116,15 +153,16 @@ export function decodeMintAccount(
       metadataExt = decodeTokenMetadataExtension(metaExt);
     }
   }
-  const supply = readBigUInt64LE(buf, 0);
   return {
     supply,
-    decimals: decoded.decimals,
-    isInitialized: decoded.isInitialized !== 0,
-    mintAuthorityOption: decoded.mintAuthorityOption,
-    mintAuthority: decoded.mintAuthority.toString('hex'),
-    freezeAuthorityOption: decoded.freezeAuthorityOption,
-    freezeAuthority: decoded.freezeAuthority.toString('hex'),
+    decimals,
+    isInitialized,
+    mintAuthorityOption,
+    mintAuthority,
+    mintAuthorityBase58,
+    freezeAuthorityOption,
+    freezeAuthority,
+    freezeAuthorityBase58,
     raw: Array.from(buf).map(x => x.toString(16).padStart(2, '0')).join(''),
     tokenMetadata: metadataExt,
     tlvExtensions: allExtensions,

@@ -1,5 +1,5 @@
 // Utility: fetch and decode transaction details from RPC
-import { DecoderRegistry } from '../registry';
+import { DecoderRegistry } from '../registry/index.js';
 
 export async function fetchAndDecodeTransaction(signature: string, rpcUrl: string, registry: DecoderRegistry, overrides?: Record<string, any>) {
   const res = await fetch(rpcUrl, {

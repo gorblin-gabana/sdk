@@ -25,4 +25,4 @@ export interface RegistryOptions {
 export type AnchorIdl = any;
 export type BeetSchema = any;
 
-export * from './plugins';
+export * from './plugins.js';

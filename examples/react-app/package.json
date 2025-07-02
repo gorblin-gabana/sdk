@@ -8,8 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@solana-program/token-2022": "^0.4.2",
-    "@solana/spl-token": "^0.1.8",
+    "@gorbchain-xyz/chaindecode": "file:../../",
     "buffer": "^6.0.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

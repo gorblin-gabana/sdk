@@ -1,5 +1,5 @@
-// Helper to convert base64 to hex
+// Helper to convert base64 to hex (browser-safe)
 export function base64ToHex(base64: string) {
-  const raw = Buffer.from(base64, 'base64');
-  return Array.from(raw).map(x => x.toString(16).padStart(2, '0')).join('');
+  const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+  return Array.from(bytes).map(x => x.toString(16).padStart(2, '0')).join('');
 }

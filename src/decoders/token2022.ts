@@ -35,6 +35,6 @@ export function buildToken2022Extension(args: any): TransactionInstruction {
   return {} as TransactionInstruction;
 }
 
-import { decodeMintAccount, DecodedMintAccount, TLVExtension, TokenMetadataExtension } from './decodeMintAccount';
+import { decodeMintAccount, DecodedMintAccount, TLVExtension, TokenMetadataExtension } from './decodeMintAccount.js';
 
 export { decodeMintAccount, DecodedMintAccount, TLVExtension, TokenMetadataExtension };
