@@ -1,11 +1,12 @@
 // Utility functions for decoding Solana instructions
-import { TransactionInstruction } from '@solana/web3.js';
+import { IInstruction } from '@solana/instructions';
 import { decodeMintInstruction, decodeTransferInstruction } from '../decoders/splToken.js';
 
 /**
- * Try to decode a TransactionInstruction using known decoders
+ * Try to decode an IInstruction using known decoders
+ * TODO: Update decoders in splToken.ts to accept IInstruction, not TransactionInstruction
  */
-export function decodeInstruction(ix: TransactionInstruction): any {
+export function decodeInstruction(ix: IInstruction): any {
   try {
     return decodeMintInstruction(ix);
   } catch {}
@@ -17,8 +18,8 @@ export function decodeInstruction(ix: TransactionInstruction): any {
 }
 
 /**
- * Decode an array of TransactionInstructions
+ * Decode an array of IInstructions
  */
-export function decodeInstructions(instructions: TransactionInstruction[]): any[] {
+export function decodeInstructions(instructions: IInstruction[]): any[] {
   return instructions.map(decodeInstruction);
 }

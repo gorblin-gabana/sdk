@@ -1,17 +1,17 @@
 // Decoders for transaction instructions using internal utils
 import { decodeInstruction, decodeInstructions } from '../utils/decodeInstructions.js';
-import { TransactionInstruction } from '@solana/web3.js';
+import { IInstruction } from '@solana/instructions';
 
 /**
- * Decode a single TransactionInstruction using all available decoders
+ * Decode a single IInstruction using all available decoders
  */
-export function decodeTransactionInstruction(ix: TransactionInstruction): any {
+export function decodeTransactionInstruction(ix: IInstruction): any {
   return decodeInstruction(ix);
 }
 
 /**
- * Decode an array of TransactionInstructions
+ * Decode an array of IInstructions
  */
-export function decodeTransactionInstructions(instructions: TransactionInstruction[]): any[] {
+export function decodeTransactionInstructions(instructions: IInstruction[]): any[] {
   return decodeInstructions(instructions);
 }

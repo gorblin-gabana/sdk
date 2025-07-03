@@ -1,5 +1,4 @@
-// Mint account decoder for SPL Token (manual, no buffer-layout dependency)
-import { PublicKey } from '@solana/web3.js';
+import { bytesToBase58 } from './base58.js';
 
 export interface DecodedMintAccount {
   supply: string;
@@ -53,12 +52,12 @@ export function decodeMintAccount(
   }
 
   const mintAuthorityOption = new DataView(buf.buffer, buf.byteOffset, buf.byteLength).getUint32(0, true);
-  const mintAuthority = new PublicKey(buf.slice(4, 36));
+  const mintAuthority = buf.slice(4, 36);
   const supply = BigInt(new DataView(buf.buffer, buf.byteOffset + 36, 8).getBigUint64(0, true)).toString();
   const decimals = buf[44];
   const isInitialized = buf[45] !== 0;
   const freezeAuthorityOption = new DataView(buf.buffer, buf.byteOffset + 46, 4).getUint32(0, true);
-  const freezeAuthority = new PublicKey(buf.slice(50, 82));
+  const freezeAuthority = buf.slice(50, 82);
 
   // Parse Metaplex Token Metadata extension if present (Token-2022 TLV extension type 6)
   let metadata: DecodedMintAccount['metadata'] | undefined = undefined;
@@ -80,13 +79,13 @@ export function decodeMintAccount(
     isInitialized,
     mintAuthority: {
       option: mintAuthorityOption,
-      address: mintAuthority.toString(),
-      base58: mintAuthority.toBase58(),
+      address: bytesToBase58(mintAuthority),
+      base58: bytesToBase58(mintAuthority),
     },
     freezeAuthority: {
       option: freezeAuthorityOption,
-      address: freezeAuthority.toString(),
-      base58: freezeAuthority.toBase58(),
+      address: bytesToBase58(freezeAuthority),
+      base58: bytesToBase58(freezeAuthority),
     },
     raw: Array.from(buf).map(x => x.toString(16).padStart(2, '0')).join(''),
     metadata,

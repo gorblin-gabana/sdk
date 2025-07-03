@@ -1,9 +1,10 @@
 // SPL Token decoders and builders
 // Unified entry point for all SPL Token-related decoding in the SDK.
 // Only export public decoders/types. Helpers are private.
-import { PublicKey, TransactionInstruction, SystemProgram } from '@solana/web3.js';
+import { IInstruction } from '@solana/instructions';
 import { decodeMintAccount, DecodedMintAccount } from '../utils/decodeMintAccount.js';
 import { getGorbchainConfig } from '../utils/gorbchainConfig.js';
+import { Address, address } from '@solana/addresses';
 
 // --- Instruction discriminators (SPL Token program spec) ---
 const MINT_TO = 7;
@@ -30,21 +31,21 @@ function writeUInt64LE(buffer: Buffer, value: bigint | number | string, offset =
 }
 
 // --- Public decoders ---
-export function decodeMintInstruction(ix: TransactionInstruction) {
+export function decodeMintInstruction(ix: IInstruction) {
   if (!ix.data || ix.data[0] !== MINT_TO) throw new Error('Not a MintTo instruction');
   const data = Buffer.from(ix.data);
   const amount = readUInt64LE(data, 1);
   return {
     type: 'mint',
     amount: amount.toString(),
-    mint: ix.keys[0]?.pubkey?.toBase58?.() ?? '',
-    destination: ix.keys[1]?.pubkey?.toBase58?.() ?? '',
-    authority: ix.keys[2]?.pubkey?.toBase58?.() ?? '',
-    multiSigners: ix.keys.slice(3).map(k => k.pubkey.toBase58()),
+    mint: ix.accounts?.[0]?.address ?? '',
+    destination: ix.accounts?.[1]?.address ?? '',
+    authority: ix.accounts?.[2]?.address ?? '',
+    multiSigners: (ix.accounts?.slice(3) ?? []).map(k => k.address),
   };
 }
 
-export function decodeTransferInstruction(ix: TransactionInstruction) {
+export function decodeTransferInstruction(ix: IInstruction) {
   if (!ix.data || ix.data[0] !== TRANSFER) throw new Error('Not a Transfer instruction');
   const data = Buffer.from(ix.data);
   const amount = readUInt64LE(data, 1);
@@ -52,40 +53,36 @@ export function decodeTransferInstruction(ix: TransactionInstruction) {
     type: 'transfer',
     amount: amount.toString(),
     source: {
-      address: ix.keys[0]?.pubkey?.toBase58?.() ?? '',
-      raw: ix.keys[0]?.pubkey?.toString?.() ?? '',
+      address: ix.accounts?.[0]?.address ?? '',
     },
     destination: {
-      address: ix.keys[1]?.pubkey?.toBase58?.() ?? '',
-      raw: ix.keys[1]?.pubkey?.toString?.() ?? '',
+      address: ix.accounts?.[1]?.address ?? '',
     },
     authority: {
-      address: ix.keys[2]?.pubkey?.toBase58?.() ?? '',
-      raw: ix.keys[2]?.pubkey?.toString?.() ?? '',
+      address: ix.accounts?.[2]?.address ?? '',
     },
-    multiSigners: ix.keys.slice(3).map(k => ({
-      address: k.pubkey.toBase58(),
-      raw: k.pubkey.toString(),
+    multiSigners: (ix.accounts?.slice(3) ?? []).map(k => ({
+      address: k.address,
     })),
     raw: Array.from(data).map(x => x.toString(16).padStart(2, '0')).join(''),
   };
 }
 
-export function decodeBurnInstruction(ix: TransactionInstruction) {
+export function decodeBurnInstruction(ix: IInstruction) {
   if (!ix.data || ix.data[0] !== BURN) throw new Error('Not a Burn instruction');
   const data = Buffer.from(ix.data);
   const amount = readUInt64LE(data, 1);
   return {
     type: 'burn',
     amount: amount.toString(),
-    account: ix.keys[0]?.pubkey?.toBase58?.() ?? '',
-    mint: ix.keys[1]?.pubkey?.toBase58?.() ?? '',
-    authority: ix.keys[2]?.pubkey?.toBase58?.() ?? '',
-    multiSigners: ix.keys.slice(3).map(k => k.pubkey.toBase58()),
+    account: ix.accounts?.[0]?.address ?? '',
+    mint: ix.accounts?.[1]?.address ?? '',
+    authority: ix.accounts?.[2]?.address ?? '',
+    multiSigners: (ix.accounts?.slice(3) ?? []).map(k => k.address),
   };
 }
 
-export function decodeSetAuthorityInstruction(ix: TransactionInstruction) {
+export function decodeSetAuthorityInstruction(ix: IInstruction) {
   if (!ix.data || ix.data[0] !== SET_AUTHORITY) throw new Error('Not a SetAuthority instruction');
   const data = Buffer.from(ix.data);
   const authorityType = data[1];
@@ -96,33 +93,33 @@ export function decodeSetAuthorityInstruction(ix: TransactionInstruction) {
   }
   return {
     type: 'setAuthority',
-    account: ix.keys[0]?.pubkey?.toBase58?.() ?? '',
+    account: ix.accounts?.[0]?.address ?? '',
     authorityType,
     newAuthority,
-    authority: ix.keys[1]?.pubkey?.toBase58?.() ?? '',
-    multiSigners: ix.keys.slice(2).map(k => k.pubkey.toBase58()),
+    authority: ix.accounts?.[1]?.address ?? '',
+    multiSigners: (ix.accounts?.slice(2) ?? []).map(k => k.address),
   };
 }
 
-export function decodeCreateAccountInstruction(ix: TransactionInstruction) {
+export function decodeCreateAccountInstruction(ix: IInstruction) {
   if (!ix.data || ix.data[0] !== INITIALIZE_ACCOUNT) throw new Error('Not an InitializeAccount instruction');
   return {
     type: 'createAccount',
-    account: ix.keys[0]?.pubkey?.toBase58?.() ?? '',
-    mint: ix.keys[1]?.pubkey?.toBase58?.() ?? '',
-    owner: ix.keys[2]?.pubkey?.toBase58?.() ?? '',
-    rent: ix.keys[3]?.pubkey?.toBase58?.() ?? '',
+    account: ix.accounts?.[0]?.address ?? '',
+    mint: ix.accounts?.[1]?.address ?? '',
+    owner: ix.accounts?.[2]?.address ?? '',
+    rent: ix.accounts?.[3]?.address ?? '',
   };
 }
 
-export function decodeCloseAccountInstruction(ix: TransactionInstruction) {
+export function decodeCloseAccountInstruction(ix: IInstruction) {
   if (!ix.data || ix.data[0] !== CLOSE_ACCOUNT) throw new Error('Not a CloseAccount instruction');
   return {
     type: 'closeAccount',
-    account: ix.keys[0]?.pubkey?.toBase58?.() ?? '',
-    destination: ix.keys[1]?.pubkey?.toBase58?.() ?? '',
-    authority: ix.keys[2]?.pubkey?.toBase58?.() ?? '',
-    multiSigners: ix.keys.slice(3).map(k => k.pubkey.toBase58()),
+    account: ix.accounts?.[0]?.address ?? '',
+    destination: ix.accounts?.[1]?.address ?? '',
+    authority: ix.accounts?.[2]?.address ?? '',
+    multiSigners: (ix.accounts?.slice(3) ?? []).map(k => k.address),
   };
 }
 
@@ -136,26 +133,30 @@ export function createMintToInstruction({
   amount,
   multiSigners = [],
 }: {
-  mint: string | PublicKey;
-  destination: string | PublicKey;
-  authority: string | PublicKey;
+  mint: string | Address;
+  destination: string | Address;
+  authority: string | Address;
   amount: bigint | number | string;
-  multiSigners?: (string | PublicKey)[];
-}): TransactionInstruction {
-  const programId = new PublicKey(getGorbchainConfig().programIds?.splToken || 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
-  const data = Buffer.alloc(9);
+  multiSigners?: (string | Address)[];
+}): IInstruction {
+  const programAddress = address(getGorbchainConfig().programIds?.splToken || 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+  const data = new Uint8Array(9);
   data[0] = MINT_TO;
-  writeUInt64LE(data, amount, 1);
-  return new TransactionInstruction({
-    programId,
-    keys: [
-      { pubkey: new PublicKey(mint), isSigner: false, isWritable: true },
-      { pubkey: new PublicKey(destination), isSigner: false, isWritable: true },
-      { pubkey: new PublicKey(authority), isSigner: true, isWritable: false },
-      ...multiSigners.map((k) => ({ pubkey: new PublicKey(k), isSigner: true, isWritable: false })),
+  let n = typeof amount === 'bigint' ? amount : BigInt(amount);
+  for (let i = 0; i < 8; i++) {
+    data[1 + i] = Number(n & BigInt(255));
+    n = n / BigInt(256);
+  }
+  return {
+    programAddress,
+    accounts: [
+      { address: address(mint), role: 1 }, // writable
+      { address: address(destination), role: 1 }, // writable
+      { address: address(authority), role: 2 }, // writable signer
+      ...multiSigners.map((k) => ({ address: address(k), role: 2 })), // writable signer
     ],
     data,
-  });
+  };
 }
 
 /**
@@ -168,26 +169,30 @@ export function createTransferInstruction({
   amount,
   multiSigners = [],
 }: {
-  source: string | PublicKey;
-  destination: string | PublicKey;
-  authority: string | PublicKey;
+  source: string | Address;
+  destination: string | Address;
+  authority: string | Address;
   amount: bigint | number | string;
-  multiSigners?: (string | PublicKey)[];
-}): TransactionInstruction {
-  const programId = new PublicKey(getGorbchainConfig().programIds?.splToken || 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
-  const data = Buffer.alloc(9);
+  multiSigners?: (string | Address)[];
+}): IInstruction {
+  const programAddress = address(getGorbchainConfig().programIds?.splToken || 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+  const data = new Uint8Array(9);
   data[0] = TRANSFER;
-  writeUInt64LE(data, amount, 1);
-  return new TransactionInstruction({
-    programId,
-    keys: [
-      { pubkey: new PublicKey(source), isSigner: false, isWritable: true },
-      { pubkey: new PublicKey(destination), isSigner: false, isWritable: true },
-      { pubkey: new PublicKey(authority), isSigner: true, isWritable: false },
-      ...multiSigners.map((k) => ({ pubkey: new PublicKey(k), isSigner: true, isWritable: false })),
+  let n = typeof amount === 'bigint' ? amount : BigInt(amount);
+  for (let i = 0; i < 8; i++) {
+    data[1 + i] = Number(n & BigInt(255));
+    n = n / BigInt(256);
+  }
+  return {
+    programAddress,
+    accounts: [
+      { address: address(source), role: 1 }, // writable
+      { address: address(destination), role: 1 }, // writable
+      { address: address(authority), role: 2 }, // writable signer
+      ...multiSigners.map((k) => ({ address: address(k), role: 2 })), // writable signer
     ],
     data,
-  });
+  };
 }
 
 /**
@@ -199,19 +204,22 @@ export function createTokenAccountInstruction({
   mint,
   owner,
 }: {
-  payer: string | PublicKey;
-  newAccount: string | PublicKey;
-  mint: string | PublicKey;
-  owner: string | PublicKey;
-}): TransactionInstruction {
+  payer: string | Address;
+  newAccount: string | Address;
+  mint: string | Address;
+  owner: string | Address;
+}): IInstruction {
   // This is a simplified version; for full ATA creation, use @solana/spl-token
-  return SystemProgram.createAccount({
-    fromPubkey: new PublicKey(payer),
-    newAccountPubkey: new PublicKey(newAccount),
-    lamports: 2039280, // Should be rent-exempt minimum
-    space: 165,
-    programId: new PublicKey(getGorbchainConfig().programIds?.splToken || 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
-  });
+  return {
+    programAddress: address(getGorbchainConfig().programIds?.splToken || 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
+    accounts: [
+      { address: address(payer), role: 2 }, // writable signer
+      { address: address(newAccount), role: 1 }, // writable
+      { address: address(mint), role: 1 }, // writable
+      { address: address(owner), role: 1 }, // writable
+    ],
+    data: new Uint8Array(0), // No data for simple create
+  };
 }
 
 // --- Account decoders ---
