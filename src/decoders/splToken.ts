@@ -1,8 +1,9 @@
 // SPL Token decoders and builders
 // Unified entry point for all SPL Token-related decoding in the SDK.
 // Only export public decoders/types. Helpers are private.
-import { TransactionInstruction } from '@solana/web3.js';
+import { PublicKey, TransactionInstruction, SystemProgram } from '@solana/web3.js';
 import { decodeMintAccount, DecodedMintAccount } from '../utils/decodeMintAccount.js';
+import { getGorbchainConfig } from '../utils/gorbchainConfig.js';
 
 // --- Instruction discriminators (SPL Token program spec) ---
 const MINT_TO = 7;
@@ -17,6 +18,15 @@ function readUInt64LE(buffer: Buffer, offset = 0) {
   const lower = buffer.readUInt32LE(offset);
   const upper = buffer.readUInt32LE(offset + 4);
   return upper * 0x100000000 + lower;
+}
+
+function writeUInt64LE(buffer: Buffer, value: bigint | number | string, offset = 0) {
+  // Fallback for ES2016: only support up to Number.MAX_SAFE_INTEGER
+  let n = typeof value === 'bigint' ? Number(value) : typeof value === 'string' ? Number(value) : value;
+  for (let i = 0; i < 8; i++) {
+    buffer[offset + i] = n & 0xff;
+    n = Math.floor(n / 256);
+  }
 }
 
 // --- Public decoders ---
@@ -116,7 +126,93 @@ export function decodeCloseAccountInstruction(ix: TransactionInstruction) {
   };
 }
 
+/**
+ * Create a MintTo instruction (mint tokens to an account)
+ */
+export function createMintToInstruction({
+  mint,
+  destination,
+  authority,
+  amount,
+  multiSigners = [],
+}: {
+  mint: string | PublicKey;
+  destination: string | PublicKey;
+  authority: string | PublicKey;
+  amount: bigint | number | string;
+  multiSigners?: (string | PublicKey)[];
+}): TransactionInstruction {
+  const programId = new PublicKey(getGorbchainConfig().programIds?.splToken || 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+  const data = Buffer.alloc(9);
+  data[0] = MINT_TO;
+  writeUInt64LE(data, amount, 1);
+  return new TransactionInstruction({
+    programId,
+    keys: [
+      { pubkey: new PublicKey(mint), isSigner: false, isWritable: true },
+      { pubkey: new PublicKey(destination), isSigner: false, isWritable: true },
+      { pubkey: new PublicKey(authority), isSigner: true, isWritable: false },
+      ...multiSigners.map((k) => ({ pubkey: new PublicKey(k), isSigner: true, isWritable: false })),
+    ],
+    data,
+  });
+}
+
+/**
+ * Create a Transfer instruction (transfer tokens between accounts)
+ */
+export function createTransferInstruction({
+  source,
+  destination,
+  authority,
+  amount,
+  multiSigners = [],
+}: {
+  source: string | PublicKey;
+  destination: string | PublicKey;
+  authority: string | PublicKey;
+  amount: bigint | number | string;
+  multiSigners?: (string | PublicKey)[];
+}): TransactionInstruction {
+  const programId = new PublicKey(getGorbchainConfig().programIds?.splToken || 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+  const data = Buffer.alloc(9);
+  data[0] = TRANSFER;
+  writeUInt64LE(data, amount, 1);
+  return new TransactionInstruction({
+    programId,
+    keys: [
+      { pubkey: new PublicKey(source), isSigner: false, isWritable: true },
+      { pubkey: new PublicKey(destination), isSigner: false, isWritable: true },
+      { pubkey: new PublicKey(authority), isSigner: true, isWritable: false },
+      ...multiSigners.map((k) => ({ pubkey: new PublicKey(k), isSigner: true, isWritable: false })),
+    ],
+    data,
+  });
+}
+
+/**
+ * Create a new SPL Token account (associated token account)
+ */
+export function createTokenAccountInstruction({
+  payer,
+  newAccount,
+  mint,
+  owner,
+}: {
+  payer: string | PublicKey;
+  newAccount: string | PublicKey;
+  mint: string | PublicKey;
+  owner: string | PublicKey;
+}): TransactionInstruction {
+  // This is a simplified version; for full ATA creation, use @solana/spl-token
+  return SystemProgram.createAccount({
+    fromPubkey: new PublicKey(payer),
+    newAccountPubkey: new PublicKey(newAccount),
+    lamports: 2039280, // Should be rent-exempt minimum
+    space: 165,
+    programId: new PublicKey(getGorbchainConfig().programIds?.splToken || 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
+  });
+}
+
 // --- Account decoders ---
 export { decodeMintAccount, DecodedMintAccount };
-
-// --- Clean: Only public decoders are exported. All helpers are private or in utils. ---

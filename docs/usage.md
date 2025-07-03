@@ -42,6 +42,29 @@ setGorbchainConfig({
 });
 ```
 
+### 4. Decode a Transaction by Signature
+
+```ts
+import { getAndDecodeTransaction } from '@gorbchain-xyz/chaindecode';
+const result = await getAndDecodeTransaction(connection, signature);
+console.log(result.instructions);
+```
+
+### 5. Send a Transaction via RPC
+
+```ts
+import { sendRpcTransaction } from '@gorbchain-xyz/chaindecode';
+const sig = await sendRpcTransaction(connection, transaction, signers);
+```
+
+### 6. Decode Instructions
+
+```ts
+import { decodeTransactionInstruction, decodeTransactionInstructions } from '@gorbchain-xyz/chaindecode';
+const decoded = decodeTransactionInstruction(instruction);
+const decodedArr = decodeTransactionInstructions([instruction1, instruction2]);
+```
+
 ## 🧩 DecoderRegistry & Custom Decoders
 
 ```ts

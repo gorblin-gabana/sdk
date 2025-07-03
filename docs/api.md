@@ -5,6 +5,8 @@
 - `DecoderRegistry` — Registry for all decoders and custom program registration
 - SPL Token decoders/builders: `decodeMintInstruction`, `decodeTransferInstruction`, etc.
 - Account decoders: `decodeMintAccount`, `fetchAndDecodeMintAccount`
+- Transaction utilities: `getAndDecodeTransaction`, `sendRpcTransaction`
+- Instruction decoders: `decodeTransactionInstruction`, `decodeTransactionInstructions`
 - React hook: `useDecodedInstructions`
 - Node utility: `createBlockDecoder`
 
@@ -17,6 +19,10 @@ import {
   decodeTransferInstruction,
   decodeMintAccount,
   fetchAndDecodeMintAccount,
+  getAndDecodeTransaction,
+  sendRpcTransaction,
+  decodeTransactionInstruction,
+  decodeTransactionInstructions,
   useDecodedInstructions,
   createBlockDecoder
 } from '@gorbchain-xyz/chaindecode';
