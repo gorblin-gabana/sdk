@@ -123,7 +123,7 @@ describe('GORBA Token Integration Tests', () => {
 
       // Mock the RPC client to avoid actual network calls in tests
       const mockRpcClient = {
-        getHealth: jest.fn().mockResolvedValue({ status: 'ok' }),
+        getHealth: jest.fn().mockResolvedValue({ status: 'healthy' }),
         getSlot: jest.fn().mockResolvedValue(12345),
         getBlockHeight: jest.fn().mockResolvedValue(67890),
         request: jest.fn()
@@ -133,7 +133,7 @@ describe('GORBA Token Integration Tests', () => {
       (sdk as any).rpc = mockRpcClient;
 
       const health = await sdk.getNetworkHealth();
-      expect((health as any).status).toBe('ok');
+      expect((health as any).status).toBe('healthy');
 
       const slot = await sdk.getCurrentSlot();
       expect(slot).toBe(12345);

@@ -232,7 +232,15 @@ export class RpcClient {
     lastValidBlockHeight: number;
   }> {
     const params = commitment ? [{ commitment }] : [];
-    return this.request('getLatestBlockhash', params);
+    const result = await this.request<{
+      value: {
+        blockhash: string;
+        lastValidBlockHeight: number;
+      };
+    }>('getLatestBlockhash', params);
+    
+    // Handle both direct response and wrapped response
+    return result.value || result;
   }
 
   /**

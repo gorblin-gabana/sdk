@@ -1610,7 +1610,7 @@ export class GorbchainSDK {
    * ```
    */
   async getBlockHeight(commitment?: string) {
-    return this.rpc.request('getBlockHeight', commitment ? [{ commitment }] : []);
+    return this.rpc.getBlockHeight(commitment);
   }
 
   /**

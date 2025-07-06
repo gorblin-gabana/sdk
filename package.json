@@ -39,12 +39,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gorbchain-xyz/chaindecode.git"
+    "url": "git+https://github.com/gorblin-gabana/sdk.git"
   },
   "bugs": {
-    "url": "https://github.com/gorbchain-xyz/chaindecode/issues"
+    "url": "https://github.com/gorblin-gabana/sdk/issues"
   },
-  "homepage": "https://github.com/gorbchain-xyz/chaindecode#readme",
+  "homepage": "https://github.com/gorblin-gabana/sdk#readme",
   "devDependencies": {
     "@testing-library/react": "^16.3.0",
     "@types/jest": "^30.0.0",

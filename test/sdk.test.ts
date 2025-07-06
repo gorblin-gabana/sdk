@@ -186,12 +186,12 @@ describe('GorbchainSDK', () => {
 
     it('should get block height', async () => {
       const mockHeight = 67890;
-      mockRpcClient.request.mockResolvedValue(mockHeight);
+      mockRpcClient.getBlockHeight.mockResolvedValue(mockHeight);
 
       const height = await sdk.getBlockHeight('finalized');
 
       expect(height).toBe(mockHeight);
-      expect(mockRpcClient.request).toHaveBeenCalledWith('getBlockHeight', [{ commitment: 'finalized' }]);
+      expect(mockRpcClient.getBlockHeight).toHaveBeenCalledWith('finalized');
     });
 
     it('should get latest blockhash', async () => {
