@@ -2,11 +2,7 @@ import { GorbchainSDK } from '../src/sdk/GorbchainSDK.js';
 import { RpcClient } from '../src/rpc/client.js';
 import { getTransaction, getAccountInfo, getBalance } from '../src/rpc/index.js';
 import {
-  RpcNetworkError,
-  RpcTimeoutError,
-  RpcServerError,
-  TransactionNotFoundError,
-  InvalidAddressError
+  RpcNetworkError
 } from '../src/errors/index.js';
 
 // Real RPC integration tests - hits actual Gorbchain network
@@ -87,7 +83,7 @@ describe('RPC Integration Tests (Real Network)', () => {
       try {
         const blockhash = await rpcClient.getLatestBlockhash('finalized');
         expect(blockhash).toBeDefined();
-        
+
         if (blockhash && typeof blockhash === 'object') {
           // Check if we have the expected properties
           if (blockhash.blockhash) {
@@ -95,13 +91,13 @@ describe('RPC Integration Tests (Real Network)', () => {
             expect(typeof blockhash.blockhash).toBe('string');
             console.log('✅ Latest Blockhash:', blockhash.blockhash);
           }
-          
+
           if (blockhash.lastValidBlockHeight !== undefined) {
             expect(typeof blockhash.lastValidBlockHeight).toBe('number');
             console.log('✅ Last Valid Block Height:', blockhash.lastValidBlockHeight);
           }
         }
-        
+
         console.log('✅ Blockhash response structure:', blockhash);
       } catch (error) {
         console.log('⚠️ Blockhash error:', (error as Error).message);
@@ -117,7 +113,7 @@ describe('RPC Integration Tests (Real Network)', () => {
         null,
         realData.validAddresses.systemProgram
       );
-      
+
       expect(accountInfo).toBeDefined();
       if (accountInfo) {
         expect(accountInfo.executable).toBe(true);
@@ -132,7 +128,7 @@ describe('RPC Integration Tests (Real Network)', () => {
         null,
         realData.validAddresses.systemProgram
       );
-      
+
       expect(typeof balance).toBe('number');
       expect(balance).toBeGreaterThanOrEqual(0);
       console.log('✅ Account Balance:', balance, 'lamports');
@@ -152,7 +148,7 @@ describe('RPC Integration Tests (Real Network)', () => {
          [realData.validAddresses.systemProgram],
          { encoding: 'base64' }
        ]);
-       
+
        expect(accounts).toBeDefined();
        expect(accounts.value).toBeDefined();
        expect(Array.isArray(accounts.value)).toBe(true);
@@ -168,7 +164,7 @@ describe('RPC Integration Tests (Real Network)', () => {
           realData.realTransactions.createAccount,
           { encoding: 'json' }
         );
-        
+
         if (txData) {
           expect(txData).toBeDefined();
           expect(txData.slot).toBeDefined();
@@ -185,7 +181,7 @@ describe('RPC Integration Tests (Real Network)', () => {
           if (txData.transaction?.message?.instructions) {
             const instructions = txData.transaction.message.instructions;
             console.log('✅ Transaction Instructions:', instructions.length);
-            
+
             instructions.forEach((instruction, index) => {
               console.log(`Instruction ${index}:`, {
                 programIdIndex: instruction.programIdIndex,
@@ -217,7 +213,7 @@ describe('RPC Integration Tests (Real Network)', () => {
            [realData.realTransactions.createAccount],
            { searchTransactionHistory: true }
          ]);
-         
+
          expect(status).toBeDefined();
          expect(status.value).toBeInstanceOf(Array);
          console.log('✅ Signature Status:', status.value[0]);
@@ -234,7 +230,7 @@ describe('RPC Integration Tests (Real Network)', () => {
           null,
           realData.validAddresses.gorbaAccount
         );
-        
+
         if (tokenAccountInfo) {
           expect(tokenAccountInfo.owner).toBeDefined();
           expect(tokenAccountInfo.data).toBeDefined();
@@ -246,10 +242,10 @@ describe('RPC Integration Tests (Real Network)', () => {
 
                      // Try to decode token account data
            if (tokenAccountInfo.data) {
-             const dataStr = Array.isArray(tokenAccountInfo.data) 
-               ? tokenAccountInfo.data[0] 
+             const dataStr = Array.isArray(tokenAccountInfo.data)
+               ? tokenAccountInfo.data[0]
                : tokenAccountInfo.data.toString();
-             console.log('✅ Token Account Data (first 100 chars):', 
+             console.log('✅ Token Account Data (first 100 chars):',
                dataStr.substring(0, 100));
            }
                  } else {
@@ -271,10 +267,10 @@ describe('RPC Integration Tests (Real Network)', () => {
              ]
            }
          ]);
-         
+
          expect(programAccounts).toBeInstanceOf(Array);
          console.log('✅ Token Program Accounts found:', programAccounts.length);
-         
+
          if (programAccounts.length > 0) {
            console.log('✅ Sample token account:', {
              pubkey: programAccounts[0].pubkey,
@@ -318,10 +314,10 @@ describe('RPC Integration Tests (Real Network)', () => {
 
   describe('Performance and Load Tests', () => {
     it('should handle multiple concurrent requests', async () => {
-      const promises = Array.from({ length: 5 }, () => 
+      const promises = Array.from({ length: 5 }, () =>
         rpcClient.getHealth()
       );
-      
+
       const results = await Promise.all(promises);
       expect(results).toHaveLength(5);
       results.forEach(result => {
@@ -336,7 +332,7 @@ describe('RPC Integration Tests (Real Network)', () => {
         const slot = await rpcClient.getSlot();
         results.push(slot);
       }
-      
+
       expect(results).toHaveLength(3);
       results.forEach(slot => {
         expect(typeof slot).toBe('number');
@@ -354,13 +350,13 @@ describe('RPC Integration Tests (Real Network)', () => {
           realData.realTransactions.mintTokens,
           { encoding: 'json' }
         );
-        
+
         if (txData && txData.transaction) {
           // Validate transaction structure
           expect(txData.transaction.message).toBeDefined();
           expect(txData.transaction.signatures).toBeDefined();
           expect(txData.transaction.signatures).toBeInstanceOf(Array);
-          
+
           console.log('✅ Transaction Structure Validation:', {
             hasMessage: !!txData.transaction.message,
             signatureCount: txData.transaction.signatures.length,
@@ -374,15 +370,13 @@ describe('RPC Integration Tests (Real Network)', () => {
                 // Attempt to decode each instruction
                 const mockInstruction = {
                   programId: txData.transaction.message.accountKeys[instruction.programIdIndex],
-                  data: instruction.data,
-                  accounts: instruction.accounts.map(accountIndex => ({
-                    pubkey: txData.transaction.message.accountKeys[accountIndex],
-                    isSigner: false,
-                    isWritable: false
-                  }))
+                  data: new Uint8Array(Buffer.from(instruction.data, 'base64')),
+                  accounts: instruction.accounts.map(accountIndex => 
+                    txData.transaction.message.accountKeys[accountIndex]
+                  )
                 };
-                
-                                 const decoded = sdk.decodeInstruction(mockInstruction);
+
+                const decoded = sdk.decodeInstruction(mockInstruction);
                  console.log(`✅ Decoded instruction ${index}:`, decoded.type);
                } catch (decodeError) {
                  console.log(`⚠️ Could not decode instruction ${index}:`, (decodeError as Error).message);
@@ -401,14 +395,14 @@ describe('RPC Integration Tests (Real Network)', () => {
           null,
           realData.validAddresses.gorbaToken
         );
-        
+
         if (accountInfo) {
           // Validate account info structure
           expect(typeof accountInfo.executable).toBe('boolean');
           expect(typeof accountInfo.lamports).toBe('number');
           expect(typeof accountInfo.owner).toBe('string');
           expect(typeof accountInfo.rentEpoch).toBe('number');
-          
+
           console.log('✅ Account Data Validation:', {
             executable: accountInfo.executable,
             owner: accountInfo.owner,
@@ -435,12 +429,12 @@ describe('RPC Integration Tests (Real Network)', () => {
       // First two failures should be attempted
       await expect(failingClient.getHealth()).rejects.toThrow();
       await expect(failingClient.getHealth()).rejects.toThrow();
-      
+
       // Third call should fail immediately due to circuit breaker
       const start = Date.now();
       await expect(failingClient.getHealth()).rejects.toThrow();
       const duration = Date.now() - start;
-      
+
       // Should fail quickly due to circuit breaker
       expect(duration).toBeLessThan(1000);
       console.log('✅ Circuit breaker triggered, failed in:', duration, 'ms');
@@ -460,7 +454,7 @@ describe('RPC Integration Tests (Real Network)', () => {
 
        let attemptCount = 0;
        const originalFetch = global.fetch;
-       
+
        // Mock fetch to simulate retryable errors
        global.fetch = jest.fn().mockImplementation(() => {
          attemptCount++;
@@ -484,4 +478,4 @@ describe('RPC Integration Tests (Real Network)', () => {
        }
      }, 10000);
   });
-}); 
+});

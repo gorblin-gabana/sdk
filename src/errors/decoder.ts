@@ -290,4 +290,4 @@ export class SwapDecodingError extends SDKError {
       swapType: this.swapType
     };
   }
-} 
+}

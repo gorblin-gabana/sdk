@@ -123,7 +123,7 @@ export class CircuitBreaker {
 
   private onSuccess(): void {
     this.failureCount = 0;
-    
+
     if (this.state === CircuitBreakerState.HALF_OPEN) {
       this.successCount++;
       if (this.successCount >= this.options.successThreshold) {
@@ -136,7 +136,7 @@ export class CircuitBreaker {
   private onFailure(): void {
     this.failureCount++;
     this.lastFailureTime = Date.now();
-    
+
     if (this.failureCount >= this.options.failureThreshold) {
       this.state = CircuitBreakerState.OPEN;
     }
@@ -171,7 +171,7 @@ export async function retry<T>(
 
       // Calculate delay with exponential backoff
       const delay = calculateDelay(attempt, config);
-      
+
       // Call onRetry callback
       config.onRetry(lastError, attempt);
 
@@ -189,14 +189,14 @@ export async function retry<T>(
 function calculateDelay(attempt: number, options: Required<RetryOptions>): number {
   const exponentialDelay = options.initialDelay * Math.pow(options.backoffMultiplier, attempt - 1);
   const delay = Math.min(exponentialDelay, options.maxDelay);
-  
+
   if (options.jitter) {
     // Add jitter to prevent thundering herd
     const jitterRange = delay * 0.1; // 10% jitter
     const jitter = Math.random() * jitterRange * 2 - jitterRange;
     return Math.max(0, delay + jitter);
   }
-  
+
   return delay;
 }
 
@@ -233,18 +233,18 @@ export async function batchRetry<T>(
 ): Promise<T[]> {
   const { retryOptions = {}, circuitBreakerOptions = {}, maxConcurrency = 5 } = options;
   const circuitBreaker = new CircuitBreaker(circuitBreakerOptions);
-  
+
   // Limit concurrency
   const results: T[] = [];
   const chunks = chunkArray(operations, maxConcurrency);
-  
+
   for (const chunk of chunks) {
     const chunkResults = await Promise.all(
       chunk.map(op => retryWithCircuitBreaker(op, circuitBreaker, retryOptions))
     );
     results.push(...chunkResults);
   }
-  
+
   return results;
 }
 
@@ -285,7 +285,7 @@ export function Retryable(options: RetryOptions = {}) {
  */
 export function WithCircuitBreaker(options: CircuitBreakerOptions = {}) {
   const circuitBreaker = new CircuitBreaker(options);
-  
+
   return function <T extends (...args: any[]) => Promise<any>>(
     target: any,
     propertyKey: string,
@@ -345,7 +345,7 @@ export class RetryManager {
   ): Promise<T> {
     const circuitBreaker = this.getCircuitBreaker(key, options.circuitBreakerOptions);
     const retryOptions = { ...this.defaultRetryOptions, ...options.retryOptions };
-    
+
     return retryWithCircuitBreaker(fn, circuitBreaker, retryOptions);
   }
 
@@ -378,4 +378,4 @@ export class RetryManager {
     });
     return status;
   }
-} 
+}

@@ -93,7 +93,7 @@ export class DecoderRegistry {
   decode(instruction: any): DecodedInstruction {
     // First map programId to programName
     const programName = this.programIdToName.get(instruction.programId);
-    
+
     if (!programName) {
       return {
         type: 'unknown',
@@ -103,10 +103,10 @@ export class DecoderRegistry {
         raw: instruction
       };
     }
-    
+
     // Now get the decoder using the program name
     const decoder = this.decoders.get(programName);
-    
+
     if (!decoder) {
       return {
         type: 'unknown',

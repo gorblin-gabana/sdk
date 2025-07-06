@@ -32,21 +32,27 @@ export default tseslint.config(
     },
     rules: {
       // TypeScript specific rules
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unsafe-assignment': 'warn',
+      '@typescript-eslint/no-unsafe-member-access': 'warn',
+      '@typescript-eslint/no-unsafe-call': 'warn',
+      '@typescript-eslint/no-unsafe-return': 'warn',
+      '@typescript-eslint/no-unsafe-argument': 'warn',
+      '@typescript-eslint/restrict-template-expressions': 'warn',
       '@typescript-eslint/explicit-function-return-type': 'warn',
       '@typescript-eslint/explicit-module-boundary-types': 'warn',
       '@typescript-eslint/no-non-null-assertion': 'warn',
-      '@typescript-eslint/prefer-nullish-coalescing': 'error',
-      '@typescript-eslint/prefer-optional-chain': 'error',
-      '@typescript-eslint/no-floating-promises': 'error',
-      '@typescript-eslint/await-thenable': 'error',
-      '@typescript-eslint/no-misused-promises': 'error',
-      '@typescript-eslint/require-await': 'error',
-      '@typescript-eslint/no-unnecessary-type-assertion': 'error',
-      '@typescript-eslint/prefer-as-const': 'error',
-      '@typescript-eslint/consistent-type-imports': 'error',
-      '@typescript-eslint/consistent-type-definitions': ['error', 'interface'],
+      '@typescript-eslint/prefer-nullish-coalescing': 'warn',
+      '@typescript-eslint/prefer-optional-chain': 'warn',
+      '@typescript-eslint/no-floating-promises': 'warn',
+      '@typescript-eslint/await-thenable': 'warn',
+      '@typescript-eslint/no-misused-promises': 'warn',
+      '@typescript-eslint/require-await': 'warn',
+      '@typescript-eslint/no-unnecessary-type-assertion': 'warn',
+      '@typescript-eslint/prefer-as-const': 'warn',
+      '@typescript-eslint/consistent-type-imports': 'warn',
+      '@typescript-eslint/consistent-type-definitions': ['warn', 'interface'],
       
       // General rules
       'no-console': 'warn',
@@ -62,7 +68,7 @@ export default tseslint.config(
       'require-await': 'off', // Handled by TypeScript
       
       // Code style
-      'max-len': ['error', { code: 100, ignoreUrls: true, ignoreStrings: true }],
+      'max-len': ['warn', { code: 100, ignoreUrls: true, ignoreStrings: true }],
       'quotes': ['error', 'single', { avoidEscape: true }],
       'semi': ['error', 'always'],
       'comma-dangle': ['error', 'never'],

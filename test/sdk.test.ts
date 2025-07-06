@@ -58,7 +58,11 @@ describe('GorbchainSDK', () => {
     });
 
     it('should decode single instruction', () => {
-      const mockInstruction = { programId: 'test', data: 'testdata' };
+      const mockInstruction = { 
+        programId: 'test', 
+        data: new Uint8Array([1, 2, 3]), 
+        accounts: ['account1', 'account2'] 
+      };
       const mockDecodedResult = {
         type: 'test',
         programId: 'test',
@@ -77,8 +81,8 @@ describe('GorbchainSDK', () => {
 
     it('should decode multiple instructions', () => {
       const mockInstructions = [
-        { programId: 'test1', data: 'testdata1' },
-        { programId: 'test2', data: 'testdata2' }
+        { programId: 'test1', data: new Uint8Array([1, 2, 3]), accounts: ['account1'] },
+        { programId: 'test2', data: new Uint8Array([4, 5, 6]), accounts: ['account2'] }
       ];
       const mockDecodedResults = [
         { type: 'test1', programId: 'test1', data: {}, accounts: [] },
@@ -127,13 +131,13 @@ describe('GorbchainSDK', () => {
       sdk = new GorbchainSDK();
       mockRpcClient = {
         getHealth: jest.fn(),
-        getSlot: jest.fn(), 
+        getSlot: jest.fn(),
         getBlockHeight: jest.fn(),
         getLatestBlockhash: jest.fn(),
         setRpcUrl: jest.fn(),
         request: jest.fn()
       };
-      
+
       // Replace the RPC client with our mock
       (sdk as any).rpc = mockRpcClient;
     });
@@ -156,7 +160,7 @@ describe('GorbchainSDK', () => {
       // Mock the request method calls that getNetworkHealth actually makes
       mockRpcClient.request
         .mockResolvedValueOnce(12345)      // getSlot
-        .mockResolvedValueOnce(67890)      // getBlockHeight  
+        .mockResolvedValueOnce(67890)      // getBlockHeight
         .mockResolvedValueOnce({ epoch: 123 }) // getEpochInfo
         .mockResolvedValueOnce({ 'solana-core': '2.0.0' }); // getVersion
 

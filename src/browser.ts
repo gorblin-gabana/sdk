@@ -7,7 +7,7 @@ export type { RichTransaction, TransactionDecodingOptions, RichInstruction } fro
 export { RpcClient } from './rpc/client.js';
 export { fetchTransactionBySignature } from './rpc/fetchTransactionBySignature.js';
 
-// Decoder exports  
+// Decoder exports
 export { DecoderRegistry, type DecodedInstruction, type DecoderFunction } from './decoders/registry.js';
 export { createDefaultDecoderRegistry } from './decoders/defaultRegistry.js';
 
@@ -21,7 +21,7 @@ export { decodeNFTInstruction } from './decoders/nft.js';
 // Name Service individual decoders
 export { decodeRegisterName, decodeUpdateName, decodeTransferName } from './decoders/nameService.js';
 
-// Swap individual decoders  
+// Swap individual decoders
 export { decodeSwap, decodeAddLiquidity, decodeRemoveLiquidity, decodeInitializePool } from './decoders/swap.js';
 
 // Transaction utilities
@@ -37,4 +37,4 @@ export * from './errors/index.js';
 
 // NOTE: Minting functions are excluded as they require Node.js Buffer and heavy Metaplex dependencies
 // For minting functionality, use the full SDK in Node.js environments
-// NOTE: getNetworkHealth is a method of GorbchainSDK class, not a standalone export 
+// NOTE: getNetworkHealth is a method of GorbchainSDK class, not a standalone export

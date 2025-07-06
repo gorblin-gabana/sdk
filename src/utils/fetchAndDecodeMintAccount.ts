@@ -12,7 +12,7 @@ export async function fetchAndDecodeMintAccount(mint: string): Promise<DecodedMi
   // Try to decode as base64
   try {
     return decodeMintAccount(data.account.data, { encoding: 'base64' });
-  } catch (e) {
+  } catch (_e) {
     // fallback: try as hex
     try {
       return decodeMintAccount(data.account.data, { encoding: 'hex' });

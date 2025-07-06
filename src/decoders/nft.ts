@@ -5,7 +5,13 @@ import { getGorbchainConfig } from '../utils/gorbchainConfig.js';
 // Get Metaplex program ID from config
 function getMetaplexProgramId(): string {
   const config = getGorbchainConfig();
-  return config.programIds?.metaplex || 'BvoSmPBF6mBRxBMY9FPguw1zUoUg3xrc5CaWf7y5ACkc';
+  return config.programIds?.metaplex ?? 'BvoSmPBF6mBRxBMY9FPguw1zUoUg3xrc5CaWf7y5ACkc';
+}
+
+interface NFTInstructionData {
+  programId: string;
+  data: Uint8Array;
+  accounts: string[];
 }
 
 // NFT Metadata account structure
@@ -101,7 +107,7 @@ export enum MetaplexInstruction {
 /**
  * Main NFT/Metaplex decoder function
  */
-export function decodeNFTInstruction(instruction: any): DecodedInstruction {
+export function decodeNFTInstruction(instruction: NFTInstructionData): DecodedInstruction {
   const data = instruction.data;
   if (!data || data.length === 0) {
     throw new Error('Invalid NFT instruction: no data');
@@ -159,7 +165,7 @@ export function decodeNFTInstruction(instruction: any): DecodedInstruction {
           instructionType,
           error: `Unknown NFT instruction type: ${instructionType}`
         },
-        accounts: instruction.accounts || [],
+        accounts: instruction.accounts,
         raw: instruction
       };
   }
@@ -301,7 +307,7 @@ export function isNFTToken(tokenInfo: {
   // - 0 decimals
   // - No mint authority (supply is fixed)
   const supply = BigInt(tokenInfo.supply);
-  
+
   return (
     supply === BigInt(1) &&
     tokenInfo.decimals === 0 &&
@@ -318,12 +324,12 @@ export async function fetchNFTMetadata(uri: string): Promise<NFTMetadata | null>
     if (!response.ok) {
       return null;
     }
-    
+
     const metadata = await response.json();
     return {
       name: metadata.name || 'Unknown NFT',
       symbol: metadata.symbol || '',
-      uri: uri,
+      uri,
       sellerFeeBasisPoints: metadata.seller_fee_basis_points || 0,
       creators: metadata.properties?.creators || [],
       collection: metadata.collection || undefined,

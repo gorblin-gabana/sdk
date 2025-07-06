@@ -51,14 +51,14 @@ class ByteReader {
     if (this.offset + 4 > this.data.length) {
       throw new Error(`Cannot read uint32 at offset ${this.offset}, data length: ${this.data.length}`);
     }
-    
+
     const byte0 = this.data[this.offset];
     const byte1 = this.data[this.offset + 1];
     const byte2 = this.data[this.offset + 2];
     const byte3 = this.data[this.offset + 3];
-    
+
     const value = byte0 | (byte1 << 8) | (byte2 << 16) | (byte3 << 24);
-    
+
     this.offset += 4;
     return value >>> 0; // Ensure unsigned
   }
@@ -71,14 +71,14 @@ class ByteReader {
       throw new Error(`Cannot read uint64 at offset ${this.offset}, data length: ${this.data.length}`);
     }
 
-    const low = this.data[this.offset] | 
-                (this.data[this.offset + 1] << 8) | 
-                (this.data[this.offset + 2] << 16) | 
+    const low = this.data[this.offset] |
+                (this.data[this.offset + 1] << 8) |
+                (this.data[this.offset + 2] << 16) |
                 (this.data[this.offset + 3] << 24);
 
-    const high = this.data[this.offset + 4] | 
-                 (this.data[this.offset + 5] << 8) | 
-                 (this.data[this.offset + 6] << 16) | 
+    const high = this.data[this.offset + 4] |
+                 (this.data[this.offset + 5] << 8) |
+                 (this.data[this.offset + 6] << 16) |
                  (this.data[this.offset + 7] << 24);
 
     this.offset += 8;
@@ -126,7 +126,7 @@ export function decodeSystemInstruction(data: Uint8Array): DecodedSystemInstruct
   try {
     const reader = new ByteReader(data);
     const instructionType = reader.readUint32();
-    
+
     switch (instructionType) {
       case SystemInstructionType.Transfer:
         if (reader.canRead(8)) {
@@ -308,4 +308,4 @@ export function formatBytes(bytes: bigint): string {
   if (num < 1024) return `${num} bytes`;
   if (num < 1024 * 1024) return `${(num / 1024).toFixed(1)} KB`;
   return `${(num / (1024 * 1024)).toFixed(1)} MB`;
-} 
+}

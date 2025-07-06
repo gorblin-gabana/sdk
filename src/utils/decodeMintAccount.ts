@@ -51,19 +51,25 @@ export function decodeMintAccount(
     buf = input;
   }
 
-  const mintAuthorityOption = new DataView(buf.buffer, buf.byteOffset, buf.byteLength).getUint32(0, true);
+  const mintAuthorityOption = new DataView(
+    buf.buffer, buf.byteOffset, buf.byteLength
+  ).getUint32(0, true);
   const mintAuthority = buf.slice(4, 36);
-  const supply = BigInt(new DataView(buf.buffer, buf.byteOffset + 36, 8).getBigUint64(0, true)).toString();
+  const supply = BigInt(
+    new DataView(buf.buffer, buf.byteOffset + 36, 8).getBigUint64(0, true)
+  ).toString();
   const decimals = buf[44];
   const isInitialized = buf[45] !== 0;
-  const freezeAuthorityOption = new DataView(buf.buffer, buf.byteOffset + 46, 4).getUint32(0, true);
+  const freezeAuthorityOption = new DataView(
+    buf.buffer, buf.byteOffset + 46, 4
+  ).getUint32(0, true);
   const freezeAuthority = buf.slice(50, 82);
 
   // Parse Metaplex Token Metadata extension if present (Token-2022 TLV extension type 6)
   let metadata: DecodedMintAccount['metadata'] | undefined = undefined;
   if (buf.length > 82 && buf[82] === 6) {
     // TLV extension type 6: Token Metadata
-    const length = buf[83] + (buf[84] << 8); // little-endian u16
+    // const _length = buf[83] + (buf[84] << 8); // little-endian u16
     const metaStart = 86;
     const name = new TextDecoder().decode(buf.slice(metaStart, metaStart + 32)).replace(/\0+$/, '');
     const symbol = new TextDecoder().decode(buf.slice(metaStart + 32, metaStart + 44)).replace(/\0+$/, '');

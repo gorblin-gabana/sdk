@@ -337,4 +337,4 @@ export class InvalidDataFormatError extends SDKError {
       expectedFormat: this.expectedFormat
     };
   }
-} 
+}

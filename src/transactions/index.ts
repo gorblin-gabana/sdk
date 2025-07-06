@@ -12,7 +12,8 @@ import { getLatestBlockhash } from '../rpc/transactions.js';
 import { pipe } from '@solana/functional';
 
 /**
- * Create and sign a transaction from instructions and feePayer. Automatically fetches recentBlockhash and lastValidBlockHeight.
+ * Create and sign a transaction from instructions and feePayer.
+ * Automatically fetches recentBlockhash and lastValidBlockHeight.
  */
 export async function createTransaction({
   connection,
@@ -49,7 +50,7 @@ export async function createTransaction({
 /**
  * Return transaction metadata and raw instructions for UI or API
  */
-export function getTransactionMetadata(tx: Transaction) {
+export function getTransactionMetadata(tx: Transaction): { signatures: any; messageBytes: any } {
   return {
     signatures: tx.signatures,
     messageBytes: tx.messageBytes

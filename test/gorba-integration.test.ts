@@ -90,11 +90,8 @@ describe('GORBA Token Integration Tests', () => {
     it('should handle GORBA mint instruction decoding', () => {
       const mockMintInstruction = {
         programId: gorbaTokenData.mintAddress,
-        data: 'mock_mint_data',
-        accounts: [
-          { pubkey: gorbaTokenData.mintAddress, isSigner: false, isWritable: true },
-          { pubkey: gorbaTokenData.tokenAccount, isSigner: false, isWritable: true }
-        ]
+        data: new Uint8Array([1, 2, 3, 4, 5]),
+        accounts: [gorbaTokenData.mintAddress, gorbaTokenData.tokenAccount]
       };
 
       const gorbaDecoder = (instruction: any) => ({
@@ -129,7 +126,7 @@ describe('GORBA Token Integration Tests', () => {
         request: jest.fn()
       };
 
-      // Replace the RPC client with our mock  
+      // Replace the RPC client with our mock
       (sdk as any).rpc = mockRpcClient;
 
       const health = await sdk.getNetworkHealth();

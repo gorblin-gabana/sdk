@@ -5,7 +5,13 @@ import { getGorbchainConfig } from '../utils/gorbchainConfig.js';
 // Get Token-2022 program ID from config
 function getToken2022ProgramId(): string {
   const config = getGorbchainConfig();
-  return config.programIds?.token2022 || 'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn';
+  return config.programIds?.token2022 ?? 'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn';
+}
+
+interface Token2022InstructionData {
+  programId: string;
+  data: Uint8Array;
+  accounts: string[];
 }
 
 // Token-2022 Instruction Types (discriminators)
@@ -32,7 +38,7 @@ export enum Token2022Instruction {
   InitializeAccount3 = 18,
   InitializeMultisig2 = 19,
   InitializeMint2 = 20,
-  
+
   // Token-2022 specific instructions
   GetAccountDataSize = 21,
   InitializeImmutableOwner = 22,
@@ -53,7 +59,7 @@ export enum Token2022Instruction {
   ConfidentialTransferFeeExtension = 37,
   WithdrawExcessLamports = 38,
   MetadataPointerExtension = 39,
-  
+
   // NFT/Metadata instructions (custom extensions)
   InitializeNFTMetadata = 210,
 }
@@ -78,13 +84,13 @@ export enum AuthorityType {
 /**
  * Main Token-2022 decoder function
  */
-export function decodeToken2022Instruction(instruction: any): DecodedInstruction {
+export function decodeToken2022Instruction(instruction: Token2022InstructionData): DecodedInstruction {
   const data = instruction.data;
   if (!data || data.length === 0) {
     return {
       type: 'token2022-generic',
       programId: getToken2022ProgramId(),
-      accounts: instruction.accounts || [],
+      accounts: instruction.accounts,
       data: {
         type: 'token2022-generic',
         description: 'Token-2022 operation (no instruction data)',
@@ -94,7 +100,7 @@ export function decodeToken2022Instruction(instruction: any): DecodedInstruction
   }
 
   let instructionType: number;
-  
+
   if (data instanceof Uint8Array) {
     instructionType = data[0];
   } else if (typeof data === 'string') {
@@ -146,7 +152,7 @@ export function decodeToken2022Instruction(instruction: any): DecodedInstruction
       return decodeInitializeAccount3(instruction, programId);
     case Token2022Instruction.SyncNative:
       return decodeSyncNative(instruction, programId);
-    
+
     // Token-2022 specific instructions
     case Token2022Instruction.GetAccountDataSize:
       return decodeGetAccountDataSize(instruction, programId);
@@ -168,11 +174,11 @@ export function decodeToken2022Instruction(instruction: any): DecodedInstruction
       return decodeWithdrawExcessLamports(instruction, programId);
     case Token2022Instruction.InitializePermanentDelegate:
       return decodeInitializePermanentDelegate(instruction, programId);
-    
+
     // NFT/Metadata instructions
     case Token2022Instruction.InitializeNFTMetadata:
       return decodeInitializeNFTMetadata(instruction, programId);
-    
+
     // Extended Token-2022 instructions (beyond standard range)
     case 219:
       return {
@@ -184,10 +190,10 @@ export function decodeToken2022Instruction(instruction: any): DecodedInstruction
           description: 'Token-2022 extension operation (type 219)',
           rawData: Array.from(instruction.data || [])
         },
-        accounts: instruction.accounts || [],
+        accounts: instruction.accounts,
         raw: instruction
       };
-    
+
     case 232:
       return {
         type: 'token2022-extension-232',
@@ -196,12 +202,12 @@ export function decodeToken2022Instruction(instruction: any): DecodedInstruction
           instructionType: 232,
           name: 'TokenExtension232',
           description: 'Token-2022 extension operation (type 232)',
-          rawData: Array.from(instruction.data || [])
+          rawData: Array.from(instruction.data)
         },
-        accounts: instruction.accounts || [],
+        accounts: instruction.accounts,
         raw: instruction
       };
-    
+
     default:
       return {
         type: 'token2022-unknown',
@@ -358,7 +364,7 @@ function decodeTransfer(instruction: any, programId: string): DecodedInstruction
   }
 
   const amount = readU64LE(data, 1);
-  
+
   return {
     type: 'token2022-transfer',
     programId,
@@ -379,7 +385,7 @@ function decodeMintTo(instruction: any, programId: string): DecodedInstruction {
   }
 
   const amount = readU64LE(data, 1);
-  
+
   return {
     type: 'token2022-mint-to',
     programId,
@@ -400,7 +406,7 @@ function decodeBurn(instruction: any, programId: string): DecodedInstruction {
   }
 
   const amount = readU64LE(data, 1);
-  
+
   return {
     type: 'token2022-burn',
     programId,
@@ -424,7 +430,7 @@ function decodeInitializeMint(instruction: any, programId: string): DecodedInstr
   const mintAuthority = bufferToBase58(data.slice(2, 34));
   const freezeAuthorityPresent = data[34] === 1;
   const freezeAuthority = freezeAuthorityPresent ? bufferToBase58(data.slice(35, 67)) : null;
-  
+
   return {
     type: 'token2022-initialize-mint',
     programId,
@@ -461,7 +467,7 @@ function decodeSetAuthority(instruction: any, programId: string): DecodedInstruc
   const authorityType = data[1];
   const newAuthorityPresent = data[2] === 1;
   const newAuthority = newAuthorityPresent ? bufferToBase58(data.slice(3, 35)) : null;
-  
+
   return {
     type: 'token2022-set-authority',
     programId,
@@ -481,7 +487,7 @@ function decodeApprove(instruction: any, programId: string): DecodedInstruction 
   }
 
   const amount = readU64LE(data, 1);
-  
+
   return {
     type: 'token2022-approve',
     programId,
@@ -554,7 +560,7 @@ function decodeTransferChecked(instruction: any, programId: string): DecodedInst
 
   const amount = readU64LE(data, 1);
   const decimals = data[9];
-  
+
   return {
     type: 'token2022-transfer-checked',
     programId,
@@ -578,7 +584,7 @@ function decodeApproveChecked(instruction: any, programId: string): DecodedInstr
 
   const amount = readU64LE(data, 1);
   const decimals = data[9];
-  
+
   return {
     type: 'token2022-approve-checked',
     programId,
@@ -602,7 +608,7 @@ function decodeMintToChecked(instruction: any, programId: string): DecodedInstru
 
   const amount = readU64LE(data, 1);
   const decimals = data[9];
-  
+
   return {
     type: 'token2022-mint-to-checked',
     programId,
@@ -625,7 +631,7 @@ function decodeBurnChecked(instruction: any, programId: string): DecodedInstruct
 
   const amount = readU64LE(data, 1);
   const decimals = data[9];
-  
+
   return {
     type: 'token2022-burn-checked',
     programId,
@@ -650,7 +656,7 @@ function decodeInitializeMint2(instruction: any, programId: string): DecodedInst
   const mintAuthority = bufferToBase58(data.slice(2, 34));
   const freezeAuthorityPresent = data[34] === 1;
   const freezeAuthority = freezeAuthorityPresent ? bufferToBase58(data.slice(35, 67)) : null;
-  
+
   return {
     type: 'token2022-initialize-mint2',
     programId,
@@ -671,7 +677,7 @@ function decodeInitializeAccount2(instruction: any, programId: string): DecodedI
   }
 
   const owner = bufferToBase58(data.slice(1, 33));
-  
+
   return {
     type: 'token2022-initialize-account2',
     programId,
@@ -692,7 +698,7 @@ function decodeInitializeAccount3(instruction: any, programId: string): DecodedI
   }
 
   const owner = bufferToBase58(data.slice(1, 33));
-  
+
   return {
     type: 'token2022-initialize-account3',
     programId,
@@ -747,7 +753,7 @@ function decodeAmountToUiAmount(instruction: any, programId: string): DecodedIns
   }
 
   const amount = readU64LE(data, 1);
-  
+
   return {
     type: 'token2022-amount-to-ui-amount',
     programId,
@@ -766,7 +772,7 @@ function decodeUiAmountToAmount(instruction: any, programId: string): DecodedIns
   }
 
   const uiAmount = readU64LE(data, 1);
-  
+
   return {
     type: 'token2022-ui-amount-to-amount',
     programId,
@@ -785,7 +791,7 @@ function decodeInitializeMintCloseAuthority(instruction: any, programId: string)
   }
 
   const closeAuthority = bufferToBase58(data.slice(1, 33));
-  
+
   return {
     type: 'token2022-initialize-mint-close-authority',
     programId,
@@ -808,7 +814,7 @@ function decodeReallocate(instruction: any, programId: string): DecodedInstructi
   for (let i = 1; i < data.length; i += 2) {
     extensionTypes.push(data[i]);
   }
-  
+
   return {
     type: 'token2022-reallocate',
     programId,
@@ -867,7 +873,7 @@ function decodeInitializePermanentDelegate(instruction: any, programId: string):
   }
 
   const delegate = bufferToBase58(data.slice(1, 33));
-  
+
   return {
     type: 'token2022-initialize-permanent-delegate',
     programId,
@@ -882,42 +888,40 @@ function decodeInitializePermanentDelegate(instruction: any, programId: string):
 
 function decodeInitializeNFTMetadata(instruction: any, programId: string): DecodedInstruction {
   const data = instruction.data;
-  
+
   try {
     // Skip instruction type byte (210) and read metadata fields
     let offset = 1;
-    
+
     // Skip some header bytes (appears to be 8 bytes based on the data pattern)
     offset += 8;
-    
+
     // Read name length (4 bytes, little-endian)
     const nameLength = (data[offset] | (data[offset + 1] << 8) | (data[offset + 2] << 16) | (data[offset + 3] << 24));
     offset += 4;
-    
+
     // Read name string
     const nameBytes = data.slice(offset, offset + nameLength);
     const name = String.fromCharCode(...nameBytes);
     offset += nameLength;
-    
+
     // Read symbol length (4 bytes, little-endian)
     const symbolLength = (data[offset] | (data[offset + 1] << 8) | (data[offset + 2] << 16) | (data[offset + 3] << 24));
     offset += 4;
-    
+
     // Read symbol string
     const symbolBytes = data.slice(offset, offset + symbolLength);
     const symbol = String.fromCharCode(...symbolBytes);
     offset += symbolLength;
-    
+
     // Read URI length (4 bytes, little-endian)
     const uriLength = (data[offset] | (data[offset + 1] << 8) | (data[offset + 2] << 16) | (data[offset + 3] << 24));
     offset += 4;
-    
+
     // Read URI string
     const uriBytes = data.slice(offset, offset + uriLength);
     const uri = String.fromCharCode(...uriBytes);
-    
-    
-    
+
     return {
       type: 'token2022-initialize-nft-metadata',
       programId,
@@ -952,11 +956,11 @@ function decodeInitializeNFTMetadata(instruction: any, programId: string): Decod
 function readU64LE(buffer: Uint8Array | number[], offset: number): string {
   const bytes = Array.isArray(buffer) ? buffer : Array.from(buffer);
   let result = BigInt(0);
-  
+
   for (let i = 0; i < 8; i++) {
     result += BigInt(bytes[offset + i]) << BigInt(i * 8);
   }
-  
+
   return result.toString();
 }
 

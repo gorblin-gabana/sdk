@@ -48,11 +48,11 @@ export function decodeWithEncoding(data: string): { bytes: Uint8Array | null, en
   try {
     const bytes = base58ToBytes(data);
     return { bytes, encoding: 'base58' };
-  } catch (e) {
+  } catch (_e) {
     try {
       const bytes = Uint8Array.from(atob(data), c => c.charCodeAt(0));
       return { bytes, encoding: 'base64' };
-    } catch (e2) {
+    } catch (_e2) {
       return { bytes: null, encoding: 'unknown' };
     }
   }

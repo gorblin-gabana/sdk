@@ -3,6 +3,25 @@
 import { PROGRAM_IDS } from '../utils/gorbchainConfig.js';
 import { ensureFallbackDecoders } from '../utils/ensureFallbackDecoders.js';
 import { fetchTransactionBySignature } from '../rpc/fetchTransactionBySignature.js';
+import type { DecoderRegistry, DecodedInstruction } from '../decoders/registry.js';
+
+interface TransactionInstruction {
+  programIdIndex: number;
+  data: Uint8Array;
+  accounts?: number[];
+}
+
+interface TransactionMessage {
+  accountKeys: string[];
+  instructions: TransactionInstruction[];
+}
+
+interface TransactionData {
+  transaction: {
+    message: TransactionMessage;
+  };
+  meta: unknown;
+}
 
 export async function getAndDecodeTransaction({
   signature,
@@ -10,14 +29,14 @@ export async function getAndDecodeTransaction({
   connection
 }: {
   signature: string;
-  registry: any;
-  connection: any;
-}): Promise<{ decoded: any[]; meta: any }> {
-  const tx = await fetchTransactionBySignature(connection, signature);
+  registry: DecoderRegistry;
+  connection: unknown; // Connection type varies by implementation
+}): Promise<{ decoded: DecodedInstruction[]; meta: unknown }> {
+  const tx = await fetchTransactionBySignature(connection, signature) as TransactionData | null;
   if (!tx?.transaction?.message?.instructions) {
     return { decoded: [], meta: null };
   }
-  const mapped = tx.transaction.message.instructions.map((ix: any, i: number) => {
+  const mapped = tx.transaction.message.instructions.map((ix: TransactionInstruction, i: number) => {
     const programId = tx.transaction.message.accountKeys[ix.programIdIndex];
     let type = 'raw';
     if (programId === PROGRAM_IDS.token2022) type = 'token2022';
@@ -27,11 +46,17 @@ export async function getAndDecodeTransaction({
     return { ...ix, type, programId };
   });
   ensureFallbackDecoders(mapped, registry);
-  const decoded = mapped.map((ix: any) => {
+  const decoded = mapped.map((ix: TransactionInstruction & { type: string; programId: string }) => {
     try {
-      return registry.decode(ix.type, ix);
-    } catch (e: any) {
-      return { error: e?.message || String(e), raw: ix };
+      return registry.decode(ix);
+    } catch (e: unknown) {
+      return {
+        type: 'error',
+        programId: ix.programId,
+        data: { error: e instanceof Error ? e.message : String(e) },
+        accounts: ix.accounts || [],
+        raw: ix
+      };
     }
   });
   return { decoded, meta: tx.meta };

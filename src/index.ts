@@ -30,7 +30,7 @@ export {
   calculateMintAccountSize,
   validateTokenParameters,
   validateNFTParameters,
-  sendTransactionWithRetry,
+  sendTransactionWithRetry
 } from './sdk/minting.js';
 
 // Minting types
@@ -39,7 +39,7 @@ export type {
   NFTCreationParams,
   TokenMintResult,
   NFTMintResult,
-  TransactionOptions,
+  TransactionOptions
 } from './sdk/minting.js';
 
 // Utility exports

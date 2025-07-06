@@ -5,7 +5,13 @@ import { getGorbchainConfig } from '../utils/gorbchainConfig.js';
 // Get SPL Token program ID from config
 function getSPLTokenProgramId(): string {
   const config = getGorbchainConfig();
-  return config.programIds?.splToken || 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
+  return config.programIds?.splToken ?? 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
+}
+
+interface SPLTokenInstructionData {
+  programId: string;
+  data: Uint8Array;
+  accounts: string[];
 }
 
 // SPL Token Instruction Types (discriminators)
@@ -44,7 +50,7 @@ export enum AuthorityType {
 /**
  * Main SPL Token decoder function
  */
-export function decodeSPLTokenInstruction(instruction: any): DecodedInstruction {
+export function decodeSPLTokenInstruction(instruction: SPLTokenInstructionData): DecodedInstruction {
   const data = instruction.data;
   if (!data || data.length === 0) {
     throw new Error('Invalid SPL Token instruction: no data');
@@ -94,7 +100,7 @@ export function decodeSPLTokenInstruction(instruction: any): DecodedInstruction 
           instructionType,
           error: `Unknown SPL Token instruction type: ${instructionType}`
         },
-        accounts: instruction.accounts || [],
+        accounts: instruction.accounts,
         raw: instruction
       };
   }
@@ -249,24 +255,24 @@ export function decodeInstructionData(base58Data: string): Uint8Array {
  * Decode Transfer instruction (3)
  * Layout: [u8 instruction, u64 amount]
  */
-function decodeTransfer(instruction: any, programId: string): DecodedInstruction {
+function decodeTransfer(instruction: SPLTokenInstructionData, programId: string): DecodedInstruction {
   const data = instruction.data;
   if (data.length !== 9) {
     throw new Error('Invalid Transfer instruction data length');
   }
 
   const amount = readU64LE(data, 1);
-  const accounts = instruction.accounts || [];
+  const accounts = instruction.accounts;
 
   return {
     type: 'spl-token-transfer',
     programId,
     data: {
       amount: amount.toString(),
-      source: accounts[0]?.address || accounts[0],
-      destination: accounts[1]?.address || accounts[1],
-      authority: accounts[2]?.address || accounts[2],
-      signers: accounts.slice(3).map((acc: any) => acc.address || acc)
+      source: accounts[0] ?? null,
+      destination: accounts[1] ?? null,
+      authority: accounts[2] ?? null,
+      signers: accounts.slice(3)
     },
     accounts,
     raw: instruction
@@ -277,24 +283,24 @@ function decodeTransfer(instruction: any, programId: string): DecodedInstruction
  * Decode MintTo instruction (7)
  * Layout: [u8 instruction, u64 amount]
  */
-function decodeMintTo(instruction: any, programId: string): DecodedInstruction {
+function decodeMintTo(instruction: SPLTokenInstructionData, programId: string): DecodedInstruction {
   const data = instruction.data;
   if (data.length !== 9) {
     throw new Error('Invalid MintTo instruction data length');
   }
 
   const amount = readU64LE(data, 1);
-  const accounts = instruction.accounts || [];
+  const accounts = instruction.accounts;
 
   return {
     type: 'spl-token-mint-to',
     programId,
     data: {
       amount: amount.toString(),
-      mint: accounts[0]?.address || accounts[0],
-      account: accounts[1]?.address || accounts[1],
-      authority: accounts[2]?.address || accounts[2],
-      signers: accounts.slice(3).map((acc: any) => acc.address || acc)
+      mint: accounts[0] ?? null,
+      account: accounts[1] ?? null,
+      authority: accounts[2] ?? null,
+      signers: accounts.slice(3)
     },
     accounts,
     raw: instruction

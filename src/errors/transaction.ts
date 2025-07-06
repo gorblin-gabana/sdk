@@ -295,4 +295,4 @@ export class TransactionTooLargeError extends SDKError {
       maxSize: this.maxSize
     };
   }
-} 
+}

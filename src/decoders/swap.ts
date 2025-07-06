@@ -1,46 +1,58 @@
 // Swap/DEX decoders and builders
 
-type TransactionInstruction = any;
-type PublicKey = any;
+interface TransactionInstruction {
+  programId: string;
+  data: Uint8Array;
+  accounts: string[];
+}
+
+interface PublicKey {
+  toString(): string;
+}
+
+interface SwapResult {
+  type: string;
+  data: Record<string, unknown>;
+}
 
 // --- Decoders ---
-export function decodeSwap(ix: TransactionInstruction, programId?: PublicKey) {
+export function decodeSwap(_ix: TransactionInstruction, _programId?: PublicKey): SwapResult {
   // TODO: Implement swap instruction decoding
   return { type: 'swap', data: {} };
 }
 
-export function decodeAddLiquidity(ix: TransactionInstruction, programId?: PublicKey) {
+export function decodeAddLiquidity(_ix: TransactionInstruction, _programId?: PublicKey): SwapResult {
   // TODO: Implement addLiquidity instruction decoding
   return { type: 'addLiquidity', data: {} };
 }
 
-export function decodeRemoveLiquidity(ix: TransactionInstruction, programId?: PublicKey) {
+export function decodeRemoveLiquidity(_ix: TransactionInstruction, _programId?: PublicKey): SwapResult {
   // TODO: Implement removeLiquidity instruction decoding
   return { type: 'removeLiquidity', data: {} };
 }
 
-export function decodeInitializePool(ix: TransactionInstruction, programId?: PublicKey) {
+export function decodeInitializePool(_ix: TransactionInstruction, _programId?: PublicKey): SwapResult {
   // TODO: Implement initializePool instruction decoding
   return { type: 'initializePool', data: {} };
 }
 
 // --- Builders ---
-export function buildSwap(args: any): TransactionInstruction {
+export function buildSwap(_args: Record<string, unknown>): TransactionInstruction {
   // TODO: Implement swap instruction builder
   return {} as TransactionInstruction;
 }
 
-export function buildAddLiquidity(args: any): TransactionInstruction {
+export function buildAddLiquidity(_args: Record<string, unknown>): TransactionInstruction {
   // TODO: Implement addLiquidity instruction builder
   return {} as TransactionInstruction;
 }
 
-export function buildRemoveLiquidity(args: any): TransactionInstruction {
+export function buildRemoveLiquidity(_args: Record<string, unknown>): TransactionInstruction {
   // TODO: Implement removeLiquidity instruction builder
   return {} as TransactionInstruction;
 }
 
-export function buildInitializePool(args: any): TransactionInstruction {
+export function buildInitializePool(_args: Record<string, unknown>): TransactionInstruction {
   // TODO: Implement initializePool instruction builder
   return {} as TransactionInstruction;
 }

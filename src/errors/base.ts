@@ -116,23 +116,23 @@ export abstract class SDKError extends Error {
    */
   getDetailedMessage(): string {
     let detailed = `${this.message} (Code: ${this.code})`;
-    
+
     if (this.context.rpcEndpoint) {
       detailed += `\nRPC Endpoint: ${this.context.rpcEndpoint}`;
     }
-    
+
     if (this.context.transactionSignature) {
       detailed += `\nTransaction: ${this.context.transactionSignature}`;
     }
-    
+
     if (this.context.programId) {
       detailed += `\nProgram ID: ${this.context.programId}`;
     }
-    
+
     if (this.solution) {
       detailed += `\nSolution: ${this.solution}`;
     }
-    
+
     return detailed;
   }
 
@@ -199,4 +199,4 @@ export class ConfigurationError extends SDKError {
       }
     );
   }
-} 
+}

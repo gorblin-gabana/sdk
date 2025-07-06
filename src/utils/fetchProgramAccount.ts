@@ -2,6 +2,8 @@
 // Usage: await fetchProgramAccount(address)
 
 import { getGorbchainConfig } from './gorbchainConfig.js';
+import type { DecodedMintAccount } from './decodeMintAccount.js';
+import { decodeMintAccount } from './decodeMintAccount.js';
 
 export interface ProgramAccountInfo {
   pubkey: string;
@@ -39,7 +41,7 @@ export async function fetchProgramAccount(address: string): Promise<ProgramAccou
   };
 }
 
-export async function fetchMintAccountFromRpc(mint: string): Promise<import('./decodeMintAccount.js').DecodedMintAccount | null> {
+export async function fetchMintAccountFromRpc(mint: string): Promise<DecodedMintAccount | null> {
   const acct = await fetchProgramAccount(mint);
   if (!acct?.data) return null;
   // Use all known token program IDs from config
@@ -55,12 +57,12 @@ export async function fetchMintAccountFromRpc(mint: string): Promise<import('./d
   if (!TOKEN_PROGRAMS.includes(acct.owner)) return null;
   try {
     // Try to decode as base64
-    return (await import('./decodeMintAccount.js')).decodeMintAccount(acct.data, { encoding: 'base64' });
-  } catch (e) {
+    return decodeMintAccount(acct.data, { encoding: 'base64' });
+  } catch (_e) {
     // fallback: try as hex
     try {
-      return (await import('./decodeMintAccount.js')).decodeMintAccount(acct.data, { encoding: 'hex' });
-    } catch {
+      return decodeMintAccount(acct.data, { encoding: 'hex' });
+    } catch (_e2) {
       return null;
     }
   }

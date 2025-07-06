@@ -1,10 +1,8 @@
 import {
-  SDKError,
   ErrorSeverity,
   ErrorCategory,
   GorbchainSDKError,
-  ConfigurationError,
-  type ErrorContext
+  ConfigurationError
 } from '../src/errors/base.js';
 import {
   RpcNetworkError,
@@ -12,7 +10,6 @@ import {
   RpcServerError
 } from '../src/errors/rpc.js';
 import {
-  DecoderError,
   DecoderNotFoundError
 } from '../src/errors/decoder.js';
 import {
@@ -50,7 +47,7 @@ describe('Error Handling System', () => {
 
     it('should check error properties correctly', () => {
       const error = new ConfigurationError('Config error');
-      
+
       expect(error.isRetryable()).toBe(false);
       expect(error.isCritical()).toBe(false);
       expect(error.severity).toBe(ErrorSeverity.HIGH);
@@ -61,9 +58,9 @@ describe('Error Handling System', () => {
         'Network error',
         { rpcEndpoint: 'https://rpc.gorbchain.xyz' }
       );
-      
+
       const json = error.toJSON();
-      
+
       expect(json.name).toBe('RpcNetworkError');
       expect(json.message).toBe('Network error');
       expect(json.code).toBe('RPC_NETWORK_ERROR');
@@ -80,14 +77,14 @@ describe('Error Handling System', () => {
     it('should get detailed error message', () => {
       const error = new RpcTimeoutError(
         30000,
-        { 
+        {
           rpcEndpoint: 'https://rpc.gorbchain.xyz',
           transactionSignature: 'test-tx'
         }
       );
-      
+
       const detailed = error.getDetailedMessage();
-      
+
       expect(detailed).toContain('RPC request timed out after 30000ms');
       expect(detailed).toContain('RPC Endpoint: https://rpc.gorbchain.xyz');
       expect(detailed).toContain('Transaction: test-tx');
@@ -230,23 +227,23 @@ describe('Error Handling System', () => {
   describe('RetryManager', () => {
     it('should manage multiple circuit breakers', () => {
       const retryManager = new RetryManager();
-      
+
       const cb1 = retryManager.getCircuitBreaker('key1');
       const cb2 = retryManager.getCircuitBreaker('key2');
       const cb1Again = retryManager.getCircuitBreaker('key1');
-      
+
       expect(cb1).toBe(cb1Again);
       expect(cb1).not.toBe(cb2);
     });
 
     it('should get status of all circuit breakers', () => {
       const retryManager = new RetryManager();
-      
+
       retryManager.getCircuitBreaker('key1');
       retryManager.getCircuitBreaker('key2');
-      
+
       const status = retryManager.getStatus();
-      
+
       expect(status).toEqual({
         key1: CircuitBreakerState.CLOSED,
         key2: CircuitBreakerState.CLOSED
@@ -255,13 +252,13 @@ describe('Error Handling System', () => {
 
     it('should execute operations with retry and circuit breaker', async () => {
       const retryManager = new RetryManager();
-      
+
       const mockFn = jest.fn().mockResolvedValue('success');
-      
+
       const result = await retryManager.execute('test-key', mockFn);
-      
+
       expect(result).toBe('success');
       expect(mockFn).toHaveBeenCalledTimes(1);
     });
   });
-}); 
+});

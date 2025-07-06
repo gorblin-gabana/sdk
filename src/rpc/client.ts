@@ -33,7 +33,7 @@ export class RpcClient {
     this.rpcUrl = options.rpcUrl || config.rpcUrl || 'https://rpc.gorbchain.xyz';
     this.timeout = options.timeout || 30000; // 30 seconds
     this.retries = options.retries || 3;
-    
+
     // Initialize retry manager with custom options
     this.retryManager = new RetryManager(
       options.retryOptions || {
@@ -114,21 +114,21 @@ export class RpcClient {
       const retryAfter = this.extractRetryAfter(responseText);
       throw new RpcRateLimitError(retryAfter, context);
     }
-    
+
     if (status === 404) {
       throw new RpcConnectionError(this.rpcUrl, context, {
         cause: new Error(`HTTP ${status}: ${responseText}`)
       });
     }
-    
+
     if (status >= 500) {
       throw new RpcServerError(responseText, status, undefined, context);
     }
-    
+
     if (status >= 400) {
       throw new RpcServerError(responseText, status, undefined, context);
     }
-    
+
     throw new RpcNetworkError(`HTTP ${status}: ${responseText}`, context);
   }
 
@@ -137,15 +137,15 @@ export class RpcClient {
    */
   private handleRpcError(error: { code: number; message: string }, method: string, context: ErrorContext): never {
     const { code, message } = error;
-    
+
     if (code === -32601) {
       throw new RpcMethodNotSupportedError(method, context);
     }
-    
+
     if (code === -32603) {
       throw new RpcServerError(message, undefined, code, context);
     }
-    
+
     throw new RpcServerError(message, undefined, code, context);
   }
 
@@ -157,13 +157,13 @@ export class RpcClient {
       if (error.name === 'AbortError') {
         throw new RpcTimeoutError(this.timeout, context);
       }
-      
+
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
         throw new RpcConnectionError(this.rpcUrl, context, { cause: error });
       }
     }
-    
-    throw new RpcNetworkError(`Request failed: ${error}`, context, { 
+
+    throw new RpcNetworkError(`Request failed: ${error}`, context, {
       cause: error instanceof Error ? error : new Error(String(error))
     });
   }
@@ -238,7 +238,7 @@ export class RpcClient {
         lastValidBlockHeight: number;
       };
     }>('getLatestBlockhash', params);
-    
+
     // Handle both direct response and wrapped response
     return result.value || result;
   }
@@ -257,9 +257,9 @@ export class RpcClient {
     if (commitment) {
       config.commitment = commitment;
     }
-    
+
     const params = [address, config];
-    
+
     const result = await this.request<{
       value: {
         lamports: number;
@@ -269,7 +269,7 @@ export class RpcClient {
         data: [string, string];
       } | null;
     }>('getAccountInfo', params);
-    
+
     return result.value;
   }
 
@@ -290,9 +290,9 @@ export class RpcClient {
     if (commitment) {
       config.commitment = commitment;
     }
-    
+
     const params = [address, config];
-    
+
     const result = await this.request<{
       value: {
         mint: string;
@@ -305,7 +305,7 @@ export class RpcClient {
         };
       } | null;
     }>('getTokenAccountInfo', params);
-    
+
     return result.value;
   }
 
@@ -320,11 +320,11 @@ export class RpcClient {
     freezeAuthority: string | null;
   } | null> {
     const accountInfo = await this.getAccountInfo(mintAddress, commitment);
-    
-    if (!accountInfo || !accountInfo.data) {
+
+    if (!accountInfo?.data) {
       return null;
     }
-    
+
     // Decode mint account data
     // Browser-compatible base64 decoding
     const binaryString = atob(accountInfo.data[0]);
@@ -332,28 +332,28 @@ export class RpcClient {
     for (let i = 0; i < binaryString.length; i++) {
       data[i] = binaryString.charCodeAt(i);
     }
-    
+
     // Mint account layout (simplified)
     if (data.length < 82) {
       return null;
     }
-    
+
     const view = new DataView(data.buffer, data.byteOffset);
-    
+
     const supply = view.getBigUint64(36, true).toString(); // true = little endian
     const decimals = view.getUint8(44);
     const isInitialized = view.getUint8(45) === 1;
-    
+
     // Read mint authority (32 bytes at offset 4)
     const mintAuthorityFlag = view.getUint8(4);
-    const mintAuthority = mintAuthorityFlag === 1 ? 
+    const mintAuthority = mintAuthorityFlag === 1 ?
       Array.from(data.subarray(5, 37)).map(b => b.toString(16).padStart(2, '0')).join('') : null;
-    
+
     // Read freeze authority (32 bytes at offset 46)
     const freezeAuthorityFlag = view.getUint8(46);
-    const freezeAuthority = freezeAuthorityFlag === 1 ? 
+    const freezeAuthority = freezeAuthorityFlag === 1 ?
       Array.from(data.subarray(47, 79)).map(b => b.toString(16).padStart(2, '0')).join('') : null;
-    
+
     return {
       supply,
       decimals,
@@ -383,17 +383,17 @@ export class RpcClient {
   } | null> {
     // Calculate metadata PDA address
     const metadataAddress = await this.findMetadataAddress(mintAddress);
-    
+
     if (!metadataAddress) {
       return null;
     }
-    
+
     const accountInfo = await this.getAccountInfo(metadataAddress, commitment);
-    
-    if (!accountInfo || !accountInfo.data) {
+
+    if (!accountInfo?.data) {
       return null;
     }
-    
+
     // Decode metadata account (simplified)
     // Browser-compatible base64 decoding
     const binaryString = atob(accountInfo.data[0]);
@@ -401,53 +401,53 @@ export class RpcClient {
     for (let i = 0; i < binaryString.length; i++) {
       data[i] = binaryString.charCodeAt(i);
     }
-    
+
     // This is a simplified metadata decoder
     // In production, you'd want to use the official Metaplex JS SDK
     try {
       const view = new DataView(data.buffer, data.byteOffset);
-      
+
       // Skip the first byte (discriminator) and decode the rest
       let offset = 1;
-      
+
       // Read update authority (32 bytes)
       offset += 32;
-      
+
       // Read mint (32 bytes)
       offset += 32;
-      
+
       // Read name (first 4 bytes are length, then string)
       const nameLength = view.getUint32(offset, true); // true = little endian
       offset += 4;
       const nameBytes = data.subarray(offset, offset + nameLength);
       const name = new TextDecoder().decode(nameBytes).replace(/\0/g, '');
       offset += nameLength;
-      
+
       // Read symbol (first 4 bytes are length, then string)
       const symbolLength = view.getUint32(offset, true);
       offset += 4;
       const symbolBytes = data.subarray(offset, offset + symbolLength);
       const symbol = new TextDecoder().decode(symbolBytes).replace(/\0/g, '');
       offset += symbolLength;
-      
+
       // Read URI (first 4 bytes are length, then string)
       const uriLength = view.getUint32(offset, true);
       offset += 4;
       const uriBytes = data.subarray(offset, offset + uriLength);
       const uri = new TextDecoder().decode(uriBytes).replace(/\0/g, '');
       offset += uriLength;
-      
+
       // Read seller fee basis points (2 bytes)
       const sellerFeeBasisPoints = view.getUint16(offset, true);
       offset += 2;
-      
+
       // Read creators (this is simplified - full implementation would parse the full structure)
       const creators: Array<{
         address: string;
         verified: boolean;
         share: number;
       }> = [];
-      
+
       return {
         name,
         symbol,
@@ -473,7 +473,7 @@ export class RpcClient {
       metaplexProgramId,
       mintAddress
     ];
-    
+
     // In a real implementation, you'd use the proper PDA calculation
     // For now, return null as we can't calculate PDAs without proper crypto libraries
     return null;
@@ -493,9 +493,9 @@ export class RpcClient {
     if (commitment) {
       config.commitment = commitment;
     }
-    
+
     const params = [addresses, config];
-    
+
     const result = await this.request<{
       value: Array<{
         lamports: number;
@@ -505,7 +505,7 @@ export class RpcClient {
         data: [string, string];
       } | null>;
     }>('getMultipleAccounts', params);
-    
+
     return result.value;
   }
 
@@ -531,9 +531,9 @@ export class RpcClient {
     if (commitment) {
       config.commitment = commitment;
     }
-    
+
     const params = [ownerAddress, filterParam, config];
-    
+
     const result = await this.request<{
       value: Array<{
         pubkey: string;
@@ -546,7 +546,7 @@ export class RpcClient {
         };
       }>;
     }>('getTokenAccountsByOwner', params);
-    
+
     return result.value;
   }
 
@@ -555,11 +555,11 @@ export class RpcClient {
    */
   async isNFT(mintAddress: string, commitment?: string): Promise<boolean> {
     const mintInfo = await this.getMintInfo(mintAddress, commitment);
-    
+
     if (!mintInfo) {
       return false;
     }
-    
+
     // NFT characteristics: supply of 1, 0 decimals, no mint authority
     return (
       mintInfo.supply === '1' &&
@@ -578,15 +578,15 @@ export class RpcClient {
   } | null {
     try {
       const textDecoder = new TextDecoder();
-      
+
       // Since we know NNFT symbol extraction works, find that first and work backwards
       const dataStr = textDecoder.decode(data);
       const nnftIndex = dataStr.indexOf('NNFT');
-      
+
       if (nnftIndex !== -1) {
         // Found NNFT, now work backwards to find the name
         const view = new DataView(data.buffer, data.byteOffset);
-        
+
         // NNFT should be preceded by a 4-byte length (4) and before that the name
         const nnftLengthOffset = nnftIndex - 4;
         if (nnftLengthOffset >= 4) {
@@ -594,19 +594,19 @@ export class RpcClient {
           if (symbolLength === 4) { // Confirms this is the length for "NNFT"
             // Now work backwards to find the name
             // Format: [name_length][name][symbol_length][symbol][uri_length][uri]
-            let nameEndOffset = nnftLengthOffset;
-            
+            const nameEndOffset = nnftLengthOffset;
+
             // Look backwards for the name - try different possible name lengths
             for (let possibleNameLength = 7; possibleNameLength <= 20; possibleNameLength++) {
               const nameStartOffset = nameEndOffset - 4 - possibleNameLength;
               if (nameStartOffset >= 0) {
                 const nameLengthOffset = nameStartOffset;
                 const nameLength = view.getUint32(nameLengthOffset, true);
-                
+
                 if (nameLength === possibleNameLength) {
                   const nameBytes = data.subarray(nameLengthOffset + 4, nameLengthOffset + 4 + nameLength);
                   const name = textDecoder.decode(nameBytes).trim();
-                  
+
                   // Check if this looks like a reasonable name
                   if (name.length > 0 && /^[a-zA-Z0-9\s\-_]+$/.test(name)) {
                     // Extract URI
@@ -616,7 +616,7 @@ export class RpcClient {
                       if (uriLength > 0 && uriLength < 201 && uriLengthOffset + 4 + uriLength <= data.length) {
                         const uriBytes = data.subarray(uriLengthOffset + 4, uriLengthOffset + 4 + uriLength);
                         const uri = textDecoder.decode(uriBytes).trim();
-                        
+
                         return { name, symbol: 'NNFT', uri };
                       }
                     }
@@ -627,16 +627,16 @@ export class RpcClient {
           }
         }
       }
-      
+
              // Generic fallback: extract any readable strings if the structured parsing failed
        // Look for common metadata patterns in the decoded string
        const potentialStrings = [];
        let currentString = '';
-       
+
        for (let i = 0; i < dataStr.length; i++) {
          const char = dataStr[i];
          const code = char.charCodeAt(0);
-         
+
          // Collect printable ASCII characters (letters, numbers, spaces, common symbols)
          if ((code >= 32 && code <= 126) && char !== '\x00') {
            currentString += char;
@@ -647,40 +647,40 @@ export class RpcClient {
            currentString = '';
          }
        }
-       
+
        // Add final string if exists
        if (currentString.length >= 2) {
          potentialStrings.push(currentString.trim());
        }
-       
+
        // Filter to reasonable metadata strings (not too long, not too short)
-       const validStrings = potentialStrings.filter(str => 
-         str.length >= 2 && str.length <= 64 && 
+       const validStrings = potentialStrings.filter(str =>
+         str.length >= 2 && str.length <= 64 &&
          /^[a-zA-Z0-9\s\-_\.\/\:]+$/.test(str)
        );
-       
+
        if (validStrings.length >= 2) {
          // Try to identify name, symbol, and URI from the valid strings
-         let name = validStrings[0];
+         const name = validStrings[0];
          let symbol = validStrings[1];
          let uri = validStrings.find(str => str.includes('http')) || '';
-         
+
          // If symbol looks too long, it might be the URI
          if (symbol.length > 10 && symbol.includes('http')) {
            uri = symbol;
            symbol = validStrings[2] || '';
          }
-         
+
          // Validate symbol format (should be short and uppercase-ish)
          if (symbol.length > 10 || !/^[A-Z0-9]+$/i.test(symbol)) {
            symbol = '';
          }
-         
+
          if (name && (symbol || uri)) {
            return { name, symbol, uri };
          }
        }
-      
+
       return null;
     } catch (error) {
       return null;
@@ -711,16 +711,16 @@ export class RpcClient {
     };
   } | null> {
     const mintInfo = await this.getMintInfo(mintAddress, commitment);
-    
+
     if (!mintInfo) {
       return null;
     }
-    
+
     const isNFT = (
       mintInfo.supply === '1' &&
       mintInfo.decimals === 0
     );
-    
+
     let metadata;
     if (isNFT) {
       // First try Token-2022 metadata extraction
@@ -731,11 +731,11 @@ export class RpcClient {
         for (let i = 0; i < binaryString.length; i++) {
           data[i] = binaryString.charCodeAt(i);
         }
-        
+
         const token2022Metadata = this.extractToken2022Metadata(data);
         if (token2022Metadata) {
           let finalName = token2022Metadata.name;
-          
+
           // If we have a URI, try to fetch the external metadata for the name
           if (token2022Metadata.uri && token2022Metadata.uri.startsWith('http')) {
             try {
@@ -750,7 +750,7 @@ export class RpcClient {
               // Fallback to extracted name if external fetch fails
             }
           }
-          
+
           metadata = {
             name: finalName,
             symbol: token2022Metadata.symbol,
@@ -760,13 +760,13 @@ export class RpcClient {
           };
         }
       }
-      
+
       // Fallback to Metaplex metadata if Token-2022 extraction failed
       if (!metadata) {
         metadata = await this.getTokenMetadata(mintAddress, commitment);
       }
     }
-    
+
     return {
       mint: mintAddress,
       ...mintInfo,

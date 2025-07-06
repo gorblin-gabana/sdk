@@ -4,16 +4,16 @@
 export interface GorbchainSDKConfig {
   /** RPC endpoint URL for blockchain communication */
   rpcEndpoint: string;
-  
+
   /** Network type identifier */
   network: 'mainnet' | 'testnet' | 'devnet' | 'custom';
-  
+
   /** Optional timeout for RPC requests in milliseconds */
   timeout?: number;
-  
+
   /** Number of retry attempts for failed requests */
   retries?: number;
-  
+
   /** Program IDs for different blockchain programs */
   programIds?: {
     /** SPL Token program ID */
@@ -27,7 +27,7 @@ export interface GorbchainSDKConfig {
     /** Custom program IDs */
     [key: string]: string | undefined;
   };
-  
+
   /** Rich decoding options for enhanced transaction processing */
   richDecoding?: {
     /** Enable rich instruction decoding (requires additional processing) */
@@ -53,7 +53,7 @@ export interface RichTransaction {
   blockTime: number;
   fee: number;
   status: 'success' | 'failed';
-  
+
   // Transaction summary
   summary: {
     type: string; // e.g., "Create NFT", "Transfer Tokens", "Transfer SOL"
@@ -62,17 +62,17 @@ export interface RichTransaction {
     instructionCount: number;
     computeUnits: number;
   };
-  
+
   // Token information (when applicable)
   tokens?: {
     created?: TokenMetadata[];
     transferred?: TokenTransferInfo[];
     operations: TokenOperationInfo[];
   };
-  
+
   // Simplified instruction list
   instructions: SimpleInstruction[];
-  
+
   // Account changes
   accountChanges?: {
     solTransfers?: SolTransfer[];
@@ -80,7 +80,7 @@ export interface RichTransaction {
     accountsCreated?: string[];
     accountsClosed?: string[];
   };
-  
+
   // Raw data (only when requested)
   raw?: {
     meta: any;

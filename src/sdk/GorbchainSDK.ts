@@ -27,6 +27,43 @@ import { RpcClient } from '../rpc/client.js';
 import { DecoderRegistry } from '../decoders/registry.js';
 import { getDefaultConfig, validateConfig } from './config.js';
 import type { GorbchainSDKConfig, RichTransaction, TransactionDecodingOptions } from './types.js';
+import type { Keypair, PublicKey } from '@solana/web3.js';
+import type { TokenCreationParams, TransactionOptions, TokenMintResult, NFTCreationParams, NFTMintResult } from './minting.js';
+import type { DecodedInstruction } from '../decoders/registry.js';
+
+// Common instruction interface
+interface InstructionData {
+  programId: string;
+  data: Uint8Array;
+  accounts: string[];
+}
+
+// Raw transaction interfaces for RPC responses
+interface RawInstruction {
+  programId: string;
+  data: string;
+  accounts: number[];
+  parsed?: unknown;
+  program?: string;
+}
+
+interface RawTransactionMessage {
+  accountKeys: Array<string | { pubkey: string }>;
+  instructions: RawInstruction[];
+}
+
+interface RawTransaction {
+  transaction: {
+    message: RawTransactionMessage;
+  };
+  meta?: {
+    fee?: number;
+    err?: unknown;
+    computeUnitsConsumed?: number;
+  };
+  slot?: number;
+  blockTime?: number;
+}
 
 // Import all decoders at the top to avoid browser require() issues
 import { decodeSystemInstruction } from '../decoders/system.js';
@@ -67,15 +104,15 @@ export class GorbchainSDK {
     const merged = { ...getDefaultConfig(), ...config };
     validateConfig(merged);
     this.config = merged;
-    
+
     // Initialize decoder registry with SDK's program IDs
     this.decoders = this.createDecoderRegistry();
-    
+
     // Initialize RPC client
     this.rpc = new RpcClient({
       rpcUrl: this.config.rpcEndpoint
     });
-    
+
     // TODO: Initialize transaction utilities
     this.transactions = {};
   }
@@ -88,7 +125,7 @@ export class GorbchainSDK {
 
     // Register System Program decoder
     const systemProgramId = '11111111111111111111111111111111';
-    registry.register('system', systemProgramId, (instruction: any) => {
+    registry.register('system', systemProgramId, (instruction: InstructionData): DecodedInstruction => {
       const decoded = decodeSystemInstruction(instruction.data);
       return {
         type: decoded.type,
@@ -106,7 +143,7 @@ export class GorbchainSDK {
 
     // Register SPL Token decoder
     const splTokenProgramId = this.config.programIds?.splToken || 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
-    registry.register('spl-token', splTokenProgramId, (instruction: any) => {
+    registry.register('spl-token', splTokenProgramId, (instruction: InstructionData): DecodedInstruction => {
       const decoded = decodeSPLTokenInstruction(instruction);
       return {
         type: decoded.type,
@@ -119,7 +156,7 @@ export class GorbchainSDK {
 
     // Register Token-2022 decoder
     const token2022ProgramId = this.config.programIds?.token2022 || 'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn';
-    registry.register('token-2022', token2022ProgramId, (instruction: any) => {
+    registry.register('token-2022', token2022ProgramId, (instruction: InstructionData): DecodedInstruction => {
       const decoded = decodeToken2022Instruction(instruction);
       return {
         type: decoded.type,
@@ -132,7 +169,7 @@ export class GorbchainSDK {
 
     // Register ATA decoder
     const ataProgramId = this.config.programIds?.ata || '4YpYoLVTQ8bxcne9GneN85RUXeN7pqGTwgPcY71ZL5gX';
-    registry.register('ata', ataProgramId, (instruction: any) => {
+    registry.register('ata', ataProgramId, (instruction: InstructionData): DecodedInstruction => {
       const decoded = decodeATAInstruction(instruction);
       return {
         type: decoded.type,
@@ -145,7 +182,7 @@ export class GorbchainSDK {
 
     // Register NFT/Metaplex decoder
     const metaplexProgramId = this.config.programIds?.metaplex || 'BvoSmPBF6mBRxBMY9FPguw1zUoUg3xrc5CaWf7y5ACkc';
-    registry.register('nft', metaplexProgramId, (instruction: any) => {
+    registry.register('nft', metaplexProgramId, (instruction: InstructionData): DecodedInstruction => {
       const decoded = decodeNFTInstruction(instruction);
       return {
         type: decoded.type,
@@ -155,8 +192,6 @@ export class GorbchainSDK {
         raw: instruction
       };
     });
-
-
 
     return registry;
   }
@@ -177,7 +212,7 @@ export class GorbchainSDK {
    * console.log(decoded.type); // e.g., 'spl-token-transfer'
    * ```
    */
-  decodeInstruction(instruction: any) {
+  decodeInstruction(instruction: InstructionData): DecodedInstruction {
     return this.decoders.decode(instruction);
   }
 
@@ -195,7 +230,7 @@ export class GorbchainSDK {
    * });
    * ```
    */
-  decodeInstructions(instructions: any[]) {
+  decodeInstructions(instructions: InstructionData[]): DecodedInstruction[] {
     return instructions.map(instruction => this.decoders.decode(instruction));
   }
 
@@ -204,33 +239,33 @@ export class GorbchainSDK {
    * This method makes additional RPC calls to fetch token info, metadata, and account details
    */
   async getAndDecodeTransaction(
-    signature: string, 
+    signature: string,
     options: TransactionDecodingOptions = {}
   ): Promise<RichTransaction> {
     // Merge options with SDK defaults
     const useRichDecoding = options.richDecoding ?? this.config.richDecoding?.enabled ?? true;
     const includeTokenMetadata = options.includeTokenMetadata ?? this.config.richDecoding?.includeTokenMetadata ?? true;
-    
+
     try {
       // Step 1: Fetch raw transaction
       const rawTransaction = await this.rpc.request('getTransaction', [
         signature,
-        { 
+        {
           maxSupportedTransactionVersion: 0,
           encoding: 'jsonParsed',
           commitment: 'confirmed'
         }
-      ]) as any;
+      ]) as RawTransaction;
 
-      if (!rawTransaction || !rawTransaction.transaction) {
+      if (!rawTransaction?.transaction) {
         throw new Error(`Transaction not found: ${signature}`);
       }
 
       // Extract account keys
-      let accountKeys: string[] = [];
+              let _accountKeys: string[] = [];
       if (rawTransaction.transaction.message?.accountKeys && Array.isArray(rawTransaction.transaction.message.accountKeys)) {
-        accountKeys = rawTransaction.transaction.message.accountKeys.map((key: any) => {
-          return typeof key === 'string' ? key : (key.pubkey || key);
+                  _accountKeys = rawTransaction.transaction.message.accountKeys.map((key) => {
+          return typeof key === 'string' ? key : (typeof key === 'object' && key && 'pubkey' in key ? String(key.pubkey) : String(key));
         });
       }
 
@@ -240,22 +275,22 @@ export class GorbchainSDK {
       const programs = new Set<string>();
       const involvedMints = new Set<string>();
       const involvedTokenAccounts = new Set<string>();
-      
+
       // First pass: decode instructions and identify tokens
       for (let i = 0; i < instructions.length; i++) {
         const instruction = instructions[i];
         const programId = instruction.programId;
-        
+
         let decodedInstruction: any;
-        
+
         // Handle different instruction formats
         if (instruction.parsed) {
           // For parsed instructions (like system), use parsed data directly
-          decodedInstruction = this.decodeParsedInstruction(instruction.parsed, instruction.program);
+          decodedInstruction = this.decodeParsedInstruction(instruction.parsed, instruction.program ?? 'unknown');
         } else {
           // For unparsed instructions, convert base64 data to Uint8Array and decode
           let instructionData: Uint8Array;
-          
+
           if (instruction.data && typeof instruction.data === 'string') {
             // Convert base64 string to Uint8Array
             try {
@@ -283,7 +318,7 @@ export class GorbchainSDK {
           } else {
             instructionData = new Uint8Array(0);
           }
-          
+
           // Decode using the decoder registry
           try {
             decodedInstruction = this.decoders.decode({
@@ -302,50 +337,50 @@ export class GorbchainSDK {
             };
           }
         }
-        
+
         // Identify involved tokens and accounts for rich data fetching
         if (instruction.accounts) {
           for (const accountItem of instruction.accounts) {
             let accountAddress: string;
-            
+
             // Handle both cases: account indices and direct account addresses
             if (typeof accountItem === 'number') {
               // Account item is an index, map it to account address
-              accountAddress = accountKeys[accountItem];
+              accountAddress = _accountKeys[accountItem];
             } else if (typeof accountItem === 'string') {
               // Account item is already an address
               accountAddress = accountItem;
             } else {
               continue; // Skip invalid entries
             }
-            
+
             if (accountAddress) {
               // For token programs, collect potential mints and token accounts
-              if (programId === this.config.programIds?.token2022 || 
+              if (programId === this.config.programIds?.token2022 ||
                   programId === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA') {
                 involvedTokenAccounts.add(accountAddress);
               }
             }
           }
         }
-        
+
         const programName = this.getProgramName(programId);
         programs.add(programName);
-        
+
         enrichedInstructions.push({
           instruction: i + 1,
           program: programName,
           programId,
           decoded: decodedInstruction,
-          accounts: instruction.accounts?.map((idx: number) => accountKeys[idx]) || [],
+          accounts: instruction.accounts?.map((idx: number) => _accountKeys[idx]) || [],
           rawInstruction: instruction
         });
       }
-      
+
       // Step 2.5: Make RPC calls to get RICH token information
       const tokenInfoMap = new Map<string, any>();
       const accountInfoMap = new Map<string, any>();
-      
+
       if (useRichDecoding && includeTokenMetadata) {
         // Fetch account info for all involved accounts
         const accountInfoPromises = Array.from(involvedTokenAccounts).map(async (address) => {
@@ -353,9 +388,9 @@ export class GorbchainSDK {
             const accountInfo = await this.rpc.getAccountInfo(address);
             if (accountInfo) {
               accountInfoMap.set(address, accountInfo);
-              
+
               // If this is a token account, get its mint
-              if (accountInfo.owner === this.config.programIds?.token2022 || 
+              if (accountInfo.owner === this.config.programIds?.token2022 ||
                   accountInfo.owner === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA') {
                 try {
                   const tokenAccountInfo = await this.rpc.getTokenAccountInfo(address);
@@ -368,13 +403,13 @@ export class GorbchainSDK {
                 }
               }
             }
-          } catch (error) {
-            console.warn(`Failed to fetch account info for ${address}:`, error);
-          }
+                  } catch (_error) {
+          // console.warn(`Failed to fetch account info for ${address}:`, _error);
+        }
         });
-        
+
         await Promise.all(accountInfoPromises);
-        
+
         // Fetch token info for all identified mints
         const tokenInfoPromises = Array.from(involvedMints).map(async (mintAddress) => {
           try {
@@ -382,39 +417,39 @@ export class GorbchainSDK {
             if (tokenInfo) {
               tokenInfoMap.set(mintAddress, tokenInfo);
             }
-          } catch (error) {
-            console.warn(`Failed to fetch token info for ${mintAddress}:`, error);
-          }
+                  } catch (_error) {
+          // console.warn(`Failed to fetch token info for ${mintAddress}:`, _error);
+        }
         });
-        
+
         await Promise.all(tokenInfoPromises);
       }
-      
+
       // Step 3: Create rich simplified instructions with actual token data
       const simpleInstructions: any[] = [];
-      
+
       for (const enriched of enrichedInstructions) {
         const { decoded, program, accounts } = enriched;
-        
+
         let action = 'Unknown';
         let description = 'Unknown operation';
         let instructionData: any = {};
-        
+
         // Map instruction types to human-readable actions with RICH data
         switch (decoded.type) {
           case 'system-transfer':
             action = 'Transfer SOL';
-            const lamports = decoded.data?.lamports || decoded.info?.lamports || 0;
+            const lamports = decoded.data?.lamports ?? decoded.info?.lamports ?? 0;
             const sol = Number(lamports) / 1e9;
             description = `Transfer ${sol} SOL`;
             instructionData = {
               amount: `${sol} SOL`,
               lamports,
-              from: decoded.data?.source || decoded.info?.source,
-              to: decoded.data?.destination || decoded.info?.destination
+              from: decoded.data?.source ?? decoded.info?.source,
+              to: decoded.data?.destination ?? decoded.info?.destination
             };
             break;
-            
+
           case 'token2022-initialize-nft-metadata':
             action = 'Create NFT';
             const nftName = decoded.data?.metadata?.name || 'Unknown NFT';
@@ -426,20 +461,20 @@ export class GorbchainSDK {
               mint: decoded.data?.mint
             };
             break;
-            
+
           case 'token2022-mint-to':
             action = 'Mint Tokens';
             // Try to get rich token info for proper formatting
-            let mintAddress = accounts[0]; // Usually first account is mint
-            let tokenInfo = tokenInfoMap.get(mintAddress);
+            const mintAddress = accounts[0]; // Usually first account is mint
+            const tokenInfo = tokenInfoMap.get(mintAddress);
             let formattedAmount = decoded.data?.amount || '0';
-            
+
             if (tokenInfo && decoded.data?.amount) {
               const rawAmount = BigInt(decoded.data.amount);
               const uiAmount = Number(rawAmount) / (10 ** tokenInfo.decimals);
               formattedAmount = `${uiAmount} ${tokenInfo.metadata?.symbol || 'tokens'}`;
             }
-            
+
             description = `Mint ${formattedAmount}`;
             instructionData = {
               amount: formattedAmount,
@@ -454,7 +489,7 @@ export class GorbchainSDK {
               authority: decoded.data?.authority
             };
             break;
-            
+
           case 'ata-create':
             action = 'Create Token Account';
             description = 'Create Associated Token Account';
@@ -464,19 +499,19 @@ export class GorbchainSDK {
               mint: decoded.data?.mint
             };
             break;
-            
+
           case 'token2022-generic':
             action = 'Token-2022 Operation';
             description = decoded.data?.description || 'Token-2022 operation';
             instructionData = decoded.data || {};
             break;
-            
+
           case 'error':
             action = 'Error';
             description = `Failed to decode ${program} instruction`;
             instructionData = decoded.data || {};
             break;
-            
+
           default:
             // Handle token2022-extension-* types
             if (decoded.type?.startsWith('token2022-extension-')) {
@@ -489,7 +524,7 @@ export class GorbchainSDK {
               instructionData = decoded.data || {};
             }
         }
-        
+
         simpleInstructions.push({
           instruction: enriched.instruction,
           program,
@@ -498,11 +533,11 @@ export class GorbchainSDK {
           data: instructionData
         });
       }
-      
+
       // Step 4: Build simplified token metadata and transaction description
       const tokenMetadata = this.buildSimpleTokenMetadata(tokenInfoMap, simpleInstructions);
       const transactionSummary = this.buildSimpleTransactionSummary(simpleInstructions);
-        
+
         // Step 6: Return enriched rich transaction
       const richTransaction: RichTransaction = {
         signature,
@@ -510,7 +545,7 @@ export class GorbchainSDK {
         blockTime: rawTransaction.blockTime || Date.now() / 1000,
         fee: rawTransaction.meta?.fee || 0,
         status: rawTransaction.meta?.err ? 'failed' : 'success',
-        
+
         summary: {
           type: transactionSummary.type,
           description: transactionSummary.description,
@@ -518,37 +553,37 @@ export class GorbchainSDK {
           instructionCount: simpleInstructions.length,
           computeUnits: rawTransaction.meta?.computeUnitsConsumed || 0
         },
-        
+
         tokens: tokenMetadata.tokens.length > 0 ? {
           created: tokenMetadata.tokens,
           operations: tokenMetadata.operations
         } : undefined,
-        
+
         instructions: simpleInstructions,
-        
+
         accountChanges: this.extractAccountChanges(rawTransaction, simpleInstructions),
-        
+
         // Include raw data only if requested
         raw: useRichDecoding ? {
           meta: rawTransaction.meta,
-          accountKeys,
+          accountKeys: _accountKeys,
           fullInstructions: instructions
         } : undefined
       };
-      
+
       return richTransaction;
-      
+
     } catch (error) {
       throw new Error(`Failed to decode transaction: ${error}`);
     }
   }
-  
+
   /**
    * Extract account changes from transaction
    */
   private extractAccountChanges(rawTransaction: any, simpleInstructions: any[]): any {
     const changes: any = {};
-    
+
     // Extract SOL transfers
     const solTransfers = simpleInstructions
       .filter(ix => ix.action === 'Transfer SOL')
@@ -558,11 +593,11 @@ export class GorbchainSDK {
         to: ix.data.to,
         lamports: ix.data.lamports
       }));
-    
+
     if (solTransfers.length > 0) {
       changes.solTransfers = solTransfers;
     }
-    
+
     // Extract token transfers
     const tokenTransfers = simpleInstructions
       .filter(ix => ix.action === 'Transfer Tokens')
@@ -572,24 +607,24 @@ export class GorbchainSDK {
         from: ix.data.from,
         to: ix.data.to
       }));
-    
+
     if (tokenTransfers.length > 0) {
       changes.tokenTransfers = tokenTransfers;
     }
-    
+
     // Extract account creations
     const accountsCreated = simpleInstructions
       .filter(ix => ix.action === 'Create Token Account')
       .map(ix => ix.data.account)
       .filter(Boolean);
-    
+
     if (accountsCreated.length > 0) {
       changes.accountsCreated = accountsCreated;
     }
-    
+
     return Object.keys(changes).length > 0 ? changes : undefined;
   }
-  
+
   /**
    * Get human-readable program name
    */
@@ -601,8 +636,8 @@ export class GorbchainSDK {
       '4YpYoLVTQ8bxcne9GneN85RUXeN7pqGTwgPcY71ZL5gX': 'ATA',
       'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL': 'ATA'
     };
-    
-    return programNames[programId] || programId.slice(0, 8) + '...';
+
+    return programNames[programId] || `${programId.slice(0, 8)  }...`;
   }
 
   /**
@@ -612,14 +647,14 @@ export class GorbchainSDK {
     try {
       const rawTransaction = await this.rpc.request('getTransaction', [
         signature,
-        { 
+        {
           maxSupportedTransactionVersion: 0,
           encoding: 'jsonParsed',
           commitment: 'confirmed'
         }
       ]) as any;
 
-      if (!rawTransaction || !rawTransaction.transaction) {
+      if (!rawTransaction?.transaction) {
         throw new Error(`Transaction not found: ${signature}`);
       }
 
@@ -720,7 +755,7 @@ export class GorbchainSDK {
     try {
       // Extract mint address from instruction accounts
       let mintAddress: string | null = null;
-      
+
       // Try to find mint address from different instruction types
       if (instruction.accounts && instruction.accounts.length > 0) {
         // For most token instructions, mint is often the first or second account
@@ -734,7 +769,7 @@ export class GorbchainSDK {
           mintAddress = instruction.accounts[0]; // Default to first account
         }
       }
-      
+
       // If we couldn't extract mint from accounts, try from decoded data
       if (!mintAddress && decoded.data) {
         if (decoded.data.mint) {
@@ -746,25 +781,25 @@ export class GorbchainSDK {
             if (tokenAccountInfo) {
               mintAddress = tokenAccountInfo.mint;
             }
-          } catch (err) {
-            console.warn('Failed to get token account info:', err);
-          }
+                  } catch (_err) {
+          // console.warn('Failed to get token account info:', _err);
+        }
         }
       }
-      
+
       if (!mintAddress) {
-        console.warn('Could not extract mint address from instruction');
+        // console.warn('Could not extract mint address from instruction');
         return null;
       }
-      
+
       // Fetch comprehensive token information
       const tokenInfo = await this.rpc.getTokenInfo(mintAddress);
-      
+
       if (!tokenInfo) {
-        console.warn('No token info found for mint:', mintAddress);
+        // console.warn('No token info found for mint:', mintAddress);
         return null;
       }
-      
+
       return {
         mintAddress,
         name: tokenInfo.metadata?.name || 'Unknown Token',
@@ -777,10 +812,10 @@ export class GorbchainSDK {
         freezeAuthority: tokenInfo.freezeAuthority,
         metadata: tokenInfo.metadata
       };
-    } catch (error) {
-      console.warn('Failed to fetch token metadata:', error);
-      return null;
-    }
+            } catch (_error) {
+          // console.warn('Failed to fetch token metadata:', _error);
+          return null;
+        }
   }
 
   /**
@@ -788,28 +823,28 @@ export class GorbchainSDK {
    */
   private classifyTransactionType(instructions: any[], accountKeys: string[]): { type: string; subtype: string } {
     const programs = instructions.map((ix: any) => ix.programId);
-    const hasTokenProgram = programs.some(p => 
-      p === this.config.programIds?.token2022 || 
+    const hasTokenProgram = programs.some(p =>
+      p === this.config.programIds?.token2022 ||
       p === this.config.programIds?.splToken ||
       p === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' ||
       p === 'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn'
     );
     const hasSystemProgram = programs.some(p => p === '11111111111111111111111111111111');
-    
+
     if (hasTokenProgram) {
-      const tokenInstructions = instructions.filter((ix: any) => 
-        ix.programId === this.config.programIds?.token2022 || 
+      const tokenInstructions = instructions.filter((ix: any) =>
+        ix.programId === this.config.programIds?.token2022 ||
         ix.programId === this.config.programIds?.splToken ||
         ix.programId === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' ||
         ix.programId === 'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn'
       );
-      
+
       const tokenTypes = tokenInstructions.map((ix: any) => {
         if (ix.parsed?.type) return ix.parsed.type;
         return 'unknown';
       });
-      
-      if (tokenTypes.includes('createAccount') || instructions.some((ix: any) => 
+
+      if (tokenTypes.includes('createAccount') || instructions.some((ix: any) =>
           ix.parsed?.type === 'createAccount' && ix.parsed?.info?.owner === 'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn')) {
         return { type: 'Token Transaction', subtype: 'Token Creation/Account Setup' };
       } else if (tokenTypes.includes('transfer')) {
@@ -824,7 +859,7 @@ export class GorbchainSDK {
     } else if (hasSystemProgram) {
       return { type: 'System Transaction', subtype: 'Account Management' };
     }
-    
+
     return { type: 'Unknown Transaction', subtype: 'Mixed Operations' };
   }
 
@@ -840,33 +875,33 @@ export class GorbchainSDK {
       tokenCount: 0,
       totalValue: 0
     };
-    
+
     // Process each instruction to extract meaningful token operations
     for (let i = 0; i < instructions.length; i++) {
       const instruction = instructions[i];
       const programId = instruction.programId;
-      
+
       // Skip non-token instructions
-      if (programId !== this.config.programIds?.token2022 && 
+      if (programId !== this.config.programIds?.token2022 &&
           programId !== this.config.programIds?.splToken &&
           programId !== 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' &&
           programId !== 'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn') {
         continue;
       }
-      
+
       // Decode the instruction to get meaningful data
       const decodedInstruction = this.decoders.decode({
         programId,
         data: instruction.data,
         accounts: instruction.accounts || []
       });
-      
+
       let operation: any = {
         instruction: i + 1,
         type: decodedInstruction.type,
         program: programId === 'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn' ? 'Token-2022' : 'SPL Token'
       };
-      
+
       // Extract specific data based on instruction type
       if (decodedInstruction.type === 'token2022-initialize-nft-metadata') {
         operation = {
@@ -878,7 +913,7 @@ export class GorbchainSDK {
           mint: decodedInstruction.data?.mint,
           description: `Created NFT: ${decodedInstruction.data?.metadata?.name || 'Unknown'}`
         };
-        
+
         // Add to tokens list
         tokens.push({
           mint: decodedInstruction.data?.mint,
@@ -889,30 +924,30 @@ export class GorbchainSDK {
           supply: '1', // NFTs typically have supply of 1
           decimals: 0
         });
-        
+
       } else if (decodedInstruction.type === 'token2022-mint-to') {
         const amount = decodedInstruction.data?.amount || '0';
         operation = {
           ...operation,
           action: 'Mint Tokens',
-          amount: amount,
+          amount,
           mint: decodedInstruction.data?.mint,
           destination: decodedInstruction.data?.destination,
           authority: decodedInstruction.data?.authority,
           description: `Minted ${amount} tokens`
         };
-        
+
       } else if (decodedInstruction.type === 'token2022-transfer') {
         const amount = decodedInstruction.data?.amount || '0';
         operation = {
           ...operation,
           action: 'Transfer Tokens',
-          amount: amount,
+          amount,
           source: decodedInstruction.data?.source,
           destination: decodedInstruction.data?.destination,
           description: `Transferred ${amount} tokens`
         };
-        
+
       } else if (decodedInstruction.type === 'system-transfer') {
         const lamports = decodedInstruction.data?.lamports || 0;
         const sol = Number(lamports) / 1e9;
@@ -925,10 +960,10 @@ export class GorbchainSDK {
           description: `Transferred ${sol} SOL`
         };
       }
-      
+
       operations.push(operation);
     }
-    
+
     // Create summary
     if (operations.length > 0) {
       const mainOperation = operations[0];
@@ -936,7 +971,7 @@ export class GorbchainSDK {
       summary.description = operations.map(op => op.description).join(', ');
       summary.tokenCount = tokens.length;
     }
-    
+
     return {
       operations,
       tokens,
@@ -953,23 +988,23 @@ export class GorbchainSDK {
   private buildSimpleTokenMetadata(tokenInfoMap: Map<string, any>, simpleInstructions: any[]): any {
     const tokens: any[] = [];
     const operations: any[] = [];
-    
+
     // Extract tokens from the tokenInfoMap - keep it simple
     for (const [mintAddress, tokenInfo] of tokenInfoMap.entries()) {
       // Simple token/NFT detection: if decimals = 0, it's an NFT
       const isNFT = tokenInfo.decimals === 0;
-      
+
       // Extract name and symbol from NFT metadata if available
       let name = tokenInfo.metadata?.name || 'Unknown Token';
       let symbol = tokenInfo.metadata?.symbol || 'UNK';
-      
+
       // Try to extract NFT metadata from instructions
-      const nftInstruction = simpleInstructions.find(ix => 
-        ix.program === 'Token-2022' && 
-        ix.data?.accounts?.includes(mintAddress) && 
+      const nftInstruction = simpleInstructions.find(ix =>
+        ix.program === 'Token-2022' &&
+        ix.data?.accounts?.includes(mintAddress) &&
         ix.data?.raw?.data
       );
-      
+
       if (nftInstruction && isNFT) {
         const extractedMetadata = this.extractNFTMetadataFromInstruction(nftInstruction.data.raw.data);
         if (extractedMetadata) {
@@ -977,7 +1012,7 @@ export class GorbchainSDK {
           symbol = extractedMetadata.symbol || symbol;
         }
       }
-      
+
       tokens.push({
         mint: mintAddress,
         name,
@@ -1003,7 +1038,7 @@ export class GorbchainSDK {
         }
       });
     }
-    
+
     // Simple operations list
     for (const instruction of simpleInstructions) {
       operations.push({
@@ -1013,7 +1048,7 @@ export class GorbchainSDK {
         description: instruction.description
       });
     }
-    
+
     return {
       tokens,
       operations
@@ -1024,13 +1059,13 @@ export class GorbchainSDK {
     if (simpleInstructions.length === 0) {
       return { type: 'Empty Transaction', description: 'No instructions found' };
     }
-    
+
     // Count operation types
     const hasSOLTransfer = simpleInstructions.some(ix => ix.action === 'Transfer SOL');
     const hasTokenOps = simpleInstructions.some(ix => ix.program === 'Token-2022');
     const hasATACreation = simpleInstructions.some(ix => ix.program === 'ATA');
     const hasNFTOps = simpleInstructions.some(ix => ix.action.includes('NFT') || ix.action.includes('Create NFT'));
-    
+
     // Generate simple transaction type
     let type: string;
     if (hasNFTOps) {
@@ -1044,14 +1079,14 @@ export class GorbchainSDK {
     } else {
       type = 'General Transaction';
     }
-    
+
     // Generate simple description
     const descriptions = simpleInstructions.map(ix => ix.description).slice(0, 3); // Max 3 descriptions
     let description = descriptions.join(', ');
     if (simpleInstructions.length > 3) {
       description += `, and ${simpleInstructions.length - 3} more operations`;
     }
-    
+
     return { type, description };
   }
 
@@ -1059,7 +1094,7 @@ export class GorbchainSDK {
     try {
       // Convert raw data to array if it's an object
       const dataArray = Array.isArray(rawData) ? rawData : Object.values(rawData);
-      
+
       // For Token-2022 metadata instructions, don't extract metadata from instruction data
       // The metadata is stored in the mint account, not in the instruction data
       // Instruction 232 is just triggering a metadata update, not storing actual metadata
@@ -1068,7 +1103,7 @@ export class GorbchainSDK {
         // should be retrieved from the mint account via RPC calls
         return null;
       }
-      
+
       // For other instruction types, you could add proper parsing here
       // But for now, return null to rely on RPC-based metadata extraction
       return null;
@@ -1084,7 +1119,7 @@ export class GorbchainSDK {
     try {
       // Extract mint address from instruction accounts
       let mintAddress: string | null = null;
-      
+
       if (instruction.accounts && instruction.accounts.length > 0) {
         // For NFT instructions, mint is often in the second position
         if (decoded.type.includes('create-metadata') || decoded.type.includes('update-metadata')) {
@@ -1095,27 +1130,27 @@ export class GorbchainSDK {
           mintAddress = instruction.accounts[1]; // Default assumption
         }
       }
-      
+
       if (!mintAddress) {
-        console.warn('Could not extract mint address from NFT instruction');
+        // console.warn('Could not extract mint address from NFT instruction');
         return null;
       }
-      
+
       // First check if it's actually an NFT
       const isNFT = await this.rpc.isNFT(mintAddress);
       if (!isNFT) {
-        console.warn('Token is not an NFT:', mintAddress);
+        // console.warn('Token is not an NFT:', mintAddress);
         return null;
       }
-      
+
       // Get comprehensive token info including metadata
       const tokenInfo = await this.rpc.getTokenInfo(mintAddress);
-      
-      if (!tokenInfo || !tokenInfo.metadata) {
-        console.warn('No NFT metadata found for mint:', mintAddress);
+
+      if (!tokenInfo?.metadata) {
+        // console.warn('No NFT metadata found for mint:', mintAddress);
         return null;
       }
-      
+
       // Try to fetch external metadata from URI if available
       let externalMetadata = null;
       if (tokenInfo.metadata.uri) {
@@ -1124,11 +1159,11 @@ export class GorbchainSDK {
           if (response.ok) {
             externalMetadata = await response.json();
           }
-        } catch (err) {
-          console.warn('Failed to fetch external NFT metadata:', err);
+        } catch (_err) {
+          // console.warn('Failed to fetch external NFT metadata:', _err);
         }
       }
-      
+
       return {
         mintAddress,
         name: tokenInfo.metadata.name || externalMetadata?.name || 'Unknown NFT',
@@ -1145,10 +1180,10 @@ export class GorbchainSDK {
         isCollection: decoded.data?.extension === 'Collection' || false,
         isMasterEdition: decoded.type.includes('master-edition')
       };
-    } catch (error) {
-      console.warn('Failed to fetch NFT metadata:', error);
-      return null;
-    }
+            } catch (_error) {
+          // console.warn('Failed to fetch NFT metadata:', _error);
+          return null;
+        }
   }
 
   /**
@@ -1169,16 +1204,16 @@ export class GorbchainSDK {
           return await this.decodeTokenAccount(data);
         }
       }
-      
+
       return {
         type: 'unknown-account',
         owner,
         dataLength: Array.isArray(data) ? data.length : (typeof data === 'string' ? data.length : 0)
       };
-    } catch (error) {
-      console.warn(`Failed to decode account data for ${account}:`, error);
-      return null;
-    }
+            } catch (_error) {
+          // console.warn(`Failed to decode account data for ${account}:`, _error);
+          return null;
+        }
   }
 
   /**
@@ -1207,16 +1242,16 @@ export class GorbchainSDK {
       // Token-2022 and SPL Token mint account structure
       if (bytes.length >= 82) {
         const view = new DataView(bytes.buffer, bytes.byteOffset);
-        
+
         // Read supply (8 bytes, little endian)
         const supply = view.getBigUint64(0, true);
-        
+
         // Read decimals (1 byte at offset 44)
         const decimals = view.getUint8(44);
-        
+
         // Read initialization flag (1 byte at offset 45)
         const isInitialized = view.getUint8(45) === 1;
-        
+
         // Read mint authority (32 bytes at offset 4)
         // First check if there's a mint authority (1 byte at offset 4)
         const hasMintAuthority = view.getUint8(4) === 1;
@@ -1225,7 +1260,7 @@ export class GorbchainSDK {
           const mintAuthorityBytes = bytes.slice(5, 37);
           mintAuthority = this.bytesToBase58(mintAuthorityBytes);
         }
-        
+
         // Read freeze authority (32 bytes at offset 37)
         // First check if there's a freeze authority (1 byte at offset 37)
         const hasFreezeAuthority = view.getUint8(37) === 1;
@@ -1234,7 +1269,7 @@ export class GorbchainSDK {
           const freezeAuthorityBytes = bytes.slice(38, 70);
           freezeAuthority = this.bytesToBase58(freezeAuthorityBytes);
         }
-        
+
         return {
           type: 'mint-account',
           data: {
@@ -1248,17 +1283,17 @@ export class GorbchainSDK {
           }
         };
       }
-      
+
       return {
         type: 'mint-account',
         error: 'Invalid mint account data length',
         dataLength: bytes.length
       };
-    } catch (error) {
-      console.error('🔥 MINT: Failed to decode mint account:', error);
-      return {
+            } catch (_error) {
+          // console.error('🔥 MINT: Failed to decode mint account:', _error);
+          return {
         type: 'mint-account',
-        error: `Failed to decode: ${error}`
+        error: `Failed to decode: ${_error}`
       };
     }
   }
@@ -1269,16 +1304,16 @@ export class GorbchainSDK {
   private bytesToBase58(bytes: Uint8Array): string {
     try {
       const alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-      
+
       // Handle empty input
       if (bytes.length === 0) return '';
-      
+
       // Convert to big integer for base58 encoding
       let num = BigInt(0);
       for (let i = 0; i < bytes.length; i++) {
         num = num * BigInt(256) + BigInt(bytes[i]);
       }
-      
+
       // Convert to base58
       let result = '';
       while (num > BigInt(0)) {
@@ -1286,17 +1321,17 @@ export class GorbchainSDK {
         result = alphabet[Number(remainder)] + result;
         num = num / BigInt(58);
       }
-      
+
       // Add leading zeros
       for (let i = 0; i < bytes.length && bytes[i] === 0; i++) {
-        result = '1' + result;
+        result = `1${  result}`;
       }
-      
+
       return result;
-    } catch (error) {
-      console.warn('Failed to convert bytes to base58:', error);
-      return 'invalid-address';
-    }
+            } catch (_error) {
+          // console.warn('Failed to convert bytes to base58:', _error);
+          return 'invalid-address';
+        }
   }
 
   /**
@@ -1325,18 +1360,18 @@ export class GorbchainSDK {
       // Token account structure (165 bytes for standard accounts)
       if (bytes.length >= 165) {
         const view = new DataView(bytes.buffer, bytes.byteOffset);
-        
+
         // Read mint address (32 bytes at offset 0)
         const mintBytes = bytes.slice(0, 32);
         const mint = this.bytesToBase58(mintBytes);
-        
+
         // Read owner address (32 bytes at offset 32)
         const ownerBytes = bytes.slice(32, 64);
         const owner = this.bytesToBase58(ownerBytes);
-        
+
         // Read amount (8 bytes at offset 64, little endian)
         const amount = view.getBigUint64(64, true);
-        
+
         // Read delegate option (1 + 32 bytes at offset 72)
         const hasDelegateOption = view.getUint8(72) === 1;
         let delegate = null;
@@ -1344,15 +1379,15 @@ export class GorbchainSDK {
           const delegateBytes = bytes.slice(73, 105);
           delegate = this.bytesToBase58(delegateBytes);
         }
-        
+
         // Read state (1 byte at offset 105)
         const state = view.getUint8(105);
         const isInitialized = state === 1;
         const isFrozen = state === 2;
-        
+
         // Read delegated amount (8 bytes at offset 106)
         const delegatedAmount = view.getBigUint64(106, true);
-        
+
         // Read close authority option (1 + 32 bytes at offset 114)
         const hasCloseAuthority = view.getUint8(114) === 1;
         let closeAuthority = null;
@@ -1360,7 +1395,7 @@ export class GorbchainSDK {
           const closeAuthorityBytes = bytes.slice(115, 147);
           closeAuthority = this.bytesToBase58(closeAuthorityBytes);
         }
-        
+
         return {
           type: 'token-account',
           data: {
@@ -1376,17 +1411,17 @@ export class GorbchainSDK {
           }
         };
       }
-      
+
       return {
         type: 'token-account',
         error: 'Invalid token account data length',
         dataLength: bytes.length
       };
-    } catch (error) {
-      console.error('🔥 TOKEN: Failed to decode token account:', error);
-      return {
+            } catch (_error) {
+          // console.error('🔥 TOKEN: Failed to decode token account:', _error);
+          return {
         type: 'token-account',
-        error: `Failed to decode: ${error}`
+        error: `Failed to decode: ${_error}`
       };
     }
   }
@@ -1396,7 +1431,7 @@ export class GorbchainSDK {
    */
   private enrichInstructionWithAccountData(decoded: any, accounts: string[], decodedAccounts: Map<string, any>): any {
     const enriched = { ...decoded };
-    
+
     // Add account details to the decoded instruction
     enriched.accountDetails = accounts.map(account => {
       const accountData = decodedAccounts.get(account);
@@ -1412,7 +1447,7 @@ export class GorbchainSDK {
         const accountData = decodedAccounts.get(account);
         return accountData?.type === 'token-account';
       });
-      
+
       const mintAccounts = accounts.filter(account => {
         const accountData = decodedAccounts.get(account);
         return accountData?.type === 'mint-account';
@@ -1541,7 +1576,7 @@ export class GorbchainSDK {
     responseTime: number;
   }> {
     const startTime = Date.now();
-    
+
     try {
       // Test multiple RPC calls to assess health
       const [slotInfo, blockHeight, epochInfo, version] = await Promise.all([
@@ -1552,7 +1587,7 @@ export class GorbchainSDK {
       ]);
 
       const responseTime = Date.now() - startTime;
-      
+
       // Determine health status based on response time
       let status: 'healthy' | 'degraded' | 'unavailable' = 'healthy';
       if (responseTime > 5000) {
@@ -1672,7 +1707,7 @@ export class GorbchainSDK {
     }
 
     const decoded = this.decoders.decode(mockInstruction);
-    
+
     return decoded;
   }
 
@@ -1742,7 +1777,7 @@ export class GorbchainSDK {
     }
 
     const decoded = this.decoders.decode(mockInstruction);
-    
+
     return decoded;
   }
 
@@ -1812,7 +1847,7 @@ export class GorbchainSDK {
     }
 
     const decoded = this.decoders.decode(mockInstruction);
-    
+
     return decoded;
   }
 
@@ -1847,7 +1882,7 @@ export class GorbchainSDK {
     }
 
     const decoded = this.decoders.decode(mockInstruction);
-    
+
     return decoded;
   }
 
@@ -1896,7 +1931,7 @@ export class GorbchainSDK {
     }
 
     const decoded = this.decoders.decode(mockInstruction);
-    
+
     return decoded;
   }
 
@@ -1915,22 +1950,22 @@ export class GorbchainSDK {
   }
 
   // ================================
-  // MINTING FUNCTIONS  
+  // MINTING FUNCTIONS
   // ================================
 
   /**
    * Create a new Token22 token with metadata using the recommended two-transaction approach
-   * 
+   *
    * @param payer - Keypair that will pay for the transaction and own the token
    * @param params - Token creation parameters
    * @param options - Transaction options
    * @returns Token minting result with addresses and signature
    */
   async createToken22TwoTx(
-    payer: import('@solana/web3.js').Keypair,
-    params: import('./minting.js').TokenCreationParams,
-    options?: import('./minting.js').TransactionOptions
-  ): Promise<import('./minting.js').TokenMintResult> {
+    payer: Keypair,
+    params: TokenCreationParams,
+    options?: TransactionOptions
+  ): Promise<TokenMintResult> {
     const { createToken22TwoTx } = await import('./minting.js');
     const { Connection } = await import('@solana/web3.js');
     const connection = new Connection(this.config.rpcEndpoint, 'confirmed');
@@ -1939,17 +1974,17 @@ export class GorbchainSDK {
 
   /**
    * Create a new Token22 token with metadata using a single transaction approach
-   * 
+   *
    * @param payer - Keypair that will pay for the transaction and own the token
-   * @param params - Token creation parameters  
+   * @param params - Token creation parameters
    * @param options - Transaction options
    * @returns Token minting result with addresses and signature
    */
   async createToken22SingleTx(
-    payer: import('@solana/web3.js').Keypair,
-    params: import('./minting.js').TokenCreationParams,
-    options?: import('./minting.js').TransactionOptions
-  ): Promise<import('./minting.js').TokenMintResult> {
+    payer: Keypair,
+    params: TokenCreationParams,
+    options?: TransactionOptions
+  ): Promise<TokenMintResult> {
     const { createToken22SingleTx } = await import('./minting.js');
     const { Connection } = await import('@solana/web3.js');
     const connection = new Connection(this.config.rpcEndpoint, 'confirmed');
@@ -1958,7 +1993,7 @@ export class GorbchainSDK {
 
   /**
    * Create a new NFT using Metaplex Core
-   * 
+   *
    * @param wallet - Wallet adapter for signing transactions
    * @param params - NFT creation parameters
    * @param options - Transaction options
@@ -1966,9 +2001,9 @@ export class GorbchainSDK {
    */
   async createNFT(
     wallet: any, // Wallet adapter
-    params: import('./minting.js').NFTCreationParams,
-    options?: import('./minting.js').TransactionOptions
-  ): Promise<import('./minting.js').NFTMintResult> {
+    params: NFTCreationParams,
+    options?: TransactionOptions
+  ): Promise<NFTMintResult> {
     const { createNFT } = await import('./minting.js');
     const { Connection } = await import('@solana/web3.js');
     const connection = new Connection(this.config.rpcEndpoint, 'confirmed');
@@ -1977,13 +2012,13 @@ export class GorbchainSDK {
 
   /**
    * Check if a user has sufficient balance for a transaction
-   * 
+   *
    * @param payer - Public key of the account to check
    * @param estimatedCost - Estimated cost in lamports
    * @returns Balance check result
    */
   async checkSufficientBalance(
-    payer: import('@solana/web3.js').PublicKey,
+    payer: PublicKey,
     estimatedCost: number
   ): Promise<{ sufficient: boolean; balance: number; required: number }> {
     const { checkSufficientBalance } = await import('./minting.js');
@@ -1994,12 +2029,12 @@ export class GorbchainSDK {
 
   /**
    * Estimate the cost for creating a token
-   * 
+   *
    * @param params - Token creation parameters
    * @returns Estimated cost in lamports
    */
   async estimateTokenCreationCost(
-    params: import('./minting.js').TokenCreationParams
+    params: TokenCreationParams
   ): Promise<number> {
     const { estimateTokenCreationCost } = await import('./minting.js');
     const { Connection } = await import('@solana/web3.js');
@@ -2009,12 +2044,12 @@ export class GorbchainSDK {
 
   /**
    * Estimate the cost for creating an NFT
-   * 
+   *
    * @param params - NFT creation parameters
    * @returns Estimated cost in lamports
    */
   async estimateNFTCreationCost(
-    params: import('./minting.js').NFTCreationParams
+    params: NFTCreationParams
   ): Promise<number> {
     const { estimateNFTCreationCost } = await import('./minting.js');
     const { Connection } = await import('@solana/web3.js');
@@ -2024,7 +2059,7 @@ export class GorbchainSDK {
 
   /**
    * Get token information from mint address
-   * 
+   *
    * @param mintAddress - Token mint address
    * @returns Token information including metadata
    */
@@ -2051,65 +2086,65 @@ export class GorbchainSDK {
    */
   private generateTransactionName(instructions: any[]): string {
     if (instructions.length === 0) return 'Empty Transaction';
-    
+
     // Get all unique actions, excluding errors
     const actions = instructions
       .filter(ix => ix.action !== 'Error')
       .map(ix => ix.action);
-    
+
     const uniqueActions = [...new Set(actions)];
-    
+
     // If all instructions failed, return error
     if (uniqueActions.length === 0) {
       return 'Failed Transaction';
     }
-    
+
     // Single operation types
     if (uniqueActions.length === 1) {
       const action = uniqueActions[0];
       return action === 'Unknown' ? 'Unknown Transaction' : action;
     }
-    
+
     // Multiple operations - generate compound name
     const hasNFTCreation = uniqueActions.includes('Create NFT');
     const hasTokenCreation = uniqueActions.includes('Create Token Account');
     const hasTokenMinting = uniqueActions.includes('Mint Tokens');
     const hasSOLTransfer = uniqueActions.includes('Transfer SOL');
     const hasTokenTransfer = uniqueActions.includes('Transfer Tokens');
-    
+
     // NFT creation workflow
     if (hasNFTCreation) {
       return 'NFT Creation';
     }
-    
+
     // Token creation workflow
     if (hasTokenCreation && hasTokenMinting) {
       return 'Token Creation & Minting';
     }
-    
+
     if (hasTokenCreation) {
       return 'Token Account Setup';
     }
-    
+
     // Transfer operations
     if (hasSOLTransfer && hasTokenTransfer) {
       return 'SOL & Token Transfer';
     }
-    
+
     if (hasSOLTransfer && uniqueActions.length === 1) {
       return 'SOL Transfer';
     }
-    
+
     if (hasTokenTransfer && uniqueActions.length === 1) {
       return 'Token Transfer';
     }
-    
+
     // Complex operations
     if (uniqueActions.length > 3) {
       return 'Complex Transaction';
     }
-    
+
     // Default for 2-3 operations
     return 'Multi-Operation Transaction';
   }
-} 
+}

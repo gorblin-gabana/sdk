@@ -7,14 +7,20 @@ export enum ATAInstruction {
   CreateIdempotent = 1,
 }
 
+interface ATAInstructionData {
+  programId: string;
+  data: Uint8Array;
+  accounts: string[];
+}
+
 /**
  * Main ATA decoder function
  */
-export function decodeATAInstruction(instruction: any): DecodedInstruction {
+export function decodeATAInstruction(instruction: ATAInstructionData): DecodedInstruction {
   const data = instruction.data;
   const programId = instruction.programId;
-  const accounts = instruction.accounts || [];
-  
+  const accounts = instruction.accounts;
+
   // Handle empty data case - common for ATA create instructions
   if (!data || data.length === 0) {
     // For empty data, infer instruction type from account structure
@@ -62,19 +68,19 @@ export function decodeATAInstruction(instruction: any): DecodedInstruction {
 /**
  * Decode Create ATA instruction
  */
-function decodeCreate(instruction: any, programId: string): DecodedInstruction {
-  const accounts = instruction.accounts || [];
-  
+function decodeCreate(instruction: ATAInstructionData, programId: string): DecodedInstruction {
+  const accounts = instruction.accounts;
+
   return {
     type: 'ata-create',
     programId,
     data: {
-      payer: accounts[0] || null,
-      associatedTokenAccount: accounts[1] || null,
-      owner: accounts[2] || null,
-      mint: accounts[3] || null,
-      systemProgram: accounts[4] || null,
-      tokenProgram: accounts[5] || null
+      payer: accounts[0] ?? null,
+      associatedTokenAccount: accounts[1] ?? null,
+      owner: accounts[2] ?? null,
+      mint: accounts[3] ?? null,
+      systemProgram: accounts[4] ?? null,
+      tokenProgram: accounts[5] ?? null
     },
     accounts,
     raw: instruction
@@ -84,21 +90,21 @@ function decodeCreate(instruction: any, programId: string): DecodedInstruction {
 /**
  * Decode Create Idempotent ATA instruction
  */
-function decodeCreateIdempotent(instruction: any, programId: string): DecodedInstruction {
-  const accounts = instruction.accounts || [];
-  
+function decodeCreateIdempotent(instruction: ATAInstructionData, programId: string): DecodedInstruction {
+  const accounts = instruction.accounts;
+
   return {
     type: 'ata-create-idempotent',
     programId,
     data: {
-      payer: accounts[0] || null,
-      associatedTokenAccount: accounts[1] || null,
-      owner: accounts[2] || null,
-      mint: accounts[3] || null,
-      systemProgram: accounts[4] || null,
-      tokenProgram: accounts[5] || null
+      payer: accounts[0] ?? null,
+      associatedTokenAccount: accounts[1] ?? null,
+      owner: accounts[2] ?? null,
+      mint: accounts[3] ?? null,
+      systemProgram: accounts[4] ?? null,
+      tokenProgram: accounts[5] ?? null
     },
     accounts,
     raw: instruction
   };
-} 
+}

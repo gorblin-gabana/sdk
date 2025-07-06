@@ -188,7 +188,7 @@ export class RpcRateLimitError extends SDKError {
     } = {}
   ) {
     super(
-      retryAfter 
+      retryAfter
         ? `Rate limit exceeded. Retry after ${retryAfter} seconds.`
         : 'Rate limit exceeded.',
       'RPC_RATE_LIMIT',
@@ -237,4 +237,4 @@ export class RpcConnectionError extends SDKError {
       }
     );
   }
-} 
+}

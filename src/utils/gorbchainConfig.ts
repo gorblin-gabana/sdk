@@ -15,7 +15,7 @@ let _config: GorbchainConfig = {
   }
 };
 
-export function setGorbchainConfig(cfg: Partial<GorbchainConfig>) {
+export function setGorbchainConfig(cfg: Partial<GorbchainConfig>): void {
   _config = { ..._config, ...cfg, programIds: { ..._config.programIds, ...cfg.programIds } };
 }
 

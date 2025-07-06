@@ -1,6 +1,6 @@
 import { GorbchainSDK } from '../src/sdk/GorbchainSDK.js';
 import { SPLTokenInstruction } from '../src/decoders/splToken.js';
-import { getGorbchainConfig, setGorbchainConfig } from '../src/utils/gorbchainConfig.js';
+import { setGorbchainConfig } from '../src/utils/gorbchainConfig.js';
 
 describe('GorbchainSDK Integration Tests', () => {
   let sdk: GorbchainSDK;
@@ -74,15 +74,15 @@ describe('GorbchainSDK Integration Tests', () => {
   describe('SPL Token Decoding', () => {
     test('should decode SPL Token Transfer instruction correctly', () => {
       const mockInstruction = {
-        programAddress: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+        programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
         data: new Uint8Array([
           SPLTokenInstruction.Transfer, // instruction type = 3
           0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 // amount: 4096 (little-endian)
         ]),
         accounts: [
-          { address: 'SourceAccount1111111111111111111111111111' },
-          { address: 'DestAccount11111111111111111111111111111' },
-          { address: 'Authority111111111111111111111111111111' }
+          'SourceAccount1111111111111111111111111111',
+          'DestAccount11111111111111111111111111111',
+          'Authority111111111111111111111111111111'
         ]
       };
 
