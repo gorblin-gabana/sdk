@@ -60,37 +60,37 @@ export function decodeSPLTokenInstruction(instruction: SPLTokenInstructionData):
   const programId = getSPLTokenProgramId();
 
   switch (instructionType) {
-    case SPLTokenInstruction.Transfer:
+    case SPLTokenInstruction.Transfer as number:
       return decodeTransfer(instruction, programId);
-    case SPLTokenInstruction.MintTo:
+    case SPLTokenInstruction.MintTo as number:
       return decodeMintTo(instruction, programId);
-    case SPLTokenInstruction.Burn:
+    case SPLTokenInstruction.Burn as number:
       return decodeBurn(instruction, programId);
-    case SPLTokenInstruction.InitializeMint:
+    case SPLTokenInstruction.InitializeMint as number:
       return decodeInitializeMint(instruction, programId);
-    case SPLTokenInstruction.InitializeAccount:
+    case SPLTokenInstruction.InitializeAccount as number:
       return decodeInitializeAccount(instruction, programId);
-    case SPLTokenInstruction.SetAuthority:
+    case SPLTokenInstruction.SetAuthority as number:
       return decodeSetAuthority(instruction, programId);
-    case SPLTokenInstruction.Approve:
+    case SPLTokenInstruction.Approve as number:
       return decodeApprove(instruction, programId);
-    case SPLTokenInstruction.Revoke:
+    case SPLTokenInstruction.Revoke as number:
       return decodeRevoke(instruction, programId);
-    case SPLTokenInstruction.CloseAccount:
+    case SPLTokenInstruction.CloseAccount as number:
       return decodeCloseAccount(instruction, programId);
-    case SPLTokenInstruction.FreezeAccount:
+    case SPLTokenInstruction.FreezeAccount as number:
       return decodeFreezeAccount(instruction, programId);
-    case SPLTokenInstruction.ThawAccount:
+    case SPLTokenInstruction.ThawAccount as number:
       return decodeThawAccount(instruction, programId);
-    case SPLTokenInstruction.TransferChecked:
+    case SPLTokenInstruction.TransferChecked as number:
       return decodeTransferChecked(instruction, programId);
-    case SPLTokenInstruction.ApproveChecked:
+    case SPLTokenInstruction.ApproveChecked as number:
       return decodeApproveChecked(instruction, programId);
-    case SPLTokenInstruction.MintToChecked:
+    case SPLTokenInstruction.MintToChecked as number:
       return decodeMintToChecked(instruction, programId);
-    case SPLTokenInstruction.BurnChecked:
+    case SPLTokenInstruction.BurnChecked as number:
       return decodeBurnChecked(instruction, programId);
-    case SPLTokenInstruction.SyncNative:
+    case SPLTokenInstruction.SyncNative as number:
       return decodeSyncNative(instruction, programId);
     default:
       return {
@@ -101,7 +101,7 @@ export function decodeSPLTokenInstruction(instruction: SPLTokenInstructionData):
           error: `Unknown SPL Token instruction type: ${instructionType}`
         },
         accounts: instruction.accounts,
-        raw: instruction
+        raw: instruction as unknown as Record<string, unknown>
       };
   }
 }
@@ -114,7 +114,7 @@ export function decodeSPLTokenInstructionWithDetails(data: Uint8Array): {
   instruction: string;
   amount?: bigint;
   decimals?: number;
-  accounts: any[];
+  accounts: unknown[];
 } {
   if (data.length === 0) {
     return {
@@ -246,7 +246,7 @@ export function decodeInstructionData(base58Data: string): Uint8Array {
     const bytes = new Uint8Array(Buffer.from(base58Data, 'base64'));
     return bytes;
   } catch (error) {
-    console.warn('Failed to decode instruction data:', error);
+    // Failed to decode instruction data - return empty array
     return new Uint8Array(0);
   }
 }
@@ -275,7 +275,7 @@ function decodeTransfer(instruction: SPLTokenInstructionData, programId: string)
       signers: accounts.slice(3)
     },
     accounts,
-    raw: instruction
+    raw: instruction as unknown as Record<string, unknown>
   };
 }
 
@@ -303,7 +303,7 @@ function decodeMintTo(instruction: SPLTokenInstructionData, programId: string): 
       signers: accounts.slice(3)
     },
     accounts,
-    raw: instruction
+    raw: instruction as unknown as Record<string, unknown>
   };
 }
 
@@ -311,7 +311,7 @@ function decodeMintTo(instruction: SPLTokenInstructionData, programId: string): 
  * Decode Burn instruction (8)
  * Layout: [u8 instruction, u64 amount]
  */
-function decodeBurn(instruction: any, programId: string): DecodedInstruction {
+function decodeBurn(instruction: SPLTokenInstructionData, programId: string): DecodedInstruction {
   const data = instruction.data;
   if (data.length !== 9) {
     throw new Error('Invalid Burn instruction data length');
@@ -325,13 +325,13 @@ function decodeBurn(instruction: any, programId: string): DecodedInstruction {
     programId,
     data: {
       amount: amount.toString(),
-      account: accounts[0]?.address || accounts[0],
-      mint: accounts[1]?.address || accounts[1],
-      authority: accounts[2]?.address || accounts[2],
-      signers: accounts.slice(3).map((acc: any) => acc.address || acc)
+      account: accounts[0] ?? null,
+      mint: accounts[1] ?? null,
+      authority: accounts[2] ?? null,
+      signers: accounts.slice(3)
     },
     accounts,
-    raw: instruction
+    raw: instruction as unknown as Record<string, unknown>
   };
 }
 
@@ -359,7 +359,7 @@ function decodeInitializeMint(instruction: any, programId: string): DecodedInstr
       freezeAuthority: freezeAuthority ? bufferToBase58(freezeAuthority) : null
     },
     accounts: instruction.accounts || [],
-    raw: instruction
+    raw: instruction as unknown as Record<string, unknown>
   };
 }
 
@@ -379,7 +379,7 @@ function decodeInitializeAccount(instruction: any, programId: string): DecodedIn
       rentSysvar: accounts[3]?.address || accounts[3]
     },
     accounts,
-    raw: instruction
+    raw: instruction as unknown as Record<string, unknown>
   };
 }
 
@@ -405,7 +405,7 @@ function decodeSetAuthority(instruction: any, programId: string): DecodedInstruc
       newAuthority: newAuthority ? bufferToBase58(newAuthority) : null
     },
     accounts: instruction.accounts || [],
-    raw: instruction
+    raw: instruction as unknown as Record<string, unknown>
   };
 }
 
@@ -421,7 +421,7 @@ function decodeApprove(instruction: any, programId: string): DecodedInstruction 
     programId,
     data: { amount: amount.toString() },
     accounts: instruction.accounts || [],
-    raw: instruction
+    raw: instruction as unknown as Record<string, unknown>
   };
 }
 
@@ -431,7 +431,7 @@ function decodeRevoke(instruction: any, programId: string): DecodedInstruction {
     programId,
     data: {},
     accounts: instruction.accounts || [],
-    raw: instruction
+    raw: instruction as unknown as Record<string, unknown>
   };
 }
 
@@ -441,7 +441,7 @@ function decodeCloseAccount(instruction: any, programId: string): DecodedInstruc
     programId,
     data: {},
     accounts: instruction.accounts || [],
-    raw: instruction
+    raw: instruction as unknown as Record<string, unknown>
   };
 }
 
@@ -451,7 +451,7 @@ function decodeFreezeAccount(instruction: any, programId: string): DecodedInstru
     programId,
     data: {},
     accounts: instruction.accounts || [],
-    raw: instruction
+    raw: instruction as unknown as Record<string, unknown>
   };
 }
 
@@ -461,7 +461,7 @@ function decodeThawAccount(instruction: any, programId: string): DecodedInstruct
     programId,
     data: {},
     accounts: instruction.accounts || [],
-    raw: instruction
+    raw: instruction as unknown as Record<string, unknown>
   };
 }
 
@@ -475,7 +475,7 @@ function decodeTransferChecked(instruction: any, programId: string): DecodedInst
     programId,
     data: { amount: amount.toString(), decimals },
     accounts: instruction.accounts || [],
-    raw: instruction
+    raw: instruction as unknown as Record<string, unknown>
   };
 }
 
@@ -489,7 +489,7 @@ function decodeApproveChecked(instruction: any, programId: string): DecodedInstr
     programId,
     data: { amount: amount.toString(), decimals },
     accounts: instruction.accounts || [],
-    raw: instruction
+    raw: instruction as unknown as Record<string, unknown>
   };
 }
 
@@ -503,7 +503,7 @@ function decodeMintToChecked(instruction: any, programId: string): DecodedInstru
     programId,
     data: { amount: amount.toString(), decimals },
     accounts: instruction.accounts || [],
-    raw: instruction
+    raw: instruction as unknown as Record<string, unknown>
   };
 }
 
@@ -517,7 +517,7 @@ function decodeBurnChecked(instruction: any, programId: string): DecodedInstruct
     programId,
     data: { amount: amount.toString(), decimals },
     accounts: instruction.accounts || [],
-    raw: instruction
+    raw: instruction as unknown as Record<string, unknown>
   };
 }
 
@@ -527,7 +527,7 @@ function decodeSyncNative(instruction: any, programId: string): DecodedInstructi
     programId,
     data: {},
     accounts: instruction.accounts || [],
-    raw: instruction
+    raw: instruction as unknown as Record<string, unknown>
   };
 }
 
@@ -568,10 +568,10 @@ function bufferToBase58(buffer: Uint8Array | number[]): string {
 
 function getAuthorityTypeName(type: number): string {
   switch (type) {
-    case AuthorityType.MintTokens: return 'MintTokens';
-    case AuthorityType.FreezeAccount: return 'FreezeAccount';
-    case AuthorityType.AccountOwner: return 'AccountOwner';
-    case AuthorityType.CloseAccount: return 'CloseAccount';
+    case AuthorityType.MintTokens as number: return 'MintTokens';
+    case AuthorityType.FreezeAccount as number: return 'FreezeAccount';
+    case AuthorityType.AccountOwner as number: return 'AccountOwner';
+    case AuthorityType.CloseAccount as number: return 'CloseAccount';
     default: return `Unknown(${type})`;
   }
 }

@@ -14,6 +14,11 @@ interface NFTInstructionData {
   accounts: string[];
 }
 
+interface NFTInstruction {
+  accounts: string[];
+  data?: Uint8Array;
+}
+
 // NFT Metadata account structure
 export interface NFTMetadata {
   name: string;
@@ -117,45 +122,45 @@ export function decodeNFTInstruction(instruction: NFTInstructionData): DecodedIn
   const programId = getMetaplexProgramId();
 
   switch (instructionType) {
-    case MetaplexInstruction.CreateMetadataAccount:
+    case MetaplexInstruction.CreateMetadataAccount as number:
       return decodeCreateMetadataAccount(instruction, programId);
-    case MetaplexInstruction.UpdateMetadataAccount:
+    case MetaplexInstruction.UpdateMetadataAccount as number:
       return decodeUpdateMetadataAccount(instruction, programId);
-    case MetaplexInstruction.CreateMasterEdition:
+    case MetaplexInstruction.CreateMasterEdition as number:
       return decodeCreateMasterEdition(instruction, programId);
-    case MetaplexInstruction.MintNewEditionFromMasterEditionViaToken:
+    case MetaplexInstruction.MintNewEditionFromMasterEditionViaToken as number:
       return decodeMintNewEdition(instruction, programId);
-    case MetaplexInstruction.UpdateMetadataAccountV2:
+    case MetaplexInstruction.UpdateMetadataAccountV2 as number:
       return decodeUpdateMetadataAccountV2(instruction, programId);
-    case MetaplexInstruction.CreateMetadataAccountV2:
+    case MetaplexInstruction.CreateMetadataAccountV2 as number:
       return decodeCreateMetadataAccountV2(instruction, programId);
-    case MetaplexInstruction.CreateMasterEditionV3:
+    case MetaplexInstruction.CreateMasterEditionV3 as number:
       return decodeCreateMasterEditionV3(instruction, programId);
-    case MetaplexInstruction.VerifyCollection:
+    case MetaplexInstruction.VerifyCollection as number:
       return decodeVerifyCollection(instruction, programId);
-    case MetaplexInstruction.UnverifyCollection:
+    case MetaplexInstruction.UnverifyCollection as number:
       return decodeUnverifyCollection(instruction, programId);
-    case MetaplexInstruction.VerifyCreator:
+    case MetaplexInstruction.VerifyCreator as number:
       return decodeVerifyCreator(instruction, programId);
-    case MetaplexInstruction.UnverifyCreator:
+    case MetaplexInstruction.UnverifyCreator as number:
       return decodeUnverifyCreator(instruction, programId);
-    case MetaplexInstruction.BurnNft:
+    case MetaplexInstruction.BurnNft as number:
       return decodeBurnNft(instruction, programId);
-    case MetaplexInstruction.CreateMetadataAccountV3:
+    case MetaplexInstruction.CreateMetadataAccountV3 as number:
       return decodeCreateMetadataAccountV3(instruction, programId);
-    case MetaplexInstruction.SetCollectionSize:
+    case MetaplexInstruction.SetCollectionSize as number:
       return decodeSetCollectionSize(instruction, programId);
-    case MetaplexInstruction.SetTokenStandard:
+    case MetaplexInstruction.SetTokenStandard as number:
       return decodeSetTokenStandard(instruction, programId);
-    case MetaplexInstruction.Transfer:
+    case MetaplexInstruction.Transfer as number:
       return decodeNFTTransfer(instruction, programId);
-    case MetaplexInstruction.Mint:
+    case MetaplexInstruction.Mint as number:
       return decodeNFTMint(instruction, programId);
-    case MetaplexInstruction.Burn:
+    case MetaplexInstruction.Burn as number:
       return decodeNFTBurn(instruction, programId);
-    case MetaplexInstruction.Lock:
+    case MetaplexInstruction.Lock as number:
       return decodeNFTLock(instruction, programId);
-    case MetaplexInstruction.Unlock:
+    case MetaplexInstruction.Unlock as number:
       return decodeNFTUnlock(instruction, programId);
     default:
       return {
@@ -166,7 +171,7 @@ export function decodeNFTInstruction(instruction: NFTInstructionData): DecodedIn
           error: `Unknown NFT instruction type: ${instructionType}`
         },
         accounts: instruction.accounts,
-        raw: instruction
+        raw: instruction as unknown as Record<string, unknown>
       };
   }
 }
@@ -184,7 +189,7 @@ export function decodeNFTInstructionWithDetails(data: Uint8Array): {
     isCollection?: boolean;
     isMasterEdition?: boolean;
   };
-  accounts: any[];
+  accounts: string[];
 } {
   if (data.length === 0) {
     return {
@@ -325,51 +330,52 @@ export async function fetchNFTMetadata(uri: string): Promise<NFTMetadata | null>
       return null;
     }
 
-    const metadata = await response.json();
+    const metadata = await response.json() as Record<string, unknown>;
     return {
-      name: metadata.name || 'Unknown NFT',
-      symbol: metadata.symbol || '',
+      name: (metadata.name as string) ?? 'Unknown NFT',
+      symbol: (metadata.symbol as string) ?? '',
       uri,
-      sellerFeeBasisPoints: metadata.seller_fee_basis_points || 0,
-      creators: metadata.properties?.creators || [],
-      collection: metadata.collection || undefined,
-      uses: metadata.uses || undefined
+      sellerFeeBasisPoints: (metadata.seller_fee_basis_points as number) ?? 0,
+      creators: (metadata.properties as Record<string, unknown>)?.creators as Array<{ address: string; verified: boolean; share: number }> ?? [],
+      collection: metadata.collection as { verified: boolean; key: string } | undefined,
+      uses: metadata.uses as { useMethod: string; remaining: number; total: number } | undefined
     };
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Failed to fetch NFT metadata:', error);
     return null;
   }
 }
 
 // Individual instruction decoders
-function decodeCreateMetadataAccount(instruction: any, programId: string): DecodedInstruction {
+function decodeCreateMetadataAccount(instruction: NFTInstruction, programId: string): DecodedInstruction {
   return {
     type: 'nft-create-metadata',
     programId,
     data: {
-      metadata: instruction.accounts[0],
-      mint: instruction.accounts[1],
-      mintAuthority: instruction.accounts[2],
-      payer: instruction.accounts[3],
-      updateAuthority: instruction.accounts[4]
+      metadata: instruction.accounts[0] ?? '',
+      mint: instruction.accounts[1] ?? '',
+      mintAuthority: instruction.accounts[2] ?? '',
+      payer: instruction.accounts[3] ?? '',
+      updateAuthority: instruction.accounts[4] ?? ''
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts
   };
 }
 
-function decodeUpdateMetadataAccount(instruction: any, programId: string): DecodedInstruction {
+function decodeUpdateMetadataAccount(instruction: NFTInstruction, programId: string): DecodedInstruction {
   return {
     type: 'nft-update-metadata',
     programId,
     data: {
-      metadata: instruction.accounts[0],
-      updateAuthority: instruction.accounts[1]
+      metadata: instruction.accounts[0] ?? '',
+      updateAuthority: instruction.accounts[1] ?? ''
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts
   };
 }
 
-function decodeCreateMasterEdition(instruction: any, programId: string): DecodedInstruction {
+function decodeCreateMasterEdition(instruction: NFTInstruction, programId: string): DecodedInstruction {
   return {
     type: 'nft-create-master-edition',
     programId,
@@ -385,7 +391,7 @@ function decodeCreateMasterEdition(instruction: any, programId: string): Decoded
   };
 }
 
-function decodeMintNewEdition(instruction: any, programId: string): DecodedInstruction {
+function decodeMintNewEdition(instruction: NFTInstruction, programId: string): DecodedInstruction {
   return {
     type: 'nft-mint-new-edition',
     programId,
@@ -396,11 +402,11 @@ function decodeMintNewEdition(instruction: any, programId: string): DecodedInstr
       mint: instruction.accounts[3],
       mintAuthority: instruction.accounts[4]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
-function decodeUpdateMetadataAccountV2(instruction: any, programId: string): DecodedInstruction {
+function decodeUpdateMetadataAccountV2(instruction: NFTInstruction, programId: string): DecodedInstruction {
   return {
     type: 'nft-update-metadata-v2',
     programId,
@@ -408,11 +414,11 @@ function decodeUpdateMetadataAccountV2(instruction: any, programId: string): Dec
       metadata: instruction.accounts[0],
       updateAuthority: instruction.accounts[1]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
-function decodeCreateMetadataAccountV2(instruction: any, programId: string): DecodedInstruction {
+function decodeCreateMetadataAccountV2(instruction: NFTInstruction, programId: string): DecodedInstruction {
   return {
     type: 'nft-create-metadata-v2',
     programId,
@@ -423,11 +429,11 @@ function decodeCreateMetadataAccountV2(instruction: any, programId: string): Dec
       payer: instruction.accounts[3],
       updateAuthority: instruction.accounts[4]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
-function decodeCreateMasterEditionV3(instruction: any, programId: string): DecodedInstruction {
+function decodeCreateMasterEditionV3(instruction: NFTInstruction, programId: string): DecodedInstruction {
   return {
     type: 'nft-create-master-edition-v3',
     programId,
@@ -439,11 +445,11 @@ function decodeCreateMasterEditionV3(instruction: any, programId: string): Decod
       payer: instruction.accounts[4],
       metadata: instruction.accounts[5]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
-function decodeVerifyCollection(instruction: any, programId: string): DecodedInstruction {
+function decodeVerifyCollection(instruction: NFTInstruction, programId: string): DecodedInstruction {
   return {
     type: 'nft-verify-collection',
     programId,
@@ -454,11 +460,11 @@ function decodeVerifyCollection(instruction: any, programId: string): DecodedIns
       collectionMint: instruction.accounts[3],
       collection: instruction.accounts[4]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
-function decodeUnverifyCollection(instruction: any, programId: string): DecodedInstruction {
+function decodeUnverifyCollection(instruction: NFTInstruction, programId: string): DecodedInstruction {
   return {
     type: 'nft-unverify-collection',
     programId,
@@ -468,11 +474,11 @@ function decodeUnverifyCollection(instruction: any, programId: string): DecodedI
       collectionMint: instruction.accounts[2],
       collection: instruction.accounts[3]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
-function decodeVerifyCreator(instruction: any, programId: string): DecodedInstruction {
+function decodeVerifyCreator(instruction: NFTInstruction, programId: string): DecodedInstruction {
   return {
     type: 'nft-verify-creator',
     programId,
@@ -480,11 +486,11 @@ function decodeVerifyCreator(instruction: any, programId: string): DecodedInstru
       metadata: instruction.accounts[0],
       creator: instruction.accounts[1]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
-function decodeUnverifyCreator(instruction: any, programId: string): DecodedInstruction {
+function decodeUnverifyCreator(instruction: NFTInstruction, programId: string): DecodedInstruction {
   return {
     type: 'nft-unverify-creator',
     programId,
@@ -492,11 +498,11 @@ function decodeUnverifyCreator(instruction: any, programId: string): DecodedInst
       metadata: instruction.accounts[0],
       creator: instruction.accounts[1]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
-function decodeBurnNft(instruction: any, programId: string): DecodedInstruction {
+function decodeBurnNft(instruction: NFTInstruction, programId: string): DecodedInstruction {
   return {
     type: 'nft-burn',
     programId,
@@ -506,11 +512,11 @@ function decodeBurnNft(instruction: any, programId: string): DecodedInstruction 
       mint: instruction.accounts[2],
       tokenAccount: instruction.accounts[3]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
-function decodeCreateMetadataAccountV3(instruction: any, programId: string): DecodedInstruction {
+function decodeCreateMetadataAccountV3(instruction: NFTInstruction, programId: string): DecodedInstruction {
   return {
     type: 'nft-create-metadata-v3',
     programId,
@@ -521,11 +527,11 @@ function decodeCreateMetadataAccountV3(instruction: any, programId: string): Dec
       payer: instruction.accounts[3],
       updateAuthority: instruction.accounts[4]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
-function decodeSetCollectionSize(instruction: any, programId: string): DecodedInstruction {
+function decodeSetCollectionSize(instruction: NFTInstruction, programId: string): DecodedInstruction {
   return {
     type: 'nft-set-collection-size',
     programId,
@@ -534,11 +540,11 @@ function decodeSetCollectionSize(instruction: any, programId: string): DecodedIn
       collectionAuthority: instruction.accounts[1],
       collectionMint: instruction.accounts[2]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
-function decodeSetTokenStandard(instruction: any, programId: string): DecodedInstruction {
+function decodeSetTokenStandard(instruction: NFTInstruction, programId: string): DecodedInstruction {
   return {
     type: 'nft-set-token-standard',
     programId,
@@ -547,11 +553,11 @@ function decodeSetTokenStandard(instruction: any, programId: string): DecodedIns
       updateAuthority: instruction.accounts[1],
       mint: instruction.accounts[2]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
-function decodeNFTTransfer(instruction: any, programId: string): DecodedInstruction {
+function decodeNFTTransfer(instruction: NFTInstruction, programId: string): DecodedInstruction {
   return {
     type: 'nft-transfer',
     programId,
@@ -562,11 +568,11 @@ function decodeNFTTransfer(instruction: any, programId: string): DecodedInstruct
       destinationOwner: instruction.accounts[3],
       mint: instruction.accounts[4]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
-function decodeNFTMint(instruction: any, programId: string): DecodedInstruction {
+function decodeNFTMint(instruction: NFTInstruction, programId: string): DecodedInstruction {
   return {
     type: 'nft-mint',
     programId,
@@ -577,11 +583,11 @@ function decodeNFTMint(instruction: any, programId: string): DecodedInstruction 
       masterEdition: instruction.accounts[3],
       mint: instruction.accounts[4]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
-function decodeNFTBurn(instruction: any, programId: string): DecodedInstruction {
+function decodeNFTBurn(instruction: NFTInstruction, programId: string): DecodedInstruction {
   return {
     type: 'nft-burn',
     programId,
@@ -590,11 +596,11 @@ function decodeNFTBurn(instruction: any, programId: string): DecodedInstruction 
       mint: instruction.accounts[1],
       authority: instruction.accounts[2]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
-function decodeNFTLock(instruction: any, programId: string): DecodedInstruction {
+function decodeNFTLock(instruction: NFTInstruction, programId: string): DecodedInstruction {
   return {
     type: 'nft-lock',
     programId,
@@ -604,11 +610,11 @@ function decodeNFTLock(instruction: any, programId: string): DecodedInstruction 
       tokenAccount: instruction.accounts[2],
       mint: instruction.accounts[3]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
-function decodeNFTUnlock(instruction: any, programId: string): DecodedInstruction {
+function decodeNFTUnlock(instruction: NFTInstruction, programId: string): DecodedInstruction {
   return {
     type: 'nft-unlock',
     programId,
@@ -618,6 +624,6 @@ function decodeNFTUnlock(instruction: any, programId: string): DecodedInstructio
       tokenAccount: instruction.accounts[2],
       mint: instruction.accounts[3]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }

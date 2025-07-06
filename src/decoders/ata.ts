@@ -39,7 +39,7 @@ export function decodeATAInstruction(instruction: ATAInstructionData): DecodedIn
           expectedAccounts: 6
         },
         accounts,
-        raw: instruction
+        raw: instruction as unknown as Record<string, unknown>
       };
     }
   }
@@ -47,9 +47,9 @@ export function decodeATAInstruction(instruction: ATAInstructionData): DecodedIn
   const instructionType = data[0];
 
   switch (instructionType) {
-    case ATAInstruction.Create:
+    case ATAInstruction.Create as number:
       return decodeCreate(instruction, programId);
-    case ATAInstruction.CreateIdempotent:
+    case ATAInstruction.CreateIdempotent as number:
       return decodeCreateIdempotent(instruction, programId);
     default:
       return {
@@ -60,7 +60,7 @@ export function decodeATAInstruction(instruction: ATAInstructionData): DecodedIn
           error: `Unknown ATA instruction type: ${instructionType}`
         },
         accounts,
-        raw: instruction
+        raw: instruction as unknown as Record<string, unknown>
       };
   }
 }
@@ -83,7 +83,7 @@ function decodeCreate(instruction: ATAInstructionData, programId: string): Decod
       tokenProgram: accounts[5] ?? null
     },
     accounts,
-    raw: instruction
+    raw: instruction as unknown as Record<string, unknown>
   };
 }
 
@@ -105,6 +105,6 @@ function decodeCreateIdempotent(instruction: ATAInstructionData, programId: stri
       tokenProgram: accounts[5] ?? null
     },
     accounts,
-    raw: instruction
+    raw: instruction as unknown as Record<string, unknown>
   };
 }

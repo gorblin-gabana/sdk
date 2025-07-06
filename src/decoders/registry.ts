@@ -14,11 +14,21 @@ export interface DecodedInstruction {
   /** The program ID that owns this instruction */
   programId: string;
   /** Parsed instruction data specific to the instruction type */
-  data: any;
+  data: Record<string, unknown>;
   /** Array of account information used by this instruction */
-  accounts: any[];
+  accounts: string[];
   /** Optional raw instruction data for debugging/reference */
-  raw?: any;
+  raw?: Record<string, unknown>;
+}
+
+/**
+ * Raw instruction interface for type safety
+ */
+export interface RawInstruction {
+  programId: string;
+  data?: Uint8Array | number[];
+  accounts?: string[];
+  programAddress?: { toString(): string };
 }
 
 /**
@@ -90,7 +100,7 @@ export class DecoderRegistry {
   /**
    * Decode an instruction using the appropriate decoder
    */
-  decode(instruction: any): DecodedInstruction {
+  decode(instruction: RawInstruction): DecodedInstruction {
     // First map programId to programName
     const programName = this.programIdToName.get(instruction.programId);
 
@@ -98,9 +108,9 @@ export class DecoderRegistry {
       return {
         type: 'unknown',
         programId: instruction.programId,
-        data: instruction.data,
-        accounts: instruction.accounts || [],
-        raw: instruction
+        data: { raw: instruction.data },
+        accounts: instruction.accounts ?? [],
+        raw: instruction as unknown as Record<string, unknown>
       };
     }
 
@@ -111,9 +121,9 @@ export class DecoderRegistry {
       return {
         type: 'unknown',
         programId: instruction.programId,
-        data: instruction.data,
-        accounts: instruction.accounts || [],
-        raw: instruction
+        data: { raw: instruction.data },
+        accounts: instruction.accounts ?? [],
+        raw: instruction as unknown as Record<string, unknown>
       };
     }
 
@@ -128,8 +138,8 @@ export class DecoderRegistry {
           error: (error as Error).message,
           originalData: instruction.data
         },
-        accounts: instruction.accounts || [],
-        raw: instruction
+        accounts: instruction.accounts ?? [],
+        raw: instruction as unknown as Record<string, unknown>
       };
     }
   }
@@ -167,27 +177,27 @@ export class DecoderRegistry {
     return Array.from(this.decoders.keys());
   }
 
-  private createRawResult(instruction: any): DecodedInstruction {
-    const data = instruction.data || new Uint8Array(0);
+  private createRawResult(instruction: RawInstruction): DecodedInstruction {
+    const data = instruction.data ?? new Uint8Array(0);
     return {
       type: 'unknown',
-      programId: instruction.programAddress?.toString() || instruction.programId,
+      programId: instruction.programAddress?.toString() ?? instruction.programId,
       data: {
         raw: Array.from(data),
         hex: this.toHexString(data)
       },
-      accounts: instruction.accounts || [],
-      raw: instruction
+      accounts: instruction.accounts ?? [],
+      raw: instruction as unknown as Record<string, unknown>
     };
   }
 
-  private createErrorResult(instruction: any, error: string): DecodedInstruction {
+  private createErrorResult(instruction: RawInstruction, error: string): DecodedInstruction {
     return {
       type: 'error',
-      programId: instruction.programAddress?.toString() || instruction.programId,
+      programId: instruction.programAddress?.toString() ?? instruction.programId,
       data: { error },
-      accounts: instruction.accounts || [],
-      raw: instruction
+      accounts: instruction.accounts ?? [],
+      raw: instruction as unknown as Record<string, unknown>
     };
   }
 

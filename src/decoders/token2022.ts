@@ -114,69 +114,69 @@ export function decodeToken2022Instruction(instruction: Token2022InstructionData
   const programId = getToken2022ProgramId();
 
   switch (instructionType) {
-    case Token2022Instruction.Transfer:
+    case Token2022Instruction.Transfer as number:
       return decodeTransfer(instruction, programId);
-    case Token2022Instruction.MintTo:
+    case Token2022Instruction.MintTo as number:
       return decodeMintTo(instruction, programId);
-    case Token2022Instruction.Burn:
+    case Token2022Instruction.Burn as number:
       return decodeBurn(instruction, programId);
-    case Token2022Instruction.InitializeMint:
+    case Token2022Instruction.InitializeMint as number:
       return decodeInitializeMint(instruction, programId);
-    case Token2022Instruction.InitializeAccount:
+    case Token2022Instruction.InitializeAccount as number:
       return decodeInitializeAccount(instruction, programId);
-    case Token2022Instruction.SetAuthority:
+    case Token2022Instruction.SetAuthority as number:
       return decodeSetAuthority(instruction, programId);
-    case Token2022Instruction.Approve:
+    case Token2022Instruction.Approve as number:
       return decodeApprove(instruction, programId);
-    case Token2022Instruction.Revoke:
+    case Token2022Instruction.Revoke as number:
       return decodeRevoke(instruction, programId);
-    case Token2022Instruction.CloseAccount:
+    case Token2022Instruction.CloseAccount as number:
       return decodeCloseAccount(instruction, programId);
-    case Token2022Instruction.FreezeAccount:
+    case Token2022Instruction.FreezeAccount as number:
       return decodeFreezeAccount(instruction, programId);
-    case Token2022Instruction.ThawAccount:
+    case Token2022Instruction.ThawAccount as number:
       return decodeThawAccount(instruction, programId);
-    case Token2022Instruction.TransferChecked:
+    case Token2022Instruction.TransferChecked as number:
       return decodeTransferChecked(instruction, programId);
-    case Token2022Instruction.ApproveChecked:
+    case Token2022Instruction.ApproveChecked as number:
       return decodeApproveChecked(instruction, programId);
-    case Token2022Instruction.MintToChecked:
+    case Token2022Instruction.MintToChecked as number:
       return decodeMintToChecked(instruction, programId);
-    case Token2022Instruction.BurnChecked:
+    case Token2022Instruction.BurnChecked as number:
       return decodeBurnChecked(instruction, programId);
-    case Token2022Instruction.InitializeMint2:
+    case Token2022Instruction.InitializeMint2 as number:
       return decodeInitializeMint2(instruction, programId);
-    case Token2022Instruction.InitializeAccount2:
+    case Token2022Instruction.InitializeAccount2 as number:
       return decodeInitializeAccount2(instruction, programId);
-    case Token2022Instruction.InitializeAccount3:
+    case Token2022Instruction.InitializeAccount3 as number:
       return decodeInitializeAccount3(instruction, programId);
-    case Token2022Instruction.SyncNative:
+    case Token2022Instruction.SyncNative as number:
       return decodeSyncNative(instruction, programId);
 
     // Token-2022 specific instructions
-    case Token2022Instruction.GetAccountDataSize:
+    case Token2022Instruction.GetAccountDataSize as number:
       return decodeGetAccountDataSize(instruction, programId);
-    case Token2022Instruction.InitializeImmutableOwner:
+    case Token2022Instruction.InitializeImmutableOwner as number:
       return decodeInitializeImmutableOwner(instruction, programId);
-    case Token2022Instruction.AmountToUiAmount:
+    case Token2022Instruction.AmountToUiAmount as number:
       return decodeAmountToUiAmount(instruction, programId);
-    case Token2022Instruction.UiAmountToAmount:
+    case Token2022Instruction.UiAmountToAmount as number:
       return decodeUiAmountToAmount(instruction, programId);
-    case Token2022Instruction.InitializeMintCloseAuthority:
+    case Token2022Instruction.InitializeMintCloseAuthority as number:
       return decodeInitializeMintCloseAuthority(instruction, programId);
-    case Token2022Instruction.Reallocate:
+    case Token2022Instruction.Reallocate as number:
       return decodeReallocate(instruction, programId);
-    case Token2022Instruction.CreateNativeMint:
+    case Token2022Instruction.CreateNativeMint as number:
       return decodeCreateNativeMint(instruction, programId);
-    case Token2022Instruction.InitializeNonTransferableMint:
+    case Token2022Instruction.InitializeNonTransferableMint as number:
       return decodeInitializeNonTransferableMint(instruction, programId);
-    case Token2022Instruction.WithdrawExcessLamports:
+    case Token2022Instruction.WithdrawExcessLamports as number:
       return decodeWithdrawExcessLamports(instruction, programId);
-    case Token2022Instruction.InitializePermanentDelegate:
+    case Token2022Instruction.InitializePermanentDelegate as number:
       return decodeInitializePermanentDelegate(instruction, programId);
 
     // NFT/Metadata instructions
-    case Token2022Instruction.InitializeNFTMetadata:
+    case Token2022Instruction.InitializeNFTMetadata as number:
       return decodeInitializeNFTMetadata(instruction, programId);
 
     // Extended Token-2022 instructions (beyond standard range)
@@ -191,7 +191,7 @@ export function decodeToken2022Instruction(instruction: Token2022InstructionData
           rawData: Array.from(instruction.data || [])
         },
         accounts: instruction.accounts,
-        raw: instruction
+        raw: instruction as unknown as Record<string, unknown>
       };
 
     case 232:
@@ -205,7 +205,7 @@ export function decodeToken2022Instruction(instruction: Token2022InstructionData
           rawData: Array.from(instruction.data)
         },
         accounts: instruction.accounts,
-        raw: instruction
+        raw: instruction as unknown as Record<string, unknown>
       };
 
     default:
@@ -220,7 +220,7 @@ export function decodeToken2022Instruction(instruction: Token2022InstructionData
           rawData: Array.from(instruction.data || [])
         },
         accounts: instruction.accounts || [],
-        raw: instruction
+        raw: instruction as unknown as Record<string, unknown>
       };
   }
 }
@@ -972,19 +972,19 @@ function bufferToBase58(buffer: Uint8Array | number[]): string {
 
 function getAuthorityTypeName(type: number): string {
   switch (type) {
-    case AuthorityType.MintTokens: return 'MintTokens';
-    case AuthorityType.FreezeAccount: return 'FreezeAccount';
-    case AuthorityType.AccountOwner: return 'AccountOwner';
-    case AuthorityType.CloseAccount: return 'CloseAccount';
-    case AuthorityType.TransferFeeConfig: return 'TransferFeeConfig';
-    case AuthorityType.WithheldWithdraw: return 'WithheldWithdraw';
-    case AuthorityType.CloseMint: return 'CloseMint';
-    case AuthorityType.InterestRate: return 'InterestRate';
-    case AuthorityType.PermanentDelegate: return 'PermanentDelegate';
-    case AuthorityType.ConfidentialTransferMint: return 'ConfidentialTransferMint';
-    case AuthorityType.TransferHookProgramId: return 'TransferHookProgramId';
-    case AuthorityType.ConfidentialTransferFeeConfig: return 'ConfidentialTransferFeeConfig';
-    case AuthorityType.MetadataPointer: return 'MetadataPointer';
+    case AuthorityType.MintTokens as number: return 'MintTokens';
+    case AuthorityType.FreezeAccount as number: return 'FreezeAccount';
+    case AuthorityType.AccountOwner as number: return 'AccountOwner';
+    case AuthorityType.CloseAccount as number: return 'CloseAccount';
+    case AuthorityType.TransferFeeConfig as number: return 'TransferFeeConfig';
+    case AuthorityType.WithheldWithdraw as number: return 'WithheldWithdraw';
+    case AuthorityType.CloseMint as number: return 'CloseMint';
+    case AuthorityType.InterestRate as number: return 'InterestRate';
+    case AuthorityType.PermanentDelegate as number: return 'PermanentDelegate';
+    case AuthorityType.ConfidentialTransferMint as number: return 'ConfidentialTransferMint';
+    case AuthorityType.TransferHookProgramId as number: return 'TransferHookProgramId';
+    case AuthorityType.ConfidentialTransferFeeConfig as number: return 'ConfidentialTransferFeeConfig';
+    case AuthorityType.MetadataPointer as number: return 'MetadataPointer';
     default: return `Unknown (${type})`;
   }
 }

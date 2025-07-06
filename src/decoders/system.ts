@@ -128,7 +128,7 @@ export function decodeSystemInstruction(data: Uint8Array): DecodedSystemInstruct
     const instructionType = reader.readUint32();
 
     switch (instructionType) {
-      case SystemInstructionType.Transfer:
+      case SystemInstructionType.Transfer as number:
         if (reader.canRead(8)) {
           const lamports = reader.readBigUint64();
           return {
@@ -146,7 +146,7 @@ export function decodeSystemInstruction(data: Uint8Array): DecodedSystemInstruct
           accounts: []
         };
 
-      case SystemInstructionType.CreateAccount:
+      case SystemInstructionType.CreateAccount as number:
         if (reader.canRead(16)) { // 8 bytes lamports + 8 bytes space
           const lamports = reader.readBigUint64();
           const space = reader.readBigUint64();
@@ -166,7 +166,7 @@ export function decodeSystemInstruction(data: Uint8Array): DecodedSystemInstruct
           accounts: []
         };
 
-      case SystemInstructionType.Assign:
+      case SystemInstructionType.Assign as number:
         return {
           type: 'system-assign',
           instruction: 'Assign account to program',
@@ -174,7 +174,7 @@ export function decodeSystemInstruction(data: Uint8Array): DecodedSystemInstruct
           accounts: []
         };
 
-      case SystemInstructionType.Allocate:
+      case SystemInstructionType.Allocate as number:
         if (reader.canRead(8)) {
           const space = reader.readBigUint64();
           return {
@@ -192,7 +192,7 @@ export function decodeSystemInstruction(data: Uint8Array): DecodedSystemInstruct
           accounts: []
         };
 
-      case SystemInstructionType.CreateAccountWithSeed:
+      case SystemInstructionType.CreateAccountWithSeed as number:
         return {
           type: 'system-create-account-with-seed',
           instruction: 'Create account with seed',
@@ -200,7 +200,7 @@ export function decodeSystemInstruction(data: Uint8Array): DecodedSystemInstruct
           accounts: []
         };
 
-      case SystemInstructionType.TransferWithSeed:
+      case SystemInstructionType.TransferWithSeed as number:
         if (reader.canRead(8)) {
           const lamports = reader.readBigUint64();
           return {
@@ -218,7 +218,7 @@ export function decodeSystemInstruction(data: Uint8Array): DecodedSystemInstruct
           accounts: []
         };
 
-      case SystemInstructionType.InitializeNonceAccount:
+      case SystemInstructionType.InitializeNonceAccount as number:
         return {
           type: 'system-initialize-nonce',
           instruction: 'Initialize nonce account',
@@ -226,7 +226,7 @@ export function decodeSystemInstruction(data: Uint8Array): DecodedSystemInstruct
           accounts: []
         };
 
-      case SystemInstructionType.AdvanceNonceAccount:
+      case SystemInstructionType.AdvanceNonceAccount as number:
         return {
           type: 'system-advance-nonce',
           instruction: 'Advance nonce account',
@@ -234,7 +234,7 @@ export function decodeSystemInstruction(data: Uint8Array): DecodedSystemInstruct
           accounts: []
         };
 
-      case SystemInstructionType.WithdrawNonceAccount:
+      case SystemInstructionType.WithdrawNonceAccount as number:
         if (reader.canRead(8)) {
           const lamports = reader.readBigUint64();
           return {
@@ -252,7 +252,7 @@ export function decodeSystemInstruction(data: Uint8Array): DecodedSystemInstruct
           accounts: []
         };
 
-      case SystemInstructionType.AuthorizeNonceAccount:
+      case SystemInstructionType.AuthorizeNonceAccount as number:
         return {
           type: 'system-authorize-nonce',
           instruction: 'Authorize nonce account',
@@ -260,7 +260,7 @@ export function decodeSystemInstruction(data: Uint8Array): DecodedSystemInstruct
           accounts: []
         };
 
-      case SystemInstructionType.UpgradeNonceAccount:
+      case SystemInstructionType.UpgradeNonceAccount as number:
         return {
           type: 'system-upgrade-nonce',
           instruction: 'Upgrade nonce account',

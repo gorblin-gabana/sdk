@@ -48,14 +48,24 @@ export async function getAndDecodeTransaction({
   ensureFallbackDecoders(mapped, registry);
   const decoded = mapped.map((ix: TransactionInstruction & { type: string; programId: string }) => {
     try {
-      return registry.decode(ix);
+      // Convert instruction to the format expected by registry
+      const instructionForRegistry = {
+        programId: ix.programId,
+        data: ix.data,
+        accounts: (ix.accounts || []).map((accountIndex: number) =>
+          tx.transaction.message.accountKeys[accountIndex] || 'unknown'
+        )
+      };
+      return registry.decode(instructionForRegistry);
     } catch (e: unknown) {
       return {
         type: 'error',
         programId: ix.programId,
         data: { error: e instanceof Error ? e.message : String(e) },
-        accounts: ix.accounts || [],
-        raw: ix
+        accounts: (ix.accounts || []).map((accountIndex: number) =>
+          tx.transaction.message.accountKeys[accountIndex] || 'unknown'
+        ),
+        raw: ix as unknown as Record<string, unknown>
       };
     }
   });

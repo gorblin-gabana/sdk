@@ -656,7 +656,7 @@ export class RpcClient {
        // Filter to reasonable metadata strings (not too long, not too short)
        const validStrings = potentialStrings.filter(str =>
          str.length >= 2 && str.length <= 64 &&
-         /^[a-zA-Z0-9\s\-_\.\/\:]+$/.test(str)
+         /^[a-zA-Z0-9\s\-_./:]+$/.test(str)
        );
 
        if (validStrings.length >= 2) {
