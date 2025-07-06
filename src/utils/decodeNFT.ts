@@ -35,7 +35,7 @@ export function decodeNFT(data: Buffer | Uint8Array): DecodedNFTMetadata {
     name,
     symbol,
     uri,
-    sellerFeeBasisPoints,
+    sellerFeeBasisPoints
     // TODO: parse creators, collection, uses, editionNonce, updateAuthority, etc.
   };
 }

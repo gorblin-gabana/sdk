@@ -1,11 +1,13 @@
 // Transaction utilities for fetching, sending, and building transactions
-import { Address, address } from '@solana/addresses';
-import { IInstruction } from '@solana/instructions';
+import type { Address } from '@solana/addresses';
+import { address } from '@solana/addresses';
+import type { IInstruction } from '@solana/instructions';
 import { createTransactionMessage } from '@solana/transaction-messages';
 import { setTransactionMessageFeePayer } from '@solana/transaction-messages';
 import { setTransactionMessageLifetimeUsingBlockhash } from '@solana/transaction-messages';
 import { appendTransactionMessageInstruction } from '@solana/transaction-messages';
-import { compileTransaction, signTransaction, Transaction } from '@solana/transactions';
+import type { Transaction } from '@solana/transactions';
+import { compileTransaction, signTransaction } from '@solana/transactions';
 import { getLatestBlockhash } from '../rpc/transactions.js';
 import { pipe } from '@solana/functional';
 
@@ -16,7 +18,7 @@ export async function createTransaction({
   connection,
   instructions,
   feePayer,
-  signers,
+  signers
 }: {
   connection: any; // Should be Connection from @solana/kit
   instructions: IInstruction[];
@@ -29,7 +31,7 @@ export async function createTransaction({
     m => setTransactionMessageFeePayer(typeof feePayer === 'string' ? address(feePayer) : feePayer, m),
     m => setTransactionMessageLifetimeUsingBlockhash({
       blockhash: blockhash as any, // Cast to any to satisfy branded type
-      lastValidBlockHeight: BigInt(lastValidBlockHeight),
+      lastValidBlockHeight: BigInt(lastValidBlockHeight)
     }, m),
     m => {
       let out = m;
@@ -50,7 +52,7 @@ export async function createTransaction({
 export function getTransactionMetadata(tx: Transaction) {
   return {
     signatures: tx.signatures,
-    messageBytes: tx.messageBytes,
+    messageBytes: tx.messageBytes
     // No direct feePayer/recentBlockhash/instructions on Transaction type in kit
   };
 }

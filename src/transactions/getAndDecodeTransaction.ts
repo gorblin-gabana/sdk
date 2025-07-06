@@ -7,14 +7,14 @@ import { fetchTransactionBySignature } from '../rpc/fetchTransactionBySignature.
 export async function getAndDecodeTransaction({
   signature,
   registry,
-  connection,
+  connection
 }: {
   signature: string;
   registry: any;
   connection: any;
 }): Promise<{ decoded: any[]; meta: any }> {
   const tx = await fetchTransactionBySignature(connection, signature);
-  if (!tx || !tx.transaction || !tx.transaction.message || !tx.transaction.message.instructions) {
+  if (!tx?.transaction?.message?.instructions) {
     return { decoded: [], meta: null };
   }
   const mapped = tx.transaction.message.instructions.map((ix: any, i: number) => {
@@ -23,7 +23,7 @@ export async function getAndDecodeTransaction({
     if (programId === PROGRAM_IDS.token2022) type = 'token2022';
     else if (programId === PROGRAM_IDS.ata) type = 'ata';
     else if (programId === PROGRAM_IDS.metaplex) type = 'metaplex';
-    else type = 'unknown' + i;
+    else type = `unknown${  i}`;
     return { ...ix, type, programId };
   });
   ensureFallbackDecoders(mapped, registry);

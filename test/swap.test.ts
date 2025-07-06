@@ -1,4 +1,4 @@
-import * as swap from '../src/decoders/swap';
+import * as swap from '../src/decoders/swap.js';
 
 describe('Swap/DEX Decoders', () => {
   it('decodes swap', () => {

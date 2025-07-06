@@ -3,7 +3,7 @@
 export function base58ToBytes(b58: string): Uint8Array {
   const ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
   const BASE = 58;
-  let bytes = [0];
+  const bytes = [0];
   for (let i = 0; i < b58.length; i++) {
     const c = b58[i];
     const val = ALPHABET.indexOf(c);
@@ -25,7 +25,7 @@ export function base58ToBytes(b58: string): Uint8Array {
 
 export function bytesToBase58(bytes: Uint8Array): string {
   const ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-  let digits = [0];
+  const digits = [0];
   for (let i = 0; i < bytes.length; ++i) {
     let carry = bytes[i];
     for (let j = 0; j < digits.length; ++j) {

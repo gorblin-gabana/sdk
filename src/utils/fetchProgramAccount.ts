@@ -22,8 +22,8 @@ export async function fetchProgramAccount(address: string): Promise<ProgramAccou
       jsonrpc: '2.0',
       id: 1,
       method: 'getAccountInfo',
-      params: [address, { encoding: 'base64' }],
-    }),
+      params: [address, { encoding: 'base64' }]
+    })
   });
   const data = await res.json();
   if (!data?.result?.value) return null;
@@ -35,13 +35,13 @@ export async function fetchProgramAccount(address: string): Promise<ProgramAccou
     executable: info.executable,
     rentEpoch: info.rentEpoch,
     data: info.data[0], // base64
-    raw: Uint8Array.from(atob(info.data[0]), c => c.charCodeAt(0)),
+    raw: Uint8Array.from(atob(info.data[0]), c => c.charCodeAt(0))
   };
 }
 
 export async function fetchMintAccountFromRpc(mint: string): Promise<import('./decodeMintAccount.js').DecodedMintAccount | null> {
   const acct = await fetchProgramAccount(mint);
-  if (!acct || !acct.data) return null;
+  if (!acct?.data) return null;
   // Use all known token program IDs from config
   const config = getGorbchainConfig();
   const TOKEN_PROGRAMS = [
@@ -49,7 +49,7 @@ export async function fetchMintAccountFromRpc(mint: string): Promise<import('./d
     config.programIds?.token,
     config.programIds?.splToken,
     config.programIds?.mainnetToken,
-    'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA', // fallback SPL Token
+    'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' // fallback SPL Token
   ].filter(Boolean);
   if (acct.raw && acct.raw.length < 82) return null;
   if (!TOKEN_PROGRAMS.includes(acct.owner)) return null;

@@ -1,4 +1,4 @@
-import * as nameService from '../src/decoders/nameService';
+import * as nameService from '../src/decoders/nameService.js';
 
 describe('Name Service Decoders', () => {
   it('decodes registerName', () => {

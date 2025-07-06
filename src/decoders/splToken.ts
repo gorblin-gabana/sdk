@@ -1,226 +1,571 @@
-// SPL Token decoders and builders
-// Unified entry point for all SPL Token-related decoding in the SDK.
-// Only export public decoders/types. Helpers are private.
-import { IInstruction } from '@solana/instructions';
-import { decodeMintAccount, DecodedMintAccount } from '../utils/decodeMintAccount.js';
+// SPL Token Program Decoders - Built from Solana program specifications
+import type { DecodedInstruction } from './registry.js';
 import { getGorbchainConfig } from '../utils/gorbchainConfig.js';
-import { Address, address } from '@solana/addresses';
 
-// --- Instruction discriminators (SPL Token program spec) ---
-const MINT_TO = 7;
-const TRANSFER = 3;
-const BURN = 8;
-const SET_AUTHORITY = 6;
-const INITIALIZE_ACCOUNT = 1;
-const CLOSE_ACCOUNT = 9;
-
-// --- Private helpers ---
-function readUInt64LE(buffer: Buffer, offset = 0) {
-  const lower = buffer.readUInt32LE(offset);
-  const upper = buffer.readUInt32LE(offset + 4);
-  return upper * 0x100000000 + lower;
+// Get SPL Token program ID from config
+function getSPLTokenProgramId(): string {
+  const config = getGorbchainConfig();
+  return config.programIds?.splToken || 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
 }
 
-function writeUInt64LE(buffer: Buffer, value: bigint | number | string, offset = 0) {
-  // Fallback for ES2016: only support up to Number.MAX_SAFE_INTEGER
-  let n = typeof value === 'bigint' ? Number(value) : typeof value === 'string' ? Number(value) : value;
-  for (let i = 0; i < 8; i++) {
-    buffer[offset + i] = n & 0xff;
-    n = Math.floor(n / 256);
+// SPL Token Instruction Types (discriminators)
+export enum SPLTokenInstruction {
+  InitializeMint = 0,
+  InitializeAccount = 1,
+  InitializeMultisig = 2,
+  Transfer = 3,
+  Approve = 4,
+  Revoke = 5,
+  SetAuthority = 6,
+  MintTo = 7,
+  Burn = 8,
+  CloseAccount = 9,
+  FreezeAccount = 10,
+  ThawAccount = 11,
+  TransferChecked = 12,
+  ApproveChecked = 13,
+  MintToChecked = 14,
+  BurnChecked = 15,
+  InitializeAccount2 = 16,
+  SyncNative = 17,
+  InitializeAccount3 = 18,
+  InitializeMultisig2 = 19,
+  InitializeMint2 = 20,
+}
+
+// Authority Types
+export enum AuthorityType {
+  MintTokens = 0,
+  FreezeAccount = 1,
+  AccountOwner = 2,
+  CloseAccount = 3,
+}
+
+/**
+ * Main SPL Token decoder function
+ */
+export function decodeSPLTokenInstruction(instruction: any): DecodedInstruction {
+  const data = instruction.data;
+  if (!data || data.length === 0) {
+    throw new Error('Invalid SPL Token instruction: no data');
+  }
+
+  const instructionType = data[0];
+  const programId = getSPLTokenProgramId();
+
+  switch (instructionType) {
+    case SPLTokenInstruction.Transfer:
+      return decodeTransfer(instruction, programId);
+    case SPLTokenInstruction.MintTo:
+      return decodeMintTo(instruction, programId);
+    case SPLTokenInstruction.Burn:
+      return decodeBurn(instruction, programId);
+    case SPLTokenInstruction.InitializeMint:
+      return decodeInitializeMint(instruction, programId);
+    case SPLTokenInstruction.InitializeAccount:
+      return decodeInitializeAccount(instruction, programId);
+    case SPLTokenInstruction.SetAuthority:
+      return decodeSetAuthority(instruction, programId);
+    case SPLTokenInstruction.Approve:
+      return decodeApprove(instruction, programId);
+    case SPLTokenInstruction.Revoke:
+      return decodeRevoke(instruction, programId);
+    case SPLTokenInstruction.CloseAccount:
+      return decodeCloseAccount(instruction, programId);
+    case SPLTokenInstruction.FreezeAccount:
+      return decodeFreezeAccount(instruction, programId);
+    case SPLTokenInstruction.ThawAccount:
+      return decodeThawAccount(instruction, programId);
+    case SPLTokenInstruction.TransferChecked:
+      return decodeTransferChecked(instruction, programId);
+    case SPLTokenInstruction.ApproveChecked:
+      return decodeApproveChecked(instruction, programId);
+    case SPLTokenInstruction.MintToChecked:
+      return decodeMintToChecked(instruction, programId);
+    case SPLTokenInstruction.BurnChecked:
+      return decodeBurnChecked(instruction, programId);
+    case SPLTokenInstruction.SyncNative:
+      return decodeSyncNative(instruction, programId);
+    default:
+      return {
+        type: 'spl-token-unknown',
+        programId,
+        data: {
+          instructionType,
+          error: `Unknown SPL Token instruction type: ${instructionType}`
+        },
+        accounts: instruction.accounts || [],
+        raw: instruction
+      };
   }
 }
 
-// --- Public decoders ---
-export function decodeMintInstruction(ix: IInstruction) {
-  if (!ix.data || ix.data[0] !== MINT_TO) throw new Error('Not a MintTo instruction');
-  const data = Buffer.from(ix.data);
-  const amount = readUInt64LE(data, 1);
+/**
+ * Enhanced SPL Token instruction decoder with amount extraction
+ */
+export function decodeSPLTokenInstructionWithDetails(data: Uint8Array): {
+  type: string;
+  instruction: string;
+  amount?: bigint;
+  decimals?: number;
+  accounts: any[];
+} {
+  if (data.length === 0) {
+    return {
+      type: 'spl-token-unknown',
+      instruction: 'Unknown SPL Token instruction',
+      accounts: []
+    };
+  }
+
+  const instructionType = data[0];
+
+  switch (instructionType) {
+    case 3: // Transfer
+      if (data.length >= 9) {
+        const amount = new DataView(data.buffer, data.byteOffset + 1, 8).getBigUint64(0, true);
+        return {
+          type: 'spl-token-transfer',
+          instruction: 'Transfer tokens',
+          amount,
+          accounts: []
+        };
+      }
+      break;
+
+    case 7: // MintTo
+      if (data.length >= 9) {
+        const amount = new DataView(data.buffer, data.byteOffset + 1, 8).getBigUint64(0, true);
+        return {
+          type: 'spl-token-mint-to',
+          instruction: 'Mint tokens',
+          amount,
+          accounts: []
+        };
+      }
+      break;
+
+    case 8: // Burn
+      if (data.length >= 9) {
+        const amount = new DataView(data.buffer, data.byteOffset + 1, 8).getBigUint64(0, true);
+        return {
+          type: 'spl-token-burn',
+          instruction: 'Burn tokens',
+          amount,
+          accounts: []
+        };
+      }
+      break;
+
+    case 4: // Approve
+      if (data.length >= 9) {
+        const amount = new DataView(data.buffer, data.byteOffset + 1, 8).getBigUint64(0, true);
+        return {
+          type: 'spl-token-approve',
+          instruction: 'Approve token spending',
+          amount,
+          accounts: []
+        };
+      }
+      break;
+
+    case 5: // Revoke
+      return {
+        type: 'spl-token-revoke',
+        instruction: 'Revoke token approval',
+        accounts: []
+      };
+
+    case 9: // CloseAccount
+      return {
+        type: 'spl-token-close-account',
+        instruction: 'Close token account',
+        accounts: []
+      };
+
+    case 10: // FreezeAccount
+      return {
+        type: 'spl-token-freeze-account',
+        instruction: 'Freeze token account',
+        accounts: []
+      };
+
+    case 11: // ThawAccount
+      return {
+        type: 'spl-token-thaw-account',
+        instruction: 'Thaw token account',
+        accounts: []
+      };
+
+    case 0: // InitializeMint
+      if (data.length >= 51) {
+        const decimals = data[1];
+        return {
+          type: 'spl-token-initialize-mint',
+          instruction: `Initialize mint with ${decimals} decimals`,
+          decimals,
+          accounts: []
+        };
+      }
+      break;
+
+    case 1: // InitializeAccount
+      return {
+        type: 'spl-token-initialize-account',
+        instruction: 'Initialize token account',
+        accounts: []
+      };
+
+    default:
+      return {
+        type: 'spl-token-unknown',
+        instruction: `Unknown SPL Token instruction (type: ${instructionType})`,
+        accounts: []
+      };
+  }
+
   return {
-    type: 'mint',
-    amount: amount.toString(),
-    mint: ix.accounts?.[0]?.address ?? '',
-    destination: ix.accounts?.[1]?.address ?? '',
-    authority: ix.accounts?.[2]?.address ?? '',
-    multiSigners: (ix.accounts?.slice(3) ?? []).map(k => k.address),
+    type: 'spl-token-unknown',
+    instruction: 'Unknown SPL Token instruction',
+    accounts: []
   };
 }
 
-export function decodeTransferInstruction(ix: IInstruction) {
-  if (!ix.data || ix.data[0] !== TRANSFER) throw new Error('Not a Transfer instruction');
-  const data = Buffer.from(ix.data);
-  const amount = readUInt64LE(data, 1);
+/**
+ * Decode base58 instruction data to Uint8Array
+ */
+export function decodeInstructionData(base58Data: string): Uint8Array {
+  try {
+    // Simple base58 decode - in production use proper base58 library
+    const bytes = new Uint8Array(Buffer.from(base58Data, 'base64'));
+    return bytes;
+  } catch (error) {
+    console.warn('Failed to decode instruction data:', error);
+    return new Uint8Array(0);
+  }
+}
+
+/**
+ * Decode Transfer instruction (3)
+ * Layout: [u8 instruction, u64 amount]
+ */
+function decodeTransfer(instruction: any, programId: string): DecodedInstruction {
+  const data = instruction.data;
+  if (data.length !== 9) {
+    throw new Error('Invalid Transfer instruction data length');
+  }
+
+  const amount = readU64LE(data, 1);
+  const accounts = instruction.accounts || [];
+
   return {
-    type: 'transfer',
-    amount: amount.toString(),
-    source: {
-      address: ix.accounts?.[0]?.address ?? '',
+    type: 'spl-token-transfer',
+    programId,
+    data: {
+      amount: amount.toString(),
+      source: accounts[0]?.address || accounts[0],
+      destination: accounts[1]?.address || accounts[1],
+      authority: accounts[2]?.address || accounts[2],
+      signers: accounts.slice(3).map((acc: any) => acc.address || acc)
     },
-    destination: {
-      address: ix.accounts?.[1]?.address ?? '',
-    },
-    authority: {
-      address: ix.accounts?.[2]?.address ?? '',
-    },
-    multiSigners: (ix.accounts?.slice(3) ?? []).map(k => ({
-      address: k.address,
-    })),
-    raw: Array.from(data).map(x => x.toString(16).padStart(2, '0')).join(''),
+    accounts,
+    raw: instruction
   };
 }
 
-export function decodeBurnInstruction(ix: IInstruction) {
-  if (!ix.data || ix.data[0] !== BURN) throw new Error('Not a Burn instruction');
-  const data = Buffer.from(ix.data);
-  const amount = readUInt64LE(data, 1);
+/**
+ * Decode MintTo instruction (7)
+ * Layout: [u8 instruction, u64 amount]
+ */
+function decodeMintTo(instruction: any, programId: string): DecodedInstruction {
+  const data = instruction.data;
+  if (data.length !== 9) {
+    throw new Error('Invalid MintTo instruction data length');
+  }
+
+  const amount = readU64LE(data, 1);
+  const accounts = instruction.accounts || [];
+
   return {
-    type: 'burn',
-    amount: amount.toString(),
-    account: ix.accounts?.[0]?.address ?? '',
-    mint: ix.accounts?.[1]?.address ?? '',
-    authority: ix.accounts?.[2]?.address ?? '',
-    multiSigners: (ix.accounts?.slice(3) ?? []).map(k => k.address),
+    type: 'spl-token-mint-to',
+    programId,
+    data: {
+      amount: amount.toString(),
+      mint: accounts[0]?.address || accounts[0],
+      account: accounts[1]?.address || accounts[1],
+      authority: accounts[2]?.address || accounts[2],
+      signers: accounts.slice(3).map((acc: any) => acc.address || acc)
+    },
+    accounts,
+    raw: instruction
   };
 }
 
-export function decodeSetAuthorityInstruction(ix: IInstruction) {
-  if (!ix.data || ix.data[0] !== SET_AUTHORITY) throw new Error('Not a SetAuthority instruction');
-  const data = Buffer.from(ix.data);
+/**
+ * Decode Burn instruction (8)
+ * Layout: [u8 instruction, u64 amount]
+ */
+function decodeBurn(instruction: any, programId: string): DecodedInstruction {
+  const data = instruction.data;
+  if (data.length !== 9) {
+    throw new Error('Invalid Burn instruction data length');
+  }
+
+  const amount = readU64LE(data, 1);
+  const accounts = instruction.accounts || [];
+
+  return {
+    type: 'spl-token-burn',
+    programId,
+    data: {
+      amount: amount.toString(),
+      account: accounts[0]?.address || accounts[0],
+      mint: accounts[1]?.address || accounts[1],
+      authority: accounts[2]?.address || accounts[2],
+      signers: accounts.slice(3).map((acc: any) => acc.address || acc)
+    },
+    accounts,
+    raw: instruction
+  };
+}
+
+/**
+ * Decode InitializeMint instruction (0)
+ * Layout: [u8 instruction, u8 decimals, [u8; 32] mint_authority, Option<[u8; 32]> freeze_authority]
+ */
+function decodeInitializeMint(instruction: any, programId: string): DecodedInstruction {
+  const data = instruction.data;
+  if (data.length !== 67) {
+    throw new Error('Invalid InitializeMint instruction data length');
+  }
+
+  const decimals = data[1];
+  const mintAuthority = data.slice(2, 34);
+  const freezeAuthorityOption = data[34];
+  const freezeAuthority = freezeAuthorityOption ? data.slice(35, 67) : null;
+
+  return {
+    type: 'spl-token-initialize-mint',
+    programId,
+    data: {
+      decimals,
+      mintAuthority: bufferToBase58(mintAuthority),
+      freezeAuthority: freezeAuthority ? bufferToBase58(freezeAuthority) : null
+    },
+    accounts: instruction.accounts || [],
+    raw: instruction
+  };
+}
+
+/**
+ * Decode InitializeAccount instruction (1)
+ */
+function decodeInitializeAccount(instruction: any, programId: string): DecodedInstruction {
+  const accounts = instruction.accounts || [];
+
+  return {
+    type: 'spl-token-initialize-account',
+    programId,
+    data: {
+      account: accounts[0]?.address || accounts[0],
+      mint: accounts[1]?.address || accounts[1],
+      owner: accounts[2]?.address || accounts[2],
+      rentSysvar: accounts[3]?.address || accounts[3]
+    },
+    accounts,
+    raw: instruction
+  };
+}
+
+/**
+ * Decode SetAuthority instruction (6)
+ * Layout: [u8 instruction, u8 authority_type, Option<[u8; 32]> new_authority]
+ */
+function decodeSetAuthority(instruction: any, programId: string): DecodedInstruction {
+  const data = instruction.data;
+  if (data.length !== 35) {
+    throw new Error('Invalid SetAuthority instruction data length');
+  }
+
   const authorityType = data[1];
   const newAuthorityOption = data[2];
-  let newAuthority = null;
-  if (newAuthorityOption) {
-    newAuthority = Buffer.from(data.slice(3, 35)).toString('hex');
-  }
-  return {
-    type: 'setAuthority',
-    account: ix.accounts?.[0]?.address ?? '',
-    authorityType,
-    newAuthority,
-    authority: ix.accounts?.[1]?.address ?? '',
-    multiSigners: (ix.accounts?.slice(2) ?? []).map(k => k.address),
-  };
-}
+  const newAuthority = newAuthorityOption ? data.slice(3, 35) : null;
 
-export function decodeCreateAccountInstruction(ix: IInstruction) {
-  if (!ix.data || ix.data[0] !== INITIALIZE_ACCOUNT) throw new Error('Not an InitializeAccount instruction');
   return {
-    type: 'createAccount',
-    account: ix.accounts?.[0]?.address ?? '',
-    mint: ix.accounts?.[1]?.address ?? '',
-    owner: ix.accounts?.[2]?.address ?? '',
-    rent: ix.accounts?.[3]?.address ?? '',
-  };
-}
-
-export function decodeCloseAccountInstruction(ix: IInstruction) {
-  if (!ix.data || ix.data[0] !== CLOSE_ACCOUNT) throw new Error('Not a CloseAccount instruction');
-  return {
-    type: 'closeAccount',
-    account: ix.accounts?.[0]?.address ?? '',
-    destination: ix.accounts?.[1]?.address ?? '',
-    authority: ix.accounts?.[2]?.address ?? '',
-    multiSigners: (ix.accounts?.slice(3) ?? []).map(k => k.address),
+    type: 'spl-token-set-authority',
+    programId,
+    data: {
+      authorityType: getAuthorityTypeName(authorityType),
+      newAuthority: newAuthority ? bufferToBase58(newAuthority) : null
+    },
+    accounts: instruction.accounts || [],
+    raw: instruction
   };
 }
 
 /**
- * Create a MintTo instruction (mint tokens to an account)
+ * Decode other instructions with simple layouts
  */
-export function createMintToInstruction({
-  mint,
-  destination,
-  authority,
-  amount,
-  multiSigners = [],
-}: {
-  mint: string | Address;
-  destination: string | Address;
-  authority: string | Address;
-  amount: bigint | number | string;
-  multiSigners?: (string | Address)[];
-}): IInstruction {
-  const programAddress = address(getGorbchainConfig().programIds?.splToken || 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
-  const data = new Uint8Array(9);
-  data[0] = MINT_TO;
-  let n = typeof amount === 'bigint' ? amount : BigInt(amount);
-  for (let i = 0; i < 8; i++) {
-    data[1 + i] = Number(n & BigInt(255));
-    n = n / BigInt(256);
+function decodeApprove(instruction: any, programId: string): DecodedInstruction {
+  const data = instruction.data;
+  const amount = readU64LE(data, 1);
+
+  return {
+    type: 'spl-token-approve',
+    programId,
+    data: { amount: amount.toString() },
+    accounts: instruction.accounts || [],
+    raw: instruction
+  };
+}
+
+function decodeRevoke(instruction: any, programId: string): DecodedInstruction {
+  return {
+    type: 'spl-token-revoke',
+    programId,
+    data: {},
+    accounts: instruction.accounts || [],
+    raw: instruction
+  };
+}
+
+function decodeCloseAccount(instruction: any, programId: string): DecodedInstruction {
+  return {
+    type: 'spl-token-close-account',
+    programId,
+    data: {},
+    accounts: instruction.accounts || [],
+    raw: instruction
+  };
+}
+
+function decodeFreezeAccount(instruction: any, programId: string): DecodedInstruction {
+  return {
+    type: 'spl-token-freeze-account',
+    programId,
+    data: {},
+    accounts: instruction.accounts || [],
+    raw: instruction
+  };
+}
+
+function decodeThawAccount(instruction: any, programId: string): DecodedInstruction {
+  return {
+    type: 'spl-token-thaw-account',
+    programId,
+    data: {},
+    accounts: instruction.accounts || [],
+    raw: instruction
+  };
+}
+
+function decodeTransferChecked(instruction: any, programId: string): DecodedInstruction {
+  const data = instruction.data;
+  const amount = readU64LE(data, 1);
+  const decimals = data[9];
+
+  return {
+    type: 'spl-token-transfer-checked',
+    programId,
+    data: { amount: amount.toString(), decimals },
+    accounts: instruction.accounts || [],
+    raw: instruction
+  };
+}
+
+function decodeApproveChecked(instruction: any, programId: string): DecodedInstruction {
+  const data = instruction.data;
+  const amount = readU64LE(data, 1);
+  const decimals = data[9];
+
+  return {
+    type: 'spl-token-approve-checked',
+    programId,
+    data: { amount: amount.toString(), decimals },
+    accounts: instruction.accounts || [],
+    raw: instruction
+  };
+}
+
+function decodeMintToChecked(instruction: any, programId: string): DecodedInstruction {
+  const data = instruction.data;
+  const amount = readU64LE(data, 1);
+  const decimals = data[9];
+
+  return {
+    type: 'spl-token-mint-to-checked',
+    programId,
+    data: { amount: amount.toString(), decimals },
+    accounts: instruction.accounts || [],
+    raw: instruction
+  };
+}
+
+function decodeBurnChecked(instruction: any, programId: string): DecodedInstruction {
+  const data = instruction.data;
+  const amount = readU64LE(data, 1);
+  const decimals = data[9];
+
+  return {
+    type: 'spl-token-burn-checked',
+    programId,
+    data: { amount: amount.toString(), decimals },
+    accounts: instruction.accounts || [],
+    raw: instruction
+  };
+}
+
+function decodeSyncNative(instruction: any, programId: string): DecodedInstruction {
+  return {
+    type: 'spl-token-sync-native',
+    programId,
+    data: {},
+    accounts: instruction.accounts || [],
+    raw: instruction
+  };
+}
+
+// Utility functions
+function readU64LE(buffer: Uint8Array | number[], offset: number): string {
+  // Read 64-bit little-endian integer as string to avoid BigInt requirement
+  let result = 0;
+  let multiplier = 1;
+
+  // Read the lower 32 bits
+  for (let i = 0; i < 4; i++) {
+    result += buffer[offset + i] * multiplier;
+    multiplier *= 256;
   }
-  return {
-    programAddress,
-    accounts: [
-      { address: address(mint), role: 1 }, // writable
-      { address: address(destination), role: 1 }, // writable
-      { address: address(authority), role: 2 }, // writable signer
-      ...multiSigners.map((k) => ({ address: address(k), role: 2 })), // writable signer
-    ],
-    data,
-  };
-}
 
-/**
- * Create a Transfer instruction (transfer tokens between accounts)
- */
-export function createTransferInstruction({
-  source,
-  destination,
-  authority,
-  amount,
-  multiSigners = [],
-}: {
-  source: string | Address;
-  destination: string | Address;
-  authority: string | Address;
-  amount: bigint | number | string;
-  multiSigners?: (string | Address)[];
-}): IInstruction {
-  const programAddress = address(getGorbchainConfig().programIds?.splToken || 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
-  const data = new Uint8Array(9);
-  data[0] = TRANSFER;
-  let n = typeof amount === 'bigint' ? amount : BigInt(amount);
-  for (let i = 0; i < 8; i++) {
-    data[1 + i] = Number(n & BigInt(255));
-    n = n / BigInt(256);
+  // For simplicity, ignore the upper 32 bits if they would cause overflow
+  // In production, you'd want proper 64-bit integer handling
+  let upper = 0;
+  multiplier = 1;
+  for (let i = 4; i < 8; i++) {
+    upper += buffer[offset + i] * multiplier;
+    multiplier *= 256;
   }
-  return {
-    programAddress,
-    accounts: [
-      { address: address(source), role: 1 }, // writable
-      { address: address(destination), role: 1 }, // writable
-      { address: address(authority), role: 2 }, // writable signer
-      ...multiSigners.map((k) => ({ address: address(k), role: 2 })), // writable signer
-    ],
-    data,
-  };
+
+  // Combine lower and upper parts, handling overflow by returning as string
+  const total = result + (upper * Math.pow(2, 32));
+  return total.toString();
 }
 
-/**
- * Create a new SPL Token account (associated token account)
- */
-export function createTokenAccountInstruction({
-  payer,
-  newAccount,
-  mint,
-  owner,
-}: {
-  payer: string | Address;
-  newAccount: string | Address;
-  mint: string | Address;
-  owner: string | Address;
-}): IInstruction {
-  // This is a simplified version; for full ATA creation, use @solana/spl-token
-  return {
-    programAddress: address(getGorbchainConfig().programIds?.splToken || 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
-    accounts: [
-      { address: address(payer), role: 2 }, // writable signer
-      { address: address(newAccount), role: 1 }, // writable
-      { address: address(mint), role: 1 }, // writable
-      { address: address(owner), role: 1 }, // writable
-    ],
-    data: new Uint8Array(0), // No data for simple create
-  };
+function bufferToBase58(buffer: Uint8Array | number[]): string {
+  // Simplified base58 encoding - in production, use a proper base58 library
+  // For now, return hex representation
+  return Array.from(buffer).map((b: number) => {
+    const hex = b.toString(16);
+    return hex.length === 1 ? `0${  hex}` : hex;
+  }).join('');
 }
 
-// --- Account decoders ---
-export { decodeMintAccount, DecodedMintAccount };
+function getAuthorityTypeName(type: number): string {
+  switch (type) {
+    case AuthorityType.MintTokens: return 'MintTokens';
+    case AuthorityType.FreezeAccount: return 'FreezeAccount';
+    case AuthorityType.AccountOwner: return 'AccountOwner';
+    case AuthorityType.CloseAccount: return 'CloseAccount';
+    default: return `Unknown(${type})`;
+  }
+}

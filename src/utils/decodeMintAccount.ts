@@ -80,14 +80,14 @@ export function decodeMintAccount(
     mintAuthority: {
       option: mintAuthorityOption,
       address: bytesToBase58(mintAuthority),
-      base58: bytesToBase58(mintAuthority),
+      base58: bytesToBase58(mintAuthority)
     },
     freezeAuthority: {
       option: freezeAuthorityOption,
       address: bytesToBase58(freezeAuthority),
-      base58: bytesToBase58(freezeAuthority),
+      base58: bytesToBase58(freezeAuthority)
     },
     raw: Array.from(buf).map(x => x.toString(16).padStart(2, '0')).join(''),
-    metadata,
+    metadata
   };
 }

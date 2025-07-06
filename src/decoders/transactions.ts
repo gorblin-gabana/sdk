@@ -1,6 +1,6 @@
 // Decoders for transaction instructions using internal utils
 import { decodeInstruction, decodeInstructions } from '../utils/decodeInstructions.js';
-import { IInstruction } from '@solana/instructions';
+import type { IInstruction } from '@solana/instructions';
 
 /**
  * Decode a single IInstruction using all available decoders
