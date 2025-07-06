@@ -23,10 +23,17 @@
  * console.log(decoded);
  * ```
  */
-import type { GorbchainSDKConfig, RichTransaction, TransactionDecodingOptions } from './types.js';
-import { getDefaultConfig, validateConfig } from './config.js';
-import { DecoderRegistry } from '../decoders/index.js';
 import { RpcClient } from '../rpc/client.js';
+import { DecoderRegistry } from '../decoders/registry.js';
+import { getDefaultConfig, validateConfig } from './config.js';
+import type { GorbchainSDKConfig, RichTransaction, TransactionDecodingOptions } from './types.js';
+
+// Import all decoders at the top to avoid browser require() issues
+import { decodeSystemInstruction } from '../decoders/system.js';
+import { decodeSPLTokenInstruction } from '../decoders/splToken.js';
+import { decodeToken2022Instruction } from '../decoders/token2022.js';
+import { decodeATAInstruction } from '../decoders/ata.js';
+import { decodeNFTInstruction } from '../decoders/nft.js';
 
 /**
  * Main SDK class for Gorbchain transaction decoding and blockchain interaction
@@ -82,45 +89,74 @@ export class GorbchainSDK {
     // Register System Program decoder
     const systemProgramId = '11111111111111111111111111111111';
     registry.register('system', systemProgramId, (instruction: any) => {
-      const { decodeSystemInstruction } = require('../decoders/system.js');
-      return decodeSystemInstruction(instruction);
+      const decoded = decodeSystemInstruction(instruction.data);
+      return {
+        type: decoded.type,
+        programId: instruction.programId,
+        data: {
+          instruction: decoded.instruction,
+          lamports: decoded.lamports,
+          space: decoded.space,
+          seed: decoded.seed
+        },
+        accounts: instruction.accounts || [],
+        raw: instruction
+      };
     });
 
     // Register SPL Token decoder
     const splTokenProgramId = this.config.programIds?.splToken || 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
     registry.register('spl-token', splTokenProgramId, (instruction: any) => {
-      const { decodeSPLTokenInstruction } = require('../decoders/splToken.js');
-      return decodeSPLTokenInstruction(instruction);
+      const decoded = decodeSPLTokenInstruction(instruction);
+      return {
+        type: decoded.type,
+        programId: instruction.programId,
+        data: decoded,
+        accounts: instruction.accounts || [],
+        raw: instruction
+      };
     });
 
     // Register Token-2022 decoder
     const token2022ProgramId = this.config.programIds?.token2022 || 'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn';
     registry.register('token-2022', token2022ProgramId, (instruction: any) => {
-      const { decodeToken2022Instruction } = require('../decoders/token2022.js');
-      return decodeToken2022Instruction(instruction);
+      const decoded = decodeToken2022Instruction(instruction);
+      return {
+        type: decoded.type,
+        programId: instruction.programId,
+        data: decoded,
+        accounts: instruction.accounts || [],
+        raw: instruction
+      };
     });
 
     // Register ATA decoder
     const ataProgramId = this.config.programIds?.ata || '4YpYoLVTQ8bxcne9GneN85RUXeN7pqGTwgPcY71ZL5gX';
     registry.register('ata', ataProgramId, (instruction: any) => {
-      const { decodeATAInstruction } = require('../decoders/ata.js');
-      return decodeATAInstruction(instruction);
+      const decoded = decodeATAInstruction(instruction);
+      return {
+        type: decoded.type,
+        programId: instruction.programId,
+        data: decoded,
+        accounts: instruction.accounts || [],
+        raw: instruction
+      };
     });
 
     // Register NFT/Metaplex decoder
     const metaplexProgramId = this.config.programIds?.metaplex || 'BvoSmPBF6mBRxBMY9FPguw1zUoUg3xrc5CaWf7y5ACkc';
     registry.register('nft', metaplexProgramId, (instruction: any) => {
-      const { decodeNFTInstruction } = require('../decoders/nft.js');
-      return decodeNFTInstruction(instruction);
+      const decoded = decodeNFTInstruction(instruction);
+      return {
+        type: decoded.type,
+        programId: instruction.programId,
+        data: decoded,
+        accounts: instruction.accounts || [],
+        raw: instruction
+      };
     });
 
-    console.log('Decoder registry created with program IDs:', {
-      system: systemProgramId,
-      splToken: splTokenProgramId,
-      token2022: token2022ProgramId,
-      ata: ataProgramId,
-      metaplex: metaplexProgramId
-    });
+
 
     return registry;
   }
@@ -165,70 +201,30 @@ export class GorbchainSDK {
 
   /**
    * Fetch and decode a transaction with comprehensive rich analysis
-   * This method automatically fetches account info for all token-related accounts
+   * This method makes additional RPC calls to fetch token info, metadata, and account details
    */
   async getAndDecodeTransaction(
     signature: string, 
     options: TransactionDecodingOptions = {}
   ): Promise<RichTransaction> {
-    console.log('🔥 SDK: getAndDecodeTransaction() method called');
-    console.log('🔥 SDK: Input signature:', signature);
-    console.log('🔥 SDK: Input options:', options);
-    console.log('🔥 SDK: this.config:', this.config);
-    console.log('🔥 SDK: this.rpc:', this.rpc);
-    console.log('🔥 SDK: this.decoders:', this.decoders);
-
     // Merge options with SDK defaults
-    const useRichDecoding = options.richDecoding ?? this.config.richDecoding?.enabled ?? false;
-    const includeTokenMetadata = options.includeTokenMetadata ?? this.config.richDecoding?.includeTokenMetadata ?? false;
-    const includeNftMetadata = options.includeNftMetadata ?? this.config.richDecoding?.includeNftMetadata ?? false;
-    
-    console.log('🔥 SDK: Merged options:', {
-      useRichDecoding,
-      includeTokenMetadata,
-      includeNftMetadata
-    });
+    const useRichDecoding = options.richDecoding ?? this.config.richDecoding?.enabled ?? true;
+    const includeTokenMetadata = options.includeTokenMetadata ?? this.config.richDecoding?.includeTokenMetadata ?? true;
     
     try {
-      console.log('🚀 SDK: Starting comprehensive transaction analysis...');
-      
       // Step 1: Fetch raw transaction
-      console.log('📡 SDK Step 1: Fetching transaction data...');
-      console.log('🔥 SDK: About to call this.rpc.request()...');
-      console.log('🔥 SDK: RPC endpoint:', this.rpc);
-      
-      let rawTransaction: any;
-      try {
-        rawTransaction = await this.rpc.request('getTransaction', [
-          signature,
-          { 
-            maxSupportedTransactionVersion: 0,
-            encoding: 'jsonParsed',
-            commitment: 'confirmed'
-          }
-        ]);
-        console.log('🔥 SDK: RPC request completed successfully');
-        console.log('🔥 SDK: Raw transaction received:', rawTransaction);
-        console.log('🔥 SDK: Raw transaction DETAILED:', JSON.stringify(rawTransaction, null, 2));
-        console.log('🔥 SDK: Instructions array:', rawTransaction.transaction?.message?.instructions);
-        console.log('🔥 SDK: Instructions DETAILED:', JSON.stringify(rawTransaction.transaction?.message?.instructions, null, 2));
-      } catch (rpcError) {
-        console.error('🔥 SDK: RPC request failed:', rpcError);
-        throw new Error(`RPC request failed: ${rpcError}`);
-      }
+      const rawTransaction = await this.rpc.request('getTransaction', [
+        signature,
+        { 
+          maxSupportedTransactionVersion: 0,
+          encoding: 'jsonParsed',
+          commitment: 'confirmed'
+        }
+      ]) as any;
 
       if (!rawTransaction || !rawTransaction.transaction) {
-        console.error('🔥 SDK: Invalid transaction response:', rawTransaction);
         throw new Error(`Transaction not found: ${signature}`);
       }
-
-      console.log('🔥 SDK: Transaction validation passed');
-      console.log('🔥 SDK: Transaction structure:', {
-        hasTransaction: !!rawTransaction.transaction,
-        hasMessage: !!rawTransaction.transaction?.message,
-        hasInstructions: !!rawTransaction.transaction?.message?.instructions,
-        instructionCount: rawTransaction.transaction?.message?.instructions?.length || 0
-      });
 
       // Extract account keys
       let accountKeys: string[] = [];
@@ -238,353 +234,398 @@ export class GorbchainSDK {
         });
       }
 
-      console.log(`📋 SDK: Found ${accountKeys.length} accounts in transaction`);
-      console.log('🔥 SDK: Account keys:', accountKeys);
-
-      // Step 2: Identify token-related accounts
-      console.log('🔍 SDK Step 2: Identifying token-related accounts...');
-      const tokenAccounts = new Set<string>();
-      const mintAccounts = new Set<string>();
-      
-      // Check instructions for token program involvement
+      // Step 2: Process instructions to create RICH enriched structure
       const instructions = rawTransaction.transaction?.message?.instructions || [];
-      console.log('🔥 SDK: Processing instructions for token detection...');
-      console.log('🔥 SDK: Total instructions to process:', instructions.length);
+      const enrichedInstructions: any[] = [];
+      const programs = new Set<string>();
+      const involvedMints = new Set<string>();
+      const involvedTokenAccounts = new Set<string>();
       
+      // First pass: decode instructions and identify tokens
       for (let i = 0; i < instructions.length; i++) {
         const instruction = instructions[i];
         const programId = instruction.programId;
         
-        console.log(`🔥 SDK: Checking instruction ${i} with program ${programId}`);
-        console.log(`🔥 SDK: Instruction ${i} full object:`, JSON.stringify(instruction, null, 2));
+        let decodedInstruction: any;
         
-        // If it's a token program instruction, collect relevant accounts
-        if (programId === this.config.programIds?.token2022 || 
-            programId === this.config.programIds?.splToken ||
-            programId === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA') {
+        // Handle different instruction formats
+        if (instruction.parsed) {
+          // For parsed instructions (like system), use parsed data directly
+          decodedInstruction = this.decodeParsedInstruction(instruction.parsed, instruction.program);
+        } else {
+          // For unparsed instructions, convert base64 data to Uint8Array and decode
+          let instructionData: Uint8Array;
           
-          console.log(`🔥 SDK: Found token program instruction at index ${i}`);
-          console.log(`🔥 SDK: Instruction accounts property:`, instruction.accounts);
-          console.log(`🔥 SDK: Instruction accounts type:`, typeof instruction.accounts);
-          console.log(`🔥 SDK: Instruction accounts length:`, instruction.accounts?.length);
-          
-          // Add instruction accounts as potential token accounts
-          if (instruction.accounts) {
-            console.log(`🔥 SDK: Processing ${instruction.accounts.length} accounts from instruction...`);
-            instruction.accounts.forEach((accountRef: any, idx: number) => {
-              console.log(`🔥 SDK: Account ${idx}: index=${accountRef}, resolved=${accountKeys[accountRef]}`);
-              
-              // Handle both index-based and already-resolved account formats
-              let resolvedAccount: string | undefined;
-              
-              if (typeof accountRef === 'number') {
-                // Index-based account (raw instructions)
-                resolvedAccount = accountKeys[accountRef];
-                console.log(`🔥 SDK: Resolved account by index ${accountRef}: ${resolvedAccount}`);
-              } else if (typeof accountRef === 'string') {
-                // Already resolved account address (parsed instructions)
-                resolvedAccount = accountRef;
-                console.log(`🔥 SDK: Account already resolved: ${resolvedAccount}`);
-              }
-              
-              if (resolvedAccount) {
-                tokenAccounts.add(resolvedAccount);
-                console.log(`🔥 SDK: Added token account: ${resolvedAccount}`);
-              } else {
-                console.log(`🔥 SDK: Failed to resolve account reference: ${accountRef}`);
-              }
-            });
-          } else {
-            console.log(`🔥 SDK: No accounts property found in instruction`);
-          }
-          
-          // For parsed instructions, extract specific accounts
-          if (instruction.parsed) {
-            console.log('🔥 SDK: Processing parsed instruction info...');
-            const info = instruction.parsed.info;
-            if (info) {
-              if (info.mint) {
-                mintAccounts.add(info.mint);
-                console.log(`🔥 SDK: Added mint account: ${info.mint}`);
-              }
-              if (info.source) {
-                tokenAccounts.add(info.source);
-                console.log(`🔥 SDK: Added source account: ${info.source}`);
-              }
-              if (info.destination) {
-                tokenAccounts.add(info.destination);
-                console.log(`🔥 SDK: Added destination account: ${info.destination}`);
-              }
-              if (info.account) {
-                tokenAccounts.add(info.account);
-                console.log(`🔥 SDK: Added account: ${info.account}`);
-              }
-              if (info.tokenAccount) {
-                tokenAccounts.add(info.tokenAccount);
-                console.log(`🔥 SDK: Added tokenAccount: ${info.tokenAccount}`);
-              }
-            }
-          }
-        }
-      }
-
-      console.log(`🪙 SDK: Found ${tokenAccounts.size} potential token accounts`);
-      console.log(`🏭 SDK: Found ${mintAccounts.size} mint accounts`);
-      console.log('🔥 SDK: Token accounts list:', Array.from(tokenAccounts));
-      console.log('🔥 SDK: Mint accounts list:', Array.from(mintAccounts));
-
-      // Step 3: Fetch account info for all identified accounts
-      console.log('📊 SDK Step 3: Fetching detailed account information...');
-      const accountInfoMap = new Map<string, any>();
-      const accountsToFetch = [...tokenAccounts, ...mintAccounts];
-      
-      console.log('🔥 SDK: Accounts to fetch info for:', accountsToFetch);
-      
-      if (accountsToFetch.length > 0) {
-        console.log(`🔄 SDK: Fetching account info for ${accountsToFetch.length} accounts...`);
-        
-        // Batch fetch account info (limit to avoid rate limiting)
-        const batchSize = 10;
-        for (let i = 0; i < accountsToFetch.length; i += batchSize) {
-          const batch = accountsToFetch.slice(i, i + batchSize);
-          console.log(`🔥 SDK: Processing batch ${Math.floor(i/batchSize) + 1}: ${batch.length} accounts`);
-          
-          const batchPromises = batch.map(async (account, index) => {
+          if (instruction.data && typeof instruction.data === 'string') {
+            // Convert base64 string to Uint8Array
             try {
-              console.log(`🔥 SDK: Fetching account info for ${account} (batch item ${index + 1})`);
-              const accountInfo = await this.rpc.request('getAccountInfo', [
-                account,
-                { encoding: 'base64', commitment: 'confirmed' }
-              ]);
-              console.log(`🔥 SDK: Account info received for ${account}:`, accountInfo);
-              return { account, info: accountInfo };
+              const binaryString = atob(instruction.data);
+              instructionData = new Uint8Array(binaryString.length);
+              for (let j = 0; j < binaryString.length; j++) {
+                instructionData[j] = binaryString.charCodeAt(j);
+              }
             } catch (error) {
-              console.warn(`🔥 SDK: Failed to fetch account info for ${account}:`, error);
-              return { account, info: null };
+              // Try to fix common base64 issues
+              let cleanedData = instruction.data.replace(/[^A-Za-z0-9+/]/g, '');
+              while (cleanedData.length % 4 !== 0) {
+                cleanedData += '=';
+              }
+              try {
+                const binaryString = atob(cleanedData);
+                instructionData = new Uint8Array(binaryString.length);
+                for (let j = 0; j < binaryString.length; j++) {
+                  instructionData[j] = binaryString.charCodeAt(j);
+                }
+              } catch (cleanupError) {
+                instructionData = new Uint8Array(0);
+              }
             }
-          });
+          } else {
+            instructionData = new Uint8Array(0);
+          }
           
-          const batchResults = await Promise.all(batchPromises);
-          batchResults.forEach(({ account, info }) => {
-            if (info) {
-              accountInfoMap.set(account, info);
-              console.log(`🔥 SDK: Stored account info for ${account}`);
-            }
-          });
-          
-          console.log(`✅ SDK: Processed batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(accountsToFetch.length/batchSize)}`);
-        }
-      } else {
-        console.log('🔥 SDK: No token accounts found to fetch info for');
-      }
-
-      console.log('🔥 SDK: Total account info collected:', accountInfoMap.size);
-
-      // Step 4: Decode account data for token accounts
-      console.log('🔧 SDK Step 4: Decoding account data...');
-      const decodedAccounts = new Map<string, any>();
-      
-      for (const [account, accountInfo] of accountInfoMap) {
-        console.log(`🔥 SDK: Decoding account data for ${account}`);
-        if (accountInfo?.value?.data) {
+          // Decode using the decoder registry
           try {
-            const decodedAccountData = await this.decodeAccountData(account, accountInfo, mintAccounts.has(account));
-            if (decodedAccountData) {
-              decodedAccounts.set(account, decodedAccountData);
-              console.log(`🎯 SDK: Decoded account ${account}:`, decodedAccountData.type);
+            decodedInstruction = this.decoders.decode({
+              programId,
+              data: instructionData,
+              accounts: instruction.accounts || []
+            });
+          } catch (error) {
+            decodedInstruction = {
+              type: 'error',
+              data: {
+                error: (error as Error).message,
+                programId,
+                originalData: instruction.data
+              }
+            };
+          }
+        }
+        
+        // Identify involved tokens and accounts for rich data fetching
+        if (instruction.accounts) {
+          for (const accountItem of instruction.accounts) {
+            let accountAddress: string;
+            
+            // Handle both cases: account indices and direct account addresses
+            if (typeof accountItem === 'number') {
+              // Account item is an index, map it to account address
+              accountAddress = accountKeys[accountItem];
+            } else if (typeof accountItem === 'string') {
+              // Account item is already an address
+              accountAddress = accountItem;
+            } else {
+              continue; // Skip invalid entries
+            }
+            
+            if (accountAddress) {
+              // For token programs, collect potential mints and token accounts
+              if (programId === this.config.programIds?.token2022 || 
+                  programId === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA') {
+                involvedTokenAccounts.add(accountAddress);
+              }
+            }
+          }
+        }
+        
+        const programName = this.getProgramName(programId);
+        programs.add(programName);
+        
+        enrichedInstructions.push({
+          instruction: i + 1,
+          program: programName,
+          programId,
+          decoded: decodedInstruction,
+          accounts: instruction.accounts?.map((idx: number) => accountKeys[idx]) || [],
+          rawInstruction: instruction
+        });
+      }
+      
+      // Step 2.5: Make RPC calls to get RICH token information
+      const tokenInfoMap = new Map<string, any>();
+      const accountInfoMap = new Map<string, any>();
+      
+      if (useRichDecoding && includeTokenMetadata) {
+        // Fetch account info for all involved accounts
+        const accountInfoPromises = Array.from(involvedTokenAccounts).map(async (address) => {
+          try {
+            const accountInfo = await this.rpc.getAccountInfo(address);
+            if (accountInfo) {
+              accountInfoMap.set(address, accountInfo);
+              
+              // If this is a token account, get its mint
+              if (accountInfo.owner === this.config.programIds?.token2022 || 
+                  accountInfo.owner === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA') {
+                try {
+                  const tokenAccountInfo = await this.rpc.getTokenAccountInfo(address);
+                  if (tokenAccountInfo?.mint) {
+                    involvedMints.add(tokenAccountInfo.mint);
+                  }
+                } catch (err) {
+                  // Address might be a mint, not a token account
+                  involvedMints.add(address);
+                }
+              }
             }
           } catch (error) {
-            console.warn(`🔥 SDK: Failed to decode account data for ${account}:`, error);
+            console.warn(`Failed to fetch account info for ${address}:`, error);
           }
-        } else {
-          console.log(`🔥 SDK: No data to decode for account ${account}`);
-        }
+        });
+        
+        await Promise.all(accountInfoPromises);
+        
+        // Fetch token info for all identified mints
+        const tokenInfoPromises = Array.from(involvedMints).map(async (mintAddress) => {
+          try {
+            const tokenInfo = await this.rpc.getTokenInfo(mintAddress);
+            if (tokenInfo) {
+              tokenInfoMap.set(mintAddress, tokenInfo);
+            }
+          } catch (error) {
+            console.warn(`Failed to fetch token info for ${mintAddress}:`, error);
+          }
+        });
+        
+        await Promise.all(tokenInfoPromises);
       }
-
-      console.log('🔥 SDK: Total accounts decoded:', decodedAccounts.size);
-
-      // Step 5: Build comprehensive rich transaction
-      console.log('🏗️ SDK Step 5: Building comprehensive transaction analysis...');
+      
+      // Step 3: Create rich simplified instructions with actual token data
+      const simpleInstructions: any[] = [];
+      
+      for (const enriched of enrichedInstructions) {
+        const { decoded, program, accounts } = enriched;
+        
+        let action = 'Unknown';
+        let description = 'Unknown operation';
+        let instructionData: any = {};
+        
+        // Map instruction types to human-readable actions with RICH data
+        switch (decoded.type) {
+          case 'system-transfer':
+            action = 'Transfer SOL';
+            const lamports = decoded.data?.lamports || decoded.info?.lamports || 0;
+            const sol = Number(lamports) / 1e9;
+            description = `Transfer ${sol} SOL`;
+            instructionData = {
+              amount: `${sol} SOL`,
+              lamports,
+              from: decoded.data?.source || decoded.info?.source,
+              to: decoded.data?.destination || decoded.info?.destination
+            };
+            break;
+            
+          case 'token2022-initialize-nft-metadata':
+            action = 'Create NFT';
+            const nftName = decoded.data?.metadata?.name || 'Unknown NFT';
+            description = `Create NFT: ${nftName}`;
+            instructionData = {
+              name: nftName,
+              symbol: decoded.data?.metadata?.symbol || 'UNK',
+              uri: decoded.data?.metadata?.uri,
+              mint: decoded.data?.mint
+            };
+            break;
+            
+          case 'token2022-mint-to':
+            action = 'Mint Tokens';
+            // Try to get rich token info for proper formatting
+            let mintAddress = accounts[0]; // Usually first account is mint
+            let tokenInfo = tokenInfoMap.get(mintAddress);
+            let formattedAmount = decoded.data?.amount || '0';
+            
+            if (tokenInfo && decoded.data?.amount) {
+              const rawAmount = BigInt(decoded.data.amount);
+              const uiAmount = Number(rawAmount) / (10 ** tokenInfo.decimals);
+              formattedAmount = `${uiAmount} ${tokenInfo.metadata?.symbol || 'tokens'}`;
+            }
+            
+            description = `Mint ${formattedAmount}`;
+            instructionData = {
+              amount: formattedAmount,
+              rawAmount: decoded.data?.amount,
+              mint: mintAddress,
+              tokenInfo: tokenInfo ? {
+                name: tokenInfo.metadata?.name,
+                symbol: tokenInfo.metadata?.symbol,
+                decimals: tokenInfo.decimals
+              } : undefined,
+              to: decoded.data?.destination,
+              authority: decoded.data?.authority
+            };
+            break;
+            
+          case 'ata-create':
+            action = 'Create Token Account';
+            description = 'Create Associated Token Account';
+            instructionData = {
+              account: decoded.data?.account,
+              owner: decoded.data?.owner,
+              mint: decoded.data?.mint
+            };
+            break;
+            
+          case 'token2022-generic':
+            action = 'Token-2022 Operation';
+            description = decoded.data?.description || 'Token-2022 operation';
+            instructionData = decoded.data || {};
+            break;
+            
+          case 'error':
+            action = 'Error';
+            description = `Failed to decode ${program} instruction`;
+            instructionData = decoded.data || {};
+            break;
+            
+          default:
+            // Handle token2022-extension-* types
+            if (decoded.type?.startsWith('token2022-extension-')) {
+              action = decoded.type;
+              description = decoded.data?.description || `${program} operation`;
+              instructionData = decoded.data || {};
+            } else {
+              action = decoded.type || 'Unknown';
+              description = `${program} operation`;
+              instructionData = decoded.data || {};
+            }
+        }
+        
+        simpleInstructions.push({
+          instruction: enriched.instruction,
+          program,
+          action,
+          description,
+          data: instructionData
+        });
+      }
+      
+      // Step 4: Build simplified token metadata and transaction description
+      const tokenMetadata = this.buildSimpleTokenMetadata(tokenInfoMap, simpleInstructions);
+      const transactionSummary = this.buildSimpleTransactionSummary(simpleInstructions);
+        
+        // Step 6: Return enriched rich transaction
       const richTransaction: RichTransaction = {
         signature,
         slot: rawTransaction.slot || 0,
-        blockTime: rawTransaction.blockTime || null,
+        blockTime: rawTransaction.blockTime || Date.now() / 1000,
         fee: rawTransaction.meta?.fee || 0,
         status: rawTransaction.meta?.err ? 'failed' : 'success',
-        error: rawTransaction.meta?.err ? JSON.stringify(rawTransaction.meta.err) : undefined,
-        instructions: [],
-        accountKeys,
-        meta: rawTransaction.meta || {},
-        // Add our comprehensive account analysis
-        tokenAccounts: Object.fromEntries(decodedAccounts),
-        accountInfoMap: Object.fromEntries(accountInfoMap)
+        
+        summary: {
+          type: transactionSummary.type,
+          description: transactionSummary.description,
+          programsUsed: Array.from(programs),
+          instructionCount: simpleInstructions.length,
+          computeUnits: rawTransaction.meta?.computeUnitsConsumed || 0
+        },
+        
+        tokens: tokenMetadata.tokens.length > 0 ? {
+          created: tokenMetadata.tokens,
+          operations: tokenMetadata.operations
+        } : undefined,
+        
+        instructions: simpleInstructions,
+        
+        accountChanges: this.extractAccountChanges(rawTransaction, simpleInstructions),
+        
+        // Include raw data only if requested
+        raw: useRichDecoding ? {
+          meta: rawTransaction.meta,
+          accountKeys,
+          fullInstructions: instructions
+        } : undefined
       };
+      
+      return richTransaction;
+      
+    } catch (error) {
+      throw new Error(`Failed to decode transaction: ${error}`);
+    }
+  }
+  
+  /**
+   * Extract account changes from transaction
+   */
+  private extractAccountChanges(rawTransaction: any, simpleInstructions: any[]): any {
+    const changes: any = {};
+    
+    // Extract SOL transfers
+    const solTransfers = simpleInstructions
+      .filter(ix => ix.action === 'Transfer SOL')
+      .map(ix => ({
+        amount: ix.data.amount,
+        from: ix.data.from,
+        to: ix.data.to,
+        lamports: ix.data.lamports
+      }));
+    
+    if (solTransfers.length > 0) {
+      changes.solTransfers = solTransfers;
+    }
+    
+    // Extract token transfers
+    const tokenTransfers = simpleInstructions
+      .filter(ix => ix.action === 'Transfer Tokens')
+      .map(ix => ({
+        mint: ix.data.mint,
+        amount: ix.data.amount,
+        from: ix.data.from,
+        to: ix.data.to
+      }));
+    
+    if (tokenTransfers.length > 0) {
+      changes.tokenTransfers = tokenTransfers;
+    }
+    
+    // Extract account creations
+    const accountsCreated = simpleInstructions
+      .filter(ix => ix.action === 'Create Token Account')
+      .map(ix => ix.data.account)
+      .filter(Boolean);
+    
+    if (accountsCreated.length > 0) {
+      changes.accountsCreated = accountsCreated;
+    }
+    
+    return Object.keys(changes).length > 0 ? changes : undefined;
+  }
+  
+  /**
+   * Get human-readable program name
+   */
+  private getProgramName(programId: string): string {
+    const programNames: { [key: string]: string } = {
+      '11111111111111111111111111111111': 'System',
+      'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn': 'Token-2022',
+      'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA': 'SPL Token',
+      '4YpYoLVTQ8bxcne9GneN85RUXeN7pqGTwgPcY71ZL5gX': 'ATA',
+      'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL': 'ATA'
+    };
+    
+    return programNames[programId] || programId.slice(0, 8) + '...';
+  }
 
-      console.log('🔥 SDK: Base rich transaction created');
-
-      // Step 6: Process instructions with enriched context
-      console.log('⚙️ SDK Step 6: Processing instructions with enriched context...');
-      for (let i = 0; i < instructions.length; i++) {
-        const instruction = instructions[i];
-        console.log(`🔥 SDK: Processing instruction ${i + 1}/${instructions.length}`);
-        
-        let programId: string = instruction.programId;
-        let instructionAccounts: string[] = [];
-        let instructionData: any;
-
-        // Handle parsed vs raw instructions
-        if (instruction.parsed) {
-          console.log(`🔥 SDK: Instruction ${i} is parsed`);
-          programId = instruction.programId;
-          instructionData = JSON.stringify(instruction.parsed);
-          instructionAccounts = instruction.accounts || [];
-        } else {
-          console.log(`🔥 SDK: Instruction ${i} is raw, converting base64...`);
-          // Convert base64 to Uint8Array for decoders
-          if (instruction.data && typeof instruction.data === 'string') {
-            try {
-              console.log(`🔥 SDK: Instruction data type: ${typeof instruction.data}`);
-              console.log(`🔥 SDK: Instruction data length: ${instruction.data.length}`);
-              console.log(`🔥 SDK: Instruction data sample: ${instruction.data.substring(0, 50)}...`);
-              
-              // Try base58 decoding first (common for Solana)
-              try {
-                console.log('🔥 SDK: Attempting base58 decoding...');
-                const { base58ToBytes } = await import('../utils/base58.js');
-                const bytes = base58ToBytes(instruction.data);
-                instructionData = bytes;
-                console.log(`🔥 SDK: Successfully decoded base58: ${instruction.data.length} chars to ${bytes.length} bytes`);
-              } catch (base58Error) {
-                console.log('🔥 SDK: Base58 decoding failed, trying base64...');
-                // Fall back to base64 decoding
-                const binaryString = atob(instruction.data);
-                const bytes = new Uint8Array(binaryString.length);
-                for (let j = 0; j < binaryString.length; j++) {
-                  bytes[j] = binaryString.charCodeAt(j);
-                }
-                instructionData = bytes;
-                console.log(`🔥 SDK: Successfully decoded base64: ${instruction.data.length} chars to ${bytes.length} bytes`);
-              }
-            } catch (error) {
-              console.warn('🔥 SDK: Failed to decode instruction data:', error);
-              console.log('🔥 SDK: Trying alternative data formats...');
-              
-              // Try to handle different data formats
-              if (Array.isArray(instruction.data)) {
-                console.log('🔥 SDK: Instruction data is array, converting to Uint8Array...');
-                instructionData = new Uint8Array(instruction.data);
-              } else if (instruction.data.startsWith && instruction.data.startsWith('0x')) {
-                console.log('🔥 SDK: Instruction data is hex string, converting...');
-                const hex = instruction.data.slice(2);
-                const bytes = new Uint8Array(hex.length / 2);
-                for (let j = 0; j < hex.length; j += 2) {
-                  bytes[j / 2] = parseInt(hex.substr(j, 2), 16);
-                }
-                instructionData = bytes;
-              } else {
-                console.log('🔥 SDK: Using instruction data as-is');
-                instructionData = instruction.data;
-              }
-            }
-          } else if (Array.isArray(instruction.data)) {
-            console.log('🔥 SDK: Instruction data is already array format');
-            instructionData = new Uint8Array(instruction.data);
-          } else {
-            console.log('🔥 SDK: Instruction data is unknown format, using as-is');
-            instructionData = instruction.data || new Uint8Array(0);
-          }
-          
-          // Map account indices to addresses
-          if (Array.isArray(instruction.accounts)) {
-            instructionAccounts = instruction.accounts.map((accountRef: any) => {
-              if (typeof accountRef === 'number') {
-                return accountKeys[accountRef] || '';
-              }
-              return accountRef;
-            });
-          }
+  /**
+   * Get raw transaction data without rich decoding
+   */
+  async getTransaction(signature: string): Promise<any> {
+    try {
+      const rawTransaction = await this.rpc.request('getTransaction', [
+        signature,
+        { 
+          maxSupportedTransactionVersion: 0,
+          encoding: 'jsonParsed',
+          commitment: 'confirmed'
         }
-        
-        // Determine program name
-        let programName = 'unknown';
-        if (programId === this.config.programIds?.splToken) programName = 'spl-token';
-        else if (programId === this.config.programIds?.token2022) programName = 'token-2022';
-        else if (programId === this.config.programIds?.ata) programName = 'ata';
-        else if (programId === this.config.programIds?.metaplex) programName = 'metaplex';
-        else if (programId === '11111111111111111111111111111111') programName = 'system';
+      ]) as any;
 
-        console.log(`🔥 SDK: Instruction ${i} identified as program: ${programName} (${programId})`);
-
-        // Decode instruction
-        const instructionObj = {
-          programId,
-          data: instructionData,
-          accounts: instructionAccounts
-        };
-
-        let decoded: any = {
-          type: 'unknown',
-          description: 'Raw instruction data',
-          data: instruction.parsed || { raw: instructionData }
-        };
-
-        // Apply rich decoding with account context
-        if (useRichDecoding) {
-          console.log(`🔥 SDK: Applying rich decoding to instruction ${i}...`);
-          try {
-            if (instruction.parsed) {
-              console.log(`🔥 SDK: Decoding parsed instruction...`);
-              decoded = this.decodeParsedInstruction(instruction.parsed, programName);
-            } else {
-              console.log(`🔥 SDK: Using decoder registry for raw instruction...`);
-              console.log(`🔥 SDK: Checking if decoder exists for program ${programId}...`);
-              console.log(`🔥 SDK: Has decoder:`, this.decoders.hasDecoder(programId));
-              
-              const decodedInstruction = this.decoders.decode(instructionObj);
-              console.log(`🔥 SDK: Decoder result:`, decodedInstruction);
-              
-              decoded = {
-                type: decodedInstruction.type,
-                description: this.getInstructionDescription(decodedInstruction.type, decodedInstruction.data),
-                data: decodedInstruction.data
-              };
-            }
-
-            // Enrich with account data
-            console.log(`🔥 SDK: Enriching instruction with account data...`);
-            decoded = this.enrichInstructionWithAccountData(decoded, instructionAccounts, decodedAccounts);
-
-            console.log(`✨ SDK: Enriched instruction ${i + 1}: ${decoded.type}`);
-          } catch (error) {
-            console.warn(`🔥 SDK: Rich decoding failed for instruction ${i}:`, error);
-          }
-        } else {
-          console.log(`🔥 SDK: Rich decoding disabled for instruction ${i}`);
-        }
-
-        richTransaction.instructions.push({
-          index: i,
-          programId,
-          programName,
-          data: typeof instructionData === 'string' ? instructionData : 
-                instructionData instanceof Uint8Array ? Array.from(instructionData).join(',') : 
-                JSON.stringify(instructionData),
-          accounts: instructionAccounts,
-          decoded
-        });
-
-        console.log(`🔥 SDK: Added instruction ${i + 1} to result`);
+      if (!rawTransaction || !rawTransaction.transaction) {
+        throw new Error(`Transaction not found: ${signature}`);
       }
 
-      console.log('🎉 SDK: Comprehensive transaction analysis complete!');
-      console.log(`📊 SDK: Final result: ${richTransaction.instructions.length} instructions, ${Object.keys(richTransaction.tokenAccounts || {}).length} token accounts analyzed`);
-      console.log('🔥 SDK: Final rich transaction object:', richTransaction);
-
-      return richTransaction;
+      return rawTransaction;
     } catch (error) {
-      console.error('❌ SDK: Error in comprehensive transaction analysis:', error);
-      console.error('🔥 SDK: Error stack:', (error as Error)?.stack);
-      throw error;
+      throw new Error(`Failed to fetch transaction: ${error}`);
     }
   }
 
@@ -743,6 +784,300 @@ export class GorbchainSDK {
   }
 
   /**
+   * Classify transaction type based on instructions and programs
+   */
+  private classifyTransactionType(instructions: any[], accountKeys: string[]): { type: string; subtype: string } {
+    const programs = instructions.map((ix: any) => ix.programId);
+    const hasTokenProgram = programs.some(p => 
+      p === this.config.programIds?.token2022 || 
+      p === this.config.programIds?.splToken ||
+      p === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' ||
+      p === 'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn'
+    );
+    const hasSystemProgram = programs.some(p => p === '11111111111111111111111111111111');
+    
+    if (hasTokenProgram) {
+      const tokenInstructions = instructions.filter((ix: any) => 
+        ix.programId === this.config.programIds?.token2022 || 
+        ix.programId === this.config.programIds?.splToken ||
+        ix.programId === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' ||
+        ix.programId === 'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn'
+      );
+      
+      const tokenTypes = tokenInstructions.map((ix: any) => {
+        if (ix.parsed?.type) return ix.parsed.type;
+        return 'unknown';
+      });
+      
+      if (tokenTypes.includes('createAccount') || instructions.some((ix: any) => 
+          ix.parsed?.type === 'createAccount' && ix.parsed?.info?.owner === 'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn')) {
+        return { type: 'Token Transaction', subtype: 'Token Creation/Account Setup' };
+      } else if (tokenTypes.includes('transfer')) {
+        return { type: 'Token Transaction', subtype: 'Token Transfer' };
+      } else if (tokenTypes.includes('burn')) {
+        return { type: 'Token Transaction', subtype: 'Token Burn' };
+      } else if (tokenTypes.includes('mintTo')) {
+        return { type: 'Token Transaction', subtype: 'Token Minting' };
+      } else {
+        return { type: 'Token Transaction', subtype: 'Token Operation' };
+      }
+    } else if (hasSystemProgram) {
+      return { type: 'System Transaction', subtype: 'Account Management' };
+    }
+    
+    return { type: 'Unknown Transaction', subtype: 'Mixed Operations' };
+  }
+
+  /**
+   * Build simplified, human-readable token metadata from decoded instructions
+   */
+  private async buildTokenMetadata(instructions: any[], decodedAccounts: Map<string, any>, accountInfoMap: Map<string, any>): Promise<any> {
+    const operations: any[] = [];
+    const tokens: any[] = [];
+    const summary = {
+      type: 'unknown',
+      description: '',
+      tokenCount: 0,
+      totalValue: 0
+    };
+    
+    // Process each instruction to extract meaningful token operations
+    for (let i = 0; i < instructions.length; i++) {
+      const instruction = instructions[i];
+      const programId = instruction.programId;
+      
+      // Skip non-token instructions
+      if (programId !== this.config.programIds?.token2022 && 
+          programId !== this.config.programIds?.splToken &&
+          programId !== 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' &&
+          programId !== 'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn') {
+        continue;
+      }
+      
+      // Decode the instruction to get meaningful data
+      const decodedInstruction = this.decoders.decode({
+        programId,
+        data: instruction.data,
+        accounts: instruction.accounts || []
+      });
+      
+      let operation: any = {
+        instruction: i + 1,
+        type: decodedInstruction.type,
+        program: programId === 'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn' ? 'Token-2022' : 'SPL Token'
+      };
+      
+      // Extract specific data based on instruction type
+      if (decodedInstruction.type === 'token2022-initialize-nft-metadata') {
+        operation = {
+          ...operation,
+          action: 'Create NFT',
+          tokenName: decodedInstruction.data?.metadata?.name || 'Unknown NFT',
+          tokenSymbol: decodedInstruction.data?.metadata?.symbol || 'UNK',
+          tokenUri: decodedInstruction.data?.metadata?.uri,
+          mint: decodedInstruction.data?.mint,
+          description: `Created NFT: ${decodedInstruction.data?.metadata?.name || 'Unknown'}`
+        };
+        
+        // Add to tokens list
+        tokens.push({
+          mint: decodedInstruction.data?.mint,
+          name: decodedInstruction.data?.metadata?.name || 'Unknown NFT',
+          symbol: decodedInstruction.data?.metadata?.symbol || 'UNK',
+          type: 'NFT',
+          uri: decodedInstruction.data?.metadata?.uri,
+          supply: '1', // NFTs typically have supply of 1
+          decimals: 0
+        });
+        
+      } else if (decodedInstruction.type === 'token2022-mint-to') {
+        const amount = decodedInstruction.data?.amount || '0';
+        operation = {
+          ...operation,
+          action: 'Mint Tokens',
+          amount: amount,
+          mint: decodedInstruction.data?.mint,
+          destination: decodedInstruction.data?.destination,
+          authority: decodedInstruction.data?.authority,
+          description: `Minted ${amount} tokens`
+        };
+        
+      } else if (decodedInstruction.type === 'token2022-transfer') {
+        const amount = decodedInstruction.data?.amount || '0';
+        operation = {
+          ...operation,
+          action: 'Transfer Tokens',
+          amount: amount,
+          source: decodedInstruction.data?.source,
+          destination: decodedInstruction.data?.destination,
+          description: `Transferred ${amount} tokens`
+        };
+        
+      } else if (decodedInstruction.type === 'system-transfer') {
+        const lamports = decodedInstruction.data?.lamports || 0;
+        const sol = Number(lamports) / 1e9;
+        operation = {
+          ...operation,
+          action: 'Transfer SOL',
+          amount: `${sol} SOL`,
+          source: decodedInstruction.data?.source,
+          destination: decodedInstruction.data?.destination,
+          description: `Transferred ${sol} SOL`
+        };
+      }
+      
+      operations.push(operation);
+    }
+    
+    // Create summary
+    if (operations.length > 0) {
+      const mainOperation = operations[0];
+      summary.type = mainOperation.action || 'Token Operation';
+      summary.description = operations.map(op => op.description).join(', ');
+      summary.tokenCount = tokens.length;
+    }
+    
+    return {
+      operations,
+      tokens,
+      summary,
+      mints: tokens.map(t => t.mint).filter(Boolean),
+      accounts: [],
+      totalValue: 0
+    };
+  }
+
+  /**
+   * Build rich token metadata using fetched token information from RPC calls
+   */
+  private buildSimpleTokenMetadata(tokenInfoMap: Map<string, any>, simpleInstructions: any[]): any {
+    const tokens: any[] = [];
+    const operations: any[] = [];
+    
+    // Extract tokens from the tokenInfoMap - keep it simple
+    for (const [mintAddress, tokenInfo] of tokenInfoMap.entries()) {
+      // Simple token/NFT detection: if decimals = 0, it's an NFT
+      const isNFT = tokenInfo.decimals === 0;
+      
+      // Extract name and symbol from NFT metadata if available
+      let name = tokenInfo.metadata?.name || 'Unknown Token';
+      let symbol = tokenInfo.metadata?.symbol || 'UNK';
+      
+      // Try to extract NFT metadata from instructions
+      const nftInstruction = simpleInstructions.find(ix => 
+        ix.program === 'Token-2022' && 
+        ix.data?.accounts?.includes(mintAddress) && 
+        ix.data?.raw?.data
+      );
+      
+      if (nftInstruction && isNFT) {
+        const extractedMetadata = this.extractNFTMetadataFromInstruction(nftInstruction.data.raw.data);
+        if (extractedMetadata) {
+          name = extractedMetadata.name || name;
+          symbol = extractedMetadata.symbol || symbol;
+        }
+      }
+      
+      tokens.push({
+        mint: mintAddress,
+        name,
+        symbol,
+        type: isNFT ? 'NFT' : 'Token',
+        isNFT,
+        decimals: tokenInfo.decimals || 0,
+        supply: {
+          raw: tokenInfo.supply || '0',
+          formatted: isNFT ? '1' : tokenInfo.supply || '0',
+          total: isNFT ? '1 (NFT)' : `${tokenInfo.supply || '0'} ${symbol}`
+        },
+        authorities: {
+          mint: tokenInfo.mintAuthority || null,
+          freeze: tokenInfo.freezeAuthority || null,
+          update: tokenInfo.updateAuthority || null
+        },
+        metadata: {
+          uri: tokenInfo.metadata?.uri || null,
+          description: tokenInfo.metadata?.description || null,
+          image: tokenInfo.metadata?.image || null,
+          attributes: tokenInfo.metadata?.attributes || []
+        }
+      });
+    }
+    
+    // Simple operations list
+    for (const instruction of simpleInstructions) {
+      operations.push({
+        instruction: instruction.instruction,
+        type: instruction.action,
+        program: instruction.program,
+        description: instruction.description
+      });
+    }
+    
+    return {
+      tokens,
+      operations
+    };
+  }
+
+  private buildSimpleTransactionSummary(simpleInstructions: any[]): { type: string; description: string } {
+    if (simpleInstructions.length === 0) {
+      return { type: 'Empty Transaction', description: 'No instructions found' };
+    }
+    
+    // Count operation types
+    const hasSOLTransfer = simpleInstructions.some(ix => ix.action === 'Transfer SOL');
+    const hasTokenOps = simpleInstructions.some(ix => ix.program === 'Token-2022');
+    const hasATACreation = simpleInstructions.some(ix => ix.program === 'ATA');
+    const hasNFTOps = simpleInstructions.some(ix => ix.action.includes('NFT') || ix.action.includes('Create NFT'));
+    
+    // Generate simple transaction type
+    let type: string;
+    if (hasNFTOps) {
+      type = 'NFT Creation';
+    } else if (hasTokenOps && hasATACreation) {
+      type = 'Token Account Setup';
+    } else if (hasSOLTransfer && !hasTokenOps) {
+      type = 'SOL Transfer';
+    } else if (hasTokenOps) {
+      type = 'Token Operation';
+    } else {
+      type = 'General Transaction';
+    }
+    
+    // Generate simple description
+    const descriptions = simpleInstructions.map(ix => ix.description).slice(0, 3); // Max 3 descriptions
+    let description = descriptions.join(', ');
+    if (simpleInstructions.length > 3) {
+      description += `, and ${simpleInstructions.length - 3} more operations`;
+    }
+    
+    return { type, description };
+  }
+
+  private extractNFTMetadataFromInstruction(rawData: any): { name?: string; symbol?: string; uri?: string } | null {
+    try {
+      // Convert raw data to array if it's an object
+      const dataArray = Array.isArray(rawData) ? rawData : Object.values(rawData);
+      
+      // For Token-2022 metadata instructions, don't extract metadata from instruction data
+      // The metadata is stored in the mint account, not in the instruction data
+      // Instruction 232 is just triggering a metadata update, not storing actual metadata
+      if (dataArray.length >= 1 && dataArray[0] === 232) {
+        // This is a Token-2022 metadata instruction, but the actual metadata
+        // should be retrieved from the mint account via RPC calls
+        return null;
+      }
+      
+      // For other instruction types, you could add proper parsing here
+      // But for now, return null to rely on RPC-based metadata extraction
+      return null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
    * Fetch NFT metadata for NFT-related instructions
    */
   private async fetchNftMetadata(instruction: any, decoded: any): Promise<any> {
@@ -854,36 +1189,113 @@ export class GorbchainSDK {
       // Convert base64 data to bytes if needed
       let bytes: Uint8Array;
       if (typeof data === 'string') {
-        bytes = new Uint8Array(Buffer.from(data, 'base64'));
+        // Browser-compatible base64 decoding
+        const binaryString = atob(data);
+        bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
       } else if (Array.isArray(data)) {
         bytes = new Uint8Array(data);
+      } else if (data[0] && Array.isArray(data[0])) {
+        // Handle [data, encoding] format - data[0] is the array, data[1] is encoding
+        bytes = new Uint8Array(data[0]);
       } else {
         bytes = data;
       }
 
-      // Basic mint account structure (simplified)
+      // Token-2022 and SPL Token mint account structure
       if (bytes.length >= 82) {
         const view = new DataView(bytes.buffer, bytes.byteOffset);
         
+        // Read supply (8 bytes, little endian)
+        const supply = view.getBigUint64(0, true);
+        
+        // Read decimals (1 byte at offset 44)
+        const decimals = view.getUint8(44);
+        
+        // Read initialization flag (1 byte at offset 45)
+        const isInitialized = view.getUint8(45) === 1;
+        
+        // Read mint authority (32 bytes at offset 4)
+        // First check if there's a mint authority (1 byte at offset 4)
+        const hasMintAuthority = view.getUint8(4) === 1;
+        let mintAuthority = null;
+        if (hasMintAuthority) {
+          const mintAuthorityBytes = bytes.slice(5, 37);
+          mintAuthority = this.bytesToBase58(mintAuthorityBytes);
+        }
+        
+        // Read freeze authority (32 bytes at offset 37)
+        // First check if there's a freeze authority (1 byte at offset 37)
+        const hasFreezeAuthority = view.getUint8(37) === 1;
+        let freezeAuthority = null;
+        if (hasFreezeAuthority) {
+          const freezeAuthorityBytes = bytes.slice(38, 70);
+          freezeAuthority = this.bytesToBase58(freezeAuthorityBytes);
+        }
+        
         return {
           type: 'mint-account',
-          supply: view.getBigUint64(0, true).toString(),
-          decimals: view.getUint8(44),
-          isInitialized: view.getUint8(45) === 1,
-          mintAuthority: bytes.slice(46, 78),
-          freezeAuthority: bytes.slice(78, 110)
+          data: {
+            supply: supply.toString(),
+            decimals,
+            isInitialized,
+            mintAuthority,
+            freezeAuthority,
+            // Calculate UI amount if supply > 0
+            uiAmount: decimals > 0 ? (Number(supply) / Math.pow(10, decimals)).toString() : supply.toString()
+          }
         };
       }
       
       return {
         type: 'mint-account',
-        error: 'Invalid mint account data length'
+        error: 'Invalid mint account data length',
+        dataLength: bytes.length
       };
     } catch (error) {
+      console.error('🔥 MINT: Failed to decode mint account:', error);
       return {
         type: 'mint-account',
         error: `Failed to decode: ${error}`
       };
+    }
+  }
+
+  /**
+   * Convert bytes to base58 address (Solana format)
+   */
+  private bytesToBase58(bytes: Uint8Array): string {
+    try {
+      const alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+      
+      // Handle empty input
+      if (bytes.length === 0) return '';
+      
+      // Convert to big integer for base58 encoding
+      let num = BigInt(0);
+      for (let i = 0; i < bytes.length; i++) {
+        num = num * BigInt(256) + BigInt(bytes[i]);
+      }
+      
+      // Convert to base58
+      let result = '';
+      while (num > BigInt(0)) {
+        const remainder = num % BigInt(58);
+        result = alphabet[Number(remainder)] + result;
+        num = num / BigInt(58);
+      }
+      
+      // Add leading zeros
+      for (let i = 0; i < bytes.length && bytes[i] === 0; i++) {
+        result = '1' + result;
+      }
+      
+      return result;
+    } catch (error) {
+      console.warn('Failed to convert bytes to base58:', error);
+      return 'invalid-address';
     }
   }
 
@@ -895,33 +1307,83 @@ export class GorbchainSDK {
       // Convert base64 data to bytes if needed
       let bytes: Uint8Array;
       if (typeof data === 'string') {
-        bytes = new Uint8Array(Buffer.from(data, 'base64'));
+        // Browser-compatible base64 decoding
+        const binaryString = atob(data);
+        bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
       } else if (Array.isArray(data)) {
         bytes = new Uint8Array(data);
+      } else if (data[0] && Array.isArray(data[0])) {
+        // Handle [data, encoding] format - data[0] is the array, data[1] is encoding
+        bytes = new Uint8Array(data[0]);
       } else {
         bytes = data;
       }
 
-      // Basic token account structure (simplified)
+      // Token account structure (165 bytes for standard accounts)
       if (bytes.length >= 165) {
         const view = new DataView(bytes.buffer, bytes.byteOffset);
         
+        // Read mint address (32 bytes at offset 0)
+        const mintBytes = bytes.slice(0, 32);
+        const mint = this.bytesToBase58(mintBytes);
+        
+        // Read owner address (32 bytes at offset 32)
+        const ownerBytes = bytes.slice(32, 64);
+        const owner = this.bytesToBase58(ownerBytes);
+        
+        // Read amount (8 bytes at offset 64, little endian)
+        const amount = view.getBigUint64(64, true);
+        
+        // Read delegate option (1 + 32 bytes at offset 72)
+        const hasDelegateOption = view.getUint8(72) === 1;
+        let delegate = null;
+        if (hasDelegateOption) {
+          const delegateBytes = bytes.slice(73, 105);
+          delegate = this.bytesToBase58(delegateBytes);
+        }
+        
+        // Read state (1 byte at offset 105)
+        const state = view.getUint8(105);
+        const isInitialized = state === 1;
+        const isFrozen = state === 2;
+        
+        // Read delegated amount (8 bytes at offset 106)
+        const delegatedAmount = view.getBigUint64(106, true);
+        
+        // Read close authority option (1 + 32 bytes at offset 114)
+        const hasCloseAuthority = view.getUint8(114) === 1;
+        let closeAuthority = null;
+        if (hasCloseAuthority) {
+          const closeAuthorityBytes = bytes.slice(115, 147);
+          closeAuthority = this.bytesToBase58(closeAuthorityBytes);
+        }
+        
         return {
           type: 'token-account',
-          mint: Array.from(bytes.slice(0, 32)),
-          owner: Array.from(bytes.slice(32, 64)),
-          amount: view.getBigUint64(64, true).toString(),
-          delegateOption: view.getUint32(72, true),
-          isInitialized: view.getUint8(108) === 1,
-          isFrozen: view.getUint8(109) === 1
+          data: {
+            mint,
+            owner,
+            amount: amount.toString(),
+            delegate,
+            delegatedAmount: delegatedAmount.toString(),
+            closeAuthority,
+            isInitialized,
+            isFrozen,
+            state: isInitialized ? 'initialized' : isFrozen ? 'frozen' : 'uninitialized'
+          }
         };
       }
       
       return {
         type: 'token-account',
-        error: 'Invalid token account data length'
+        error: 'Invalid token account data length',
+        dataLength: bytes.length
       };
     } catch (error) {
+      console.error('🔥 TOKEN: Failed to decode token account:', error);
       return {
         type: 'token-account',
         error: `Failed to decode: ${error}`
@@ -1210,7 +1672,7 @@ export class GorbchainSDK {
     }
 
     const decoded = this.decoders.decode(mockInstruction);
-    console.log('System Program Decoder Test Result:', decoded);
+    
     return decoded;
   }
 
@@ -1280,7 +1742,7 @@ export class GorbchainSDK {
     }
 
     const decoded = this.decoders.decode(mockInstruction);
-    console.log('SPL Token Decoder Test Result:', decoded);
+    
     return decoded;
   }
 
@@ -1350,7 +1812,7 @@ export class GorbchainSDK {
     }
 
     const decoded = this.decoders.decode(mockInstruction);
-    console.log('Token-2022 Decoder Test Result:', decoded);
+    
     return decoded;
   }
 
@@ -1385,7 +1847,7 @@ export class GorbchainSDK {
     }
 
     const decoded = this.decoders.decode(mockInstruction);
-    console.log('ATA Program Decoder Test Result:', decoded);
+    
     return decoded;
   }
 
@@ -1434,7 +1896,7 @@ export class GorbchainSDK {
     }
 
     const decoded = this.decoders.decode(mockInstruction);
-    console.log('Metaplex Decoder Test Result:', decoded);
+    
     return decoded;
   }
 
@@ -1582,5 +2044,72 @@ export class GorbchainSDK {
     const { Connection } = await import('@solana/web3.js');
     const connection = new Connection(this.config.rpcEndpoint, 'confirmed');
     return getTokenInfo(connection, mintAddress);
+  }
+
+  /**
+   * Generate a meaningful transaction name based on the instructions
+   */
+  private generateTransactionName(instructions: any[]): string {
+    if (instructions.length === 0) return 'Empty Transaction';
+    
+    // Get all unique actions, excluding errors
+    const actions = instructions
+      .filter(ix => ix.action !== 'Error')
+      .map(ix => ix.action);
+    
+    const uniqueActions = [...new Set(actions)];
+    
+    // If all instructions failed, return error
+    if (uniqueActions.length === 0) {
+      return 'Failed Transaction';
+    }
+    
+    // Single operation types
+    if (uniqueActions.length === 1) {
+      const action = uniqueActions[0];
+      return action === 'Unknown' ? 'Unknown Transaction' : action;
+    }
+    
+    // Multiple operations - generate compound name
+    const hasNFTCreation = uniqueActions.includes('Create NFT');
+    const hasTokenCreation = uniqueActions.includes('Create Token Account');
+    const hasTokenMinting = uniqueActions.includes('Mint Tokens');
+    const hasSOLTransfer = uniqueActions.includes('Transfer SOL');
+    const hasTokenTransfer = uniqueActions.includes('Transfer Tokens');
+    
+    // NFT creation workflow
+    if (hasNFTCreation) {
+      return 'NFT Creation';
+    }
+    
+    // Token creation workflow
+    if (hasTokenCreation && hasTokenMinting) {
+      return 'Token Creation & Minting';
+    }
+    
+    if (hasTokenCreation) {
+      return 'Token Account Setup';
+    }
+    
+    // Transfer operations
+    if (hasSOLTransfer && hasTokenTransfer) {
+      return 'SOL & Token Transfer';
+    }
+    
+    if (hasSOLTransfer && uniqueActions.length === 1) {
+      return 'SOL Transfer';
+    }
+    
+    if (hasTokenTransfer && uniqueActions.length === 1) {
+      return 'Token Transfer';
+    }
+    
+    // Complex operations
+    if (uniqueActions.length > 3) {
+      return 'Complex Transaction';
+    }
+    
+    // Default for 2-3 operations
+    return 'Multi-Operation Transaction';
   }
 } 

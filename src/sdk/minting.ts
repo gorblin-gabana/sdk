@@ -267,15 +267,6 @@ export async function createToken22TwoTx(
   const mintKeypair = Keypair.generate();
   const mint = mintKeypair.publicKey;
   
-  console.log('🚀 Creating Token22 with two-transaction approach...');
-  console.log('📝 Token Details:', {
-    name: params.name,
-    symbol: params.symbol,
-    supply: params.supply,
-    decimals: params.decimals,
-    mint: mint.toString(),
-  });
-  
   // Transaction 1: Create mint account and initialize
   const extensions = [ExtensionType.MetadataPointer];
   const mintLen = getMintLen(extensions);
@@ -316,15 +307,12 @@ export async function createToken22TwoTx(
     )
   );
   
-  console.log('📤 Sending setup transaction...');
   const setupSignature = await sendTransactionWithRetry(
     connection,
     setupTransaction,
     [payer, mintKeypair],
     options
   );
-  
-  console.log('✅ Setup transaction confirmed:', setupSignature);
   
   // Transaction 2: Initialize metadata and mint tokens
   const mintingTransaction = new Transaction();
@@ -403,16 +391,12 @@ export async function createToken22TwoTx(
     )
   );
   
-  console.log('📤 Sending minting transaction...');
   const mintingSignature = await sendTransactionWithRetry(
     connection,
     mintingTransaction,
     [payer],
     options
   );
-  
-  console.log('✅ Minting transaction confirmed:', mintingSignature);
-  console.log('🎉 Token created successfully!');
   
   return {
     signature: mintingSignature,
@@ -438,14 +422,7 @@ export async function createToken22SingleTx(
   const mintKeypair = Keypair.generate();
   const mint = mintKeypair.publicKey;
   
-  console.log('🚀 Creating Token22 with single-transaction approach...');
-  console.log('📝 Token Details:', {
-    name: params.name,
-    symbol: params.symbol,
-    supply: params.supply,
-    decimals: params.decimals,
-    mint: mint.toString(),
-  });
+
   
   const extensions = [ExtensionType.MetadataPointer];
   const mintLen = getMintLen(extensions);
@@ -535,16 +512,12 @@ export async function createToken22SingleTx(
     )
   );
   
-  console.log('📤 Sending transaction...');
   const signature = await sendTransactionWithRetry(
     connection,
     transaction,
     [payer, mintKeypair],
     options
   );
-  
-  console.log('✅ Transaction confirmed:', signature);
-  console.log('🎉 Token created successfully!');
   
   return {
     signature,
@@ -565,13 +538,7 @@ export async function createNFT(
 ): Promise<NFTMintResult> {
   validateNFTParameters(params);
   
-  console.log('🚀 Creating NFT with Metaplex Core...');
-  console.log('📝 NFT Details:', {
-    name: params.name,
-    uri: params.uri,
-    description: params.description,
-    royaltyBasisPoints: params.royaltyBasisPoints,
-  });
+
   
   try {
     // Setup UMI context
@@ -581,7 +548,7 @@ export async function createNFT(
     
     const assetSigner = generateSigner(umi);
     
-    console.log('📤 Sending NFT creation transaction...');
+
     
     // Create NFT with basic parameters for now
     // Note: Advanced features like royalties and attributes can be added in future versions
@@ -596,8 +563,7 @@ export async function createNFT(
       byte.toString(16).padStart(2, '0')
     ).join('');
     
-    console.log('✅ NFT creation confirmed:', signature);
-    console.log('🎉 NFT created successfully!');
+
     
     return {
       signature,

@@ -12,12 +12,33 @@ export enum ATAInstruction {
  */
 export function decodeATAInstruction(instruction: any): DecodedInstruction {
   const data = instruction.data;
+  const programId = instruction.programId;
+  const accounts = instruction.accounts || [];
+  
+  // Handle empty data case - common for ATA create instructions
   if (!data || data.length === 0) {
-    throw new Error('Invalid ATA instruction: no data');
+    // For empty data, infer instruction type from account structure
+    if (accounts.length >= 6) {
+      // Standard ATA create instruction has 6 accounts:
+      // [payer, associatedTokenAccount, owner, mint, systemProgram, tokenProgram]
+      return decodeCreate(instruction, programId);
+    } else {
+      // Unknown ATA instruction with empty data
+      return {
+        type: 'ata-unknown',
+        programId,
+        data: {
+          error: 'Unknown ATA instruction: empty data with unexpected account structure',
+          accountCount: accounts.length,
+          expectedAccounts: 6
+        },
+        accounts,
+        raw: instruction
+      };
+    }
   }
 
   const instructionType = data[0];
-  const programId = instruction.programId;
 
   switch (instructionType) {
     case ATAInstruction.Create:
@@ -32,7 +53,7 @@ export function decodeATAInstruction(instruction: any): DecodedInstruction {
           instructionType,
           error: `Unknown ATA instruction type: ${instructionType}`
         },
-        accounts: instruction.accounts || [],
+        accounts,
         raw: instruction
       };
   }

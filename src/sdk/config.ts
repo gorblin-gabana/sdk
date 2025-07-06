@@ -21,9 +21,9 @@ export function getDefaultConfig(): GorbchainSDKConfig {
       metaplex: 'BvoSmPBF6mBRxBMY9FPguw1zUoUg3xrc5CaWf7y5ACkc'
     },
     richDecoding: {
-      enabled: false, // Disabled by default for performance
-      includeTokenMetadata: false,
-      includeNftMetadata: false,
+      enabled: true, // Enabled by default for better user experience
+      includeTokenMetadata: true,
+      includeNftMetadata: true,
       maxConcurrentRequests: 5,
       enableCache: true
     }

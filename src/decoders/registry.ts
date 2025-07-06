@@ -91,17 +91,10 @@ export class DecoderRegistry {
    * Decode an instruction using the appropriate decoder
    */
   decode(instruction: any): DecodedInstruction {
-    console.log('🔥 DECODER: decode() called with instruction:', instruction);
-    console.log('🔥 DECODER: instruction.programId:', instruction.programId);
-    console.log('🔥 DECODER: instruction.data type:', typeof instruction.data);
-    console.log('🔥 DECODER: instruction.data:', instruction.data);
-    
     // First map programId to programName
     const programName = this.programIdToName.get(instruction.programId);
-    console.log('🔥 DECODER: Mapped programId to programName:', programName);
     
     if (!programName) {
-      console.log('🔥 DECODER: No program name found for programId, returning unknown');
       return {
         type: 'unknown',
         programId: instruction.programId,
@@ -113,10 +106,8 @@ export class DecoderRegistry {
     
     // Now get the decoder using the program name
     const decoder = this.decoders.get(programName);
-    console.log('🔥 DECODER: Found decoder for program name?', !!decoder);
     
     if (!decoder) {
-      console.log('🔥 DECODER: No decoder found for program name, returning unknown');
       return {
         type: 'unknown',
         programId: instruction.programId,
@@ -127,13 +118,9 @@ export class DecoderRegistry {
     }
 
     try {
-      console.log('🔥 DECODER: Attempting to decode instruction...');
       const result = decoder(instruction);
-      console.log('🔥 DECODER: Decode successful:', result);
       return result;
     } catch (error) {
-      console.error('🔥 DECODER: Decode failed with error:', error);
-      console.error('🔥 DECODER: Error stack:', (error as Error)?.stack);
       return {
         type: 'error',
         programId: instruction.programId,

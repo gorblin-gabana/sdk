@@ -53,6 +53,9 @@ export enum Token2022Instruction {
   ConfidentialTransferFeeExtension = 37,
   WithdrawExcessLamports = 38,
   MetadataPointerExtension = 39,
+  
+  // NFT/Metadata instructions (custom extensions)
+  InitializeNFTMetadata = 210,
 }
 
 // Authority Types for Token-2022
@@ -76,139 +79,139 @@ export enum AuthorityType {
  * Main Token-2022 decoder function
  */
 export function decodeToken2022Instruction(instruction: any): DecodedInstruction {
-  console.log('🔥 TOKEN2022: decodeToken2022Instruction() called');
-  console.log('🔥 TOKEN2022: instruction received:', instruction);
-  console.log('🔥 TOKEN2022: instruction.data:', instruction.data);
-  console.log('🔥 TOKEN2022: instruction.data type:', typeof instruction.data);
-  console.log('🔥 TOKEN2022: instruction.data instanceof Uint8Array:', instruction.data instanceof Uint8Array);
-  console.log('🔥 TOKEN2022: instruction.data length:', instruction.data?.length);
-  
   const data = instruction.data;
   if (!data || data.length === 0) {
-    console.log('🔥 TOKEN2022: No data or empty data, throwing error');
-    throw new Error('Invalid Token-2022 instruction: no data');
+    return {
+      type: 'token2022-generic',
+      programId: getToken2022ProgramId(),
+      accounts: instruction.accounts || [],
+      data: {
+        type: 'token2022-generic',
+        description: 'Token-2022 operation (no instruction data)',
+        error: 'No instruction data available'
+      }
+    };
   }
 
   let instructionType: number;
   
   if (data instanceof Uint8Array) {
     instructionType = data[0];
-    console.log('🔥 TOKEN2022: Data is Uint8Array, first byte:', instructionType);
   } else if (typeof data === 'string') {
-    console.log('🔥 TOKEN2022: Data is string, cannot extract instruction type');
     throw new Error('Invalid Token-2022 instruction: data is string, expected Uint8Array');
   } else if (Array.isArray(data)) {
     instructionType = data[0];
-    console.log('🔥 TOKEN2022: Data is Array, first element:', instructionType);
   } else {
-    console.log('🔥 TOKEN2022: Data is unknown type, cannot extract instruction type');
     throw new Error('Invalid Token-2022 instruction: unknown data type');
   }
 
-  console.log('🔥 TOKEN2022: Extracted instruction type:', instructionType);
-  
   const programId = getToken2022ProgramId();
-  console.log('🔥 TOKEN2022: Program ID:', programId);
 
   switch (instructionType) {
     case Token2022Instruction.Transfer:
-      console.log('🔥 TOKEN2022: Decoding Transfer instruction');
       return decodeTransfer(instruction, programId);
     case Token2022Instruction.MintTo:
-      console.log('🔥 TOKEN2022: Decoding MintTo instruction');
       return decodeMintTo(instruction, programId);
     case Token2022Instruction.Burn:
-      console.log('🔥 TOKEN2022: Decoding Burn instruction');
       return decodeBurn(instruction, programId);
     case Token2022Instruction.InitializeMint:
-      console.log('🔥 TOKEN2022: Decoding InitializeMint instruction');
       return decodeInitializeMint(instruction, programId);
     case Token2022Instruction.InitializeAccount:
-      console.log('🔥 TOKEN2022: Decoding InitializeAccount instruction');
       return decodeInitializeAccount(instruction, programId);
     case Token2022Instruction.SetAuthority:
-      console.log('🔥 TOKEN2022: Decoding SetAuthority instruction');
       return decodeSetAuthority(instruction, programId);
     case Token2022Instruction.Approve:
-      console.log('🔥 TOKEN2022: Decoding Approve instruction');
       return decodeApprove(instruction, programId);
     case Token2022Instruction.Revoke:
-      console.log('🔥 TOKEN2022: Decoding Revoke instruction');
       return decodeRevoke(instruction, programId);
     case Token2022Instruction.CloseAccount:
-      console.log('🔥 TOKEN2022: Decoding CloseAccount instruction');
       return decodeCloseAccount(instruction, programId);
     case Token2022Instruction.FreezeAccount:
-      console.log('🔥 TOKEN2022: Decoding FreezeAccount instruction');
       return decodeFreezeAccount(instruction, programId);
     case Token2022Instruction.ThawAccount:
-      console.log('🔥 TOKEN2022: Decoding ThawAccount instruction');
       return decodeThawAccount(instruction, programId);
     case Token2022Instruction.TransferChecked:
-      console.log('🔥 TOKEN2022: Decoding TransferChecked instruction');
       return decodeTransferChecked(instruction, programId);
     case Token2022Instruction.ApproveChecked:
-      console.log('🔥 TOKEN2022: Decoding ApproveChecked instruction');
       return decodeApproveChecked(instruction, programId);
     case Token2022Instruction.MintToChecked:
-      console.log('🔥 TOKEN2022: Decoding MintToChecked instruction');
       return decodeMintToChecked(instruction, programId);
     case Token2022Instruction.BurnChecked:
-      console.log('🔥 TOKEN2022: Decoding BurnChecked instruction');
       return decodeBurnChecked(instruction, programId);
     case Token2022Instruction.InitializeMint2:
-      console.log('🔥 TOKEN2022: Decoding InitializeMint2 instruction');
       return decodeInitializeMint2(instruction, programId);
     case Token2022Instruction.InitializeAccount2:
-      console.log('🔥 TOKEN2022: Decoding InitializeAccount2 instruction');
       return decodeInitializeAccount2(instruction, programId);
     case Token2022Instruction.InitializeAccount3:
-      console.log('🔥 TOKEN2022: Decoding InitializeAccount3 instruction');
       return decodeInitializeAccount3(instruction, programId);
     case Token2022Instruction.SyncNative:
-      console.log('🔥 TOKEN2022: Decoding SyncNative instruction');
       return decodeSyncNative(instruction, programId);
     
     // Token-2022 specific instructions
     case Token2022Instruction.GetAccountDataSize:
-      console.log('🔥 TOKEN2022: Decoding GetAccountDataSize instruction');
       return decodeGetAccountDataSize(instruction, programId);
     case Token2022Instruction.InitializeImmutableOwner:
-      console.log('🔥 TOKEN2022: Decoding InitializeImmutableOwner instruction');
       return decodeInitializeImmutableOwner(instruction, programId);
     case Token2022Instruction.AmountToUiAmount:
-      console.log('🔥 TOKEN2022: Decoding AmountToUiAmount instruction');
       return decodeAmountToUiAmount(instruction, programId);
     case Token2022Instruction.UiAmountToAmount:
-      console.log('🔥 TOKEN2022: Decoding UiAmountToAmount instruction');
       return decodeUiAmountToAmount(instruction, programId);
     case Token2022Instruction.InitializeMintCloseAuthority:
-      console.log('🔥 TOKEN2022: Decoding InitializeMintCloseAuthority instruction');
       return decodeInitializeMintCloseAuthority(instruction, programId);
     case Token2022Instruction.Reallocate:
-      console.log('🔥 TOKEN2022: Decoding Reallocate instruction');
       return decodeReallocate(instruction, programId);
     case Token2022Instruction.CreateNativeMint:
-      console.log('🔥 TOKEN2022: Decoding CreateNativeMint instruction');
       return decodeCreateNativeMint(instruction, programId);
     case Token2022Instruction.InitializeNonTransferableMint:
-      console.log('🔥 TOKEN2022: Decoding InitializeNonTransferableMint instruction');
       return decodeInitializeNonTransferableMint(instruction, programId);
     case Token2022Instruction.WithdrawExcessLamports:
-      console.log('🔥 TOKEN2022: Decoding WithdrawExcessLamports instruction');
       return decodeWithdrawExcessLamports(instruction, programId);
     case Token2022Instruction.InitializePermanentDelegate:
-      console.log('🔥 TOKEN2022: Decoding InitializePermanentDelegate instruction');
       return decodeInitializePermanentDelegate(instruction, programId);
     
+    // NFT/Metadata instructions
+    case Token2022Instruction.InitializeNFTMetadata:
+      return decodeInitializeNFTMetadata(instruction, programId);
+    
+    // Extended Token-2022 instructions (beyond standard range)
+    case 219:
+      return {
+        type: 'token2022-extension-219',
+        programId,
+        data: {
+          instructionType: 219,
+          name: 'TokenExtension219',
+          description: 'Token-2022 extension operation (type 219)',
+          rawData: Array.from(instruction.data || [])
+        },
+        accounts: instruction.accounts || [],
+        raw: instruction
+      };
+    
+    case 232:
+      return {
+        type: 'token2022-extension-232',
+        programId,
+        data: {
+          instructionType: 232,
+          name: 'TokenExtension232',
+          description: 'Token-2022 extension operation (type 232)',
+          rawData: Array.from(instruction.data || [])
+        },
+        accounts: instruction.accounts || [],
+        raw: instruction
+      };
+    
     default:
-      console.log('🔥 TOKEN2022: Unknown instruction type, returning unknown');
       return {
         type: 'token2022-unknown',
         programId,
         data: {
           instructionType,
-          error: `Unknown Token-2022 instruction type: ${instructionType}`
+          name: `UnknownToken2022Instruction${instructionType}`,
+          description: `Unknown Token-2022 instruction type: ${instructionType}`,
+          error: `Unknown Token-2022 instruction type: ${instructionType}`,
+          rawData: Array.from(instruction.data || [])
         },
         accounts: instruction.accounts || [],
         raw: instruction
@@ -875,6 +878,74 @@ function decodeInitializePermanentDelegate(instruction: any, programId: string):
     },
     accounts: instruction.accounts || []
   };
+}
+
+function decodeInitializeNFTMetadata(instruction: any, programId: string): DecodedInstruction {
+  const data = instruction.data;
+  
+  try {
+    // Skip instruction type byte (210) and read metadata fields
+    let offset = 1;
+    
+    // Skip some header bytes (appears to be 8 bytes based on the data pattern)
+    offset += 8;
+    
+    // Read name length (4 bytes, little-endian)
+    const nameLength = (data[offset] | (data[offset + 1] << 8) | (data[offset + 2] << 16) | (data[offset + 3] << 24));
+    offset += 4;
+    
+    // Read name string
+    const nameBytes = data.slice(offset, offset + nameLength);
+    const name = String.fromCharCode(...nameBytes);
+    offset += nameLength;
+    
+    // Read symbol length (4 bytes, little-endian)
+    const symbolLength = (data[offset] | (data[offset + 1] << 8) | (data[offset + 2] << 16) | (data[offset + 3] << 24));
+    offset += 4;
+    
+    // Read symbol string
+    const symbolBytes = data.slice(offset, offset + symbolLength);
+    const symbol = String.fromCharCode(...symbolBytes);
+    offset += symbolLength;
+    
+    // Read URI length (4 bytes, little-endian)
+    const uriLength = (data[offset] | (data[offset + 1] << 8) | (data[offset + 2] << 16) | (data[offset + 3] << 24));
+    offset += 4;
+    
+    // Read URI string
+    const uriBytes = data.slice(offset, offset + uriLength);
+    const uri = String.fromCharCode(...uriBytes);
+    
+    
+    
+    return {
+      type: 'token2022-initialize-nft-metadata',
+      programId,
+      data: {
+        mint: instruction.accounts[0],
+        metadata: {
+          name,
+          symbol,
+          uri
+        },
+        extension: 'NFTMetadata'
+      },
+      accounts: instruction.accounts || []
+    };
+  } catch (error) {
+    console.warn('🔥 TOKEN2022: Failed to parse NFT metadata:', error);
+    return {
+      type: 'token2022-initialize-nft-metadata-error',
+      programId,
+      data: {
+        mint: instruction.accounts[0],
+        error: (error as Error).message,
+        rawData: Array.from(data),
+        extension: 'NFTMetadata'
+      },
+      accounts: instruction.accounts || []
+    };
+  }
 }
 
 // Utility functions

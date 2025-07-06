@@ -44,60 +44,281 @@ export interface GorbchainSDKConfig {
 }
 
 /**
- * Rich transaction object with decoded instructions and comprehensive account analysis
+ * Simplified rich transaction interface focused on human readability
  */
 export interface RichTransaction {
-  /** Transaction signature */
+  // Basic transaction info
   signature: string;
-  /** Slot number when transaction was processed */
   slot: number;
-  /** Unix timestamp when transaction was processed */
-  blockTime: number | null;
-  /** Transaction fee in lamports */
+  blockTime: number;
   fee: number;
-  /** Transaction status */
   status: 'success' | 'failed';
-  /** Error message if transaction failed */
-  error?: string;
-  /** Array of decoded instructions */
-  instructions: RichInstruction[];
-  /** Array of account keys involved in transaction */
-  accountKeys: string[];
-  /** Transaction metadata from RPC response */
-  meta: any;
-  /** Comprehensive token account analysis */
-  tokenAccounts?: Record<string, any>;
-  /** Raw account info map for all fetched accounts */
-  accountInfoMap?: Record<string, any>;
+  
+  // Transaction summary
+  summary: {
+    type: string; // e.g., "Create NFT", "Transfer Tokens", "Transfer SOL"
+    description: string; // Human-readable description
+    programsUsed: string[]; // e.g., ["Token-2022", "System"]
+    instructionCount: number;
+    computeUnits: number;
+  };
+  
+  // Token information (when applicable)
+  tokens?: {
+    created?: TokenMetadata[];
+    transferred?: TokenTransferInfo[];
+    operations: TokenOperationInfo[];
+  };
+  
+  // Simplified instruction list
+  instructions: SimpleInstruction[];
+  
+  // Account changes
+  accountChanges?: {
+    solTransfers?: SolTransfer[];
+    tokenTransfers?: TokenTransferInfo[];
+    accountsCreated?: string[];
+    accountsClosed?: string[];
+  };
+  
+  // Raw data (only when requested)
+  raw?: {
+    meta: any;
+    accountKeys: string[];
+    fullInstructions: any[];
+  };
 }
 
 /**
- * Rich instruction with enhanced decoding
+ * Simplified instruction interface
+ */
+export interface SimpleInstruction {
+  instruction: number;
+  program: string; // e.g., "Token-2022", "System", "ATA"
+  action: string; // e.g., "Create NFT", "Mint Tokens", "Transfer SOL"
+  description: string; // Human-readable description
+  data?: {
+    [key: string]: any; // Relevant data for this instruction
+  };
+}
+
+/**
+ * Token metadata information
+ */
+export interface TokenMetadata {
+  mint: string;
+  name: string;
+  symbol: string;
+  type: 'Token' | 'NFT';
+  decimals?: number;
+  supply?: string;
+  uri?: string;
+  description?: string;
+}
+
+/**
+ * Token transfer information for simplified interface
+ */
+export interface TokenTransferInfo {
+  mint: string;
+  amount: string;
+  from: string;
+  to: string;
+  tokenName?: string;
+  tokenSymbol?: string;
+  decimals?: number;
+}
+
+/**
+ * SOL transfer information
+ */
+export interface SolTransfer {
+  amount: string; // in SOL, e.g., "0.897840"
+  from: string;
+  to: string;
+  lamports: number;
+}
+
+/**
+ * Token operation information for simplified interface
+ */
+export interface TokenOperationInfo {
+  instruction: number;
+  type: string;
+  action: string;
+  description: string;
+  program: string;
+  data?: {
+    [key: string]: any;
+  };
+}
+
+// Removed old complex RichTransaction interface
+
+/**
+ * Enhanced instruction interface with rich decoding
  */
 export interface RichInstruction {
-  /** Instruction index in the transaction */
   index: number;
-  /** Program ID that owns this instruction */
   programId: string;
-  /** Program name (if recognized) */
-  programName?: string;
-  /** Raw instruction data */
-  data: string;
-  /** Account addresses used by this instruction */
+  programName: string;
+  data: any;
   accounts: string[];
-  /** Decoded instruction details */
   decoded: {
-    /** Instruction type */
     type: string;
-    /** Human-readable description */
     description: string;
-    /** Parsed instruction data */
-    data?: any;
-    /** Token metadata (if applicable and enabled) */
-    tokenMetadata?: any;
-    /** NFT metadata (if applicable and enabled) */
-    nftMetadata?: any;
+    data: any;
+    accountDetails: AccountDetail[];
+    metadata?: any;
   };
+}
+
+/**
+ * Token operation details
+ */
+export interface TokenOperation {
+  index: number;
+  type: 'transfer' | 'mint' | 'burn' | 'approve' | 'revoke' | 'initialize' | 'close' | 'unknown';
+  subtype?: string;
+  amount: number | null;
+  mint: string | null;
+  account: string | null;
+  programId: string;
+  accounts: string[];
+  metadata?: any;
+}
+
+/**
+ * Token transfer details
+ */
+export interface TokenTransfer {
+  index: number;
+  mint: string;
+  amount: number;
+  decimals: number;
+  source: string;
+  destination: string;
+  authority: string;
+  programId: string;
+  uiAmount?: number;
+  uiAmountString?: string;
+}
+
+/**
+ * Token mint details
+ */
+export interface TokenMint {
+  index: number;
+  mint: string;
+  amount: number;
+  decimals: number;
+  destination: string;
+  authority: string;
+  programId: string;
+}
+
+/**
+ * Token burn details
+ */
+export interface TokenBurn {
+  index: number;
+  mint: string;
+  amount: number;
+  decimals: number;
+  account: string;
+  authority: string;
+  programId: string;
+}
+
+/**
+ * Enhanced token account information
+ */
+export interface TokenAccount {
+  address: string;
+  mint: string;
+  owner: string;
+  amount: number;
+  decimals: number;
+  programId: string;
+  isNative: boolean;
+  uiAmount?: number;
+  uiAmountString?: string;
+}
+
+/**
+ * Account detail information
+ */
+export interface AccountDetail {
+  address: string;
+  type: 'token-account' | 'mint-account' | 'system-account' | 'program-account' | 'unknown-account';
+  owner?: string;
+  dataLength?: number;
+  error?: string;
+  metadata?: any;
+}
+
+/**
+ * Token account information
+ */
+export interface TokenAccountInfo {
+  address: string;
+  type: 'token-account' | 'mint-account';
+  mint?: string;
+  owner?: string;
+  amount?: number;
+  decimals?: number;
+  programId?: string;
+  error?: string;
+  dataLength?: number;
+}
+
+/**
+ * System account information
+ */
+export interface SystemAccountInfo {
+  address: string;
+  type: 'system-account';
+  owner: string;
+  balance: number;
+  dataLength: number;
+  executable: boolean;
+  rentEpoch: number;
+}
+
+/**
+ * Program account information
+ */
+export interface ProgramAccountInfo {
+  address: string;
+  type: 'program-account';
+  owner: string;
+  dataLength: number;
+  executable: boolean;
+  programId: string;
+}
+
+/**
+ * Balance change information
+ */
+export interface BalanceChange {
+  address: string;
+  type: 'sol' | 'token';
+  mint?: string;
+  preBalance: number;
+  postBalance: number;
+  change: number;
+  changePercent: number;
+}
+
+/**
+ * Transaction category for filtering
+ */
+export interface TransactionCategory {
+  primary: 'token' | 'system' | 'program' | 'mixed';
+  secondary: string[];
+  tags: string[];
+  complexity: 'simple' | 'medium' | 'complex';
+  riskLevel: 'low' | 'medium' | 'high';
 }
 
 /**

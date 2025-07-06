@@ -318,26 +318,33 @@ export class RpcClient {
     }
     
     // Decode mint account data
-    const data = Buffer.from(accountInfo.data[0], 'base64');
+    // Browser-compatible base64 decoding
+    const binaryString = atob(accountInfo.data[0]);
+    const data = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      data[i] = binaryString.charCodeAt(i);
+    }
     
     // Mint account layout (simplified)
     if (data.length < 82) {
       return null;
     }
     
-    const supply = data.readBigUInt64LE(36).toString();
-    const decimals = data.readUInt8(44);
-    const isInitialized = data.readUInt8(45) === 1;
+    const view = new DataView(data.buffer, data.byteOffset);
+    
+    const supply = view.getBigUint64(36, true).toString(); // true = little endian
+    const decimals = view.getUint8(44);
+    const isInitialized = view.getUint8(45) === 1;
     
     // Read mint authority (32 bytes at offset 4)
-    const mintAuthorityFlag = data.readUInt8(4);
+    const mintAuthorityFlag = view.getUint8(4);
     const mintAuthority = mintAuthorityFlag === 1 ? 
-      Buffer.from(data.subarray(5, 37)).toString('hex') : null;
+      Array.from(data.subarray(5, 37)).map(b => b.toString(16).padStart(2, '0')).join('') : null;
     
     // Read freeze authority (32 bytes at offset 46)
-    const freezeAuthorityFlag = data.readUInt8(46);
+    const freezeAuthorityFlag = view.getUint8(46);
     const freezeAuthority = freezeAuthorityFlag === 1 ? 
-      Buffer.from(data.subarray(47, 79)).toString('hex') : null;
+      Array.from(data.subarray(47, 79)).map(b => b.toString(16).padStart(2, '0')).join('') : null;
     
     return {
       supply,
@@ -380,11 +387,18 @@ export class RpcClient {
     }
     
     // Decode metadata account (simplified)
-    const data = Buffer.from(accountInfo.data[0], 'base64');
+    // Browser-compatible base64 decoding
+    const binaryString = atob(accountInfo.data[0]);
+    const data = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      data[i] = binaryString.charCodeAt(i);
+    }
     
     // This is a simplified metadata decoder
     // In production, you'd want to use the official Metaplex JS SDK
     try {
+      const view = new DataView(data.buffer, data.byteOffset);
+      
       // Skip the first byte (discriminator) and decode the rest
       let offset = 1;
       
@@ -395,25 +409,28 @@ export class RpcClient {
       offset += 32;
       
       // Read name (first 4 bytes are length, then string)
-      const nameLength = data.readUInt32LE(offset);
+      const nameLength = view.getUint32(offset, true); // true = little endian
       offset += 4;
-      const name = data.subarray(offset, offset + nameLength).toString('utf8').replace(/\0/g, '');
+      const nameBytes = data.subarray(offset, offset + nameLength);
+      const name = new TextDecoder().decode(nameBytes).replace(/\0/g, '');
       offset += nameLength;
       
       // Read symbol (first 4 bytes are length, then string)
-      const symbolLength = data.readUInt32LE(offset);
+      const symbolLength = view.getUint32(offset, true);
       offset += 4;
-      const symbol = data.subarray(offset, offset + symbolLength).toString('utf8').replace(/\0/g, '');
+      const symbolBytes = data.subarray(offset, offset + symbolLength);
+      const symbol = new TextDecoder().decode(symbolBytes).replace(/\0/g, '');
       offset += symbolLength;
       
       // Read URI (first 4 bytes are length, then string)
-      const uriLength = data.readUInt32LE(offset);
+      const uriLength = view.getUint32(offset, true);
       offset += 4;
-      const uri = data.subarray(offset, offset + uriLength).toString('utf8').replace(/\0/g, '');
+      const uriBytes = data.subarray(offset, offset + uriLength);
+      const uri = new TextDecoder().decode(uriBytes).replace(/\0/g, '');
       offset += uriLength;
       
       // Read seller fee basis points (2 bytes)
-      const sellerFeeBasisPoints = data.readUInt16LE(offset);
+      const sellerFeeBasisPoints = view.getUint16(offset, true);
       offset += 2;
       
       // Read creators (this is simplified - full implementation would parse the full structure)
@@ -544,6 +561,125 @@ export class RpcClient {
   }
 
   /**
+   * Extract Token-2022 metadata from mint account data
+   */
+  private extractToken2022Metadata(data: Uint8Array): {
+    name: string;
+    symbol: string;
+    uri: string;
+  } | null {
+    try {
+      const textDecoder = new TextDecoder();
+      
+      // Since we know NNFT symbol extraction works, find that first and work backwards
+      const dataStr = textDecoder.decode(data);
+      const nnftIndex = dataStr.indexOf('NNFT');
+      
+      if (nnftIndex !== -1) {
+        // Found NNFT, now work backwards to find the name
+        const view = new DataView(data.buffer, data.byteOffset);
+        
+        // NNFT should be preceded by a 4-byte length (4) and before that the name
+        const nnftLengthOffset = nnftIndex - 4;
+        if (nnftLengthOffset >= 4) {
+          const symbolLength = view.getUint32(nnftLengthOffset, true);
+          if (symbolLength === 4) { // Confirms this is the length for "NNFT"
+            // Now work backwards to find the name
+            // Format: [name_length][name][symbol_length][symbol][uri_length][uri]
+            let nameEndOffset = nnftLengthOffset;
+            
+            // Look backwards for the name - try different possible name lengths
+            for (let possibleNameLength = 7; possibleNameLength <= 20; possibleNameLength++) {
+              const nameStartOffset = nameEndOffset - 4 - possibleNameLength;
+              if (nameStartOffset >= 0) {
+                const nameLengthOffset = nameStartOffset;
+                const nameLength = view.getUint32(nameLengthOffset, true);
+                
+                if (nameLength === possibleNameLength) {
+                  const nameBytes = data.subarray(nameLengthOffset + 4, nameLengthOffset + 4 + nameLength);
+                  const name = textDecoder.decode(nameBytes).trim();
+                  
+                  // Check if this looks like a reasonable name
+                  if (name.length > 0 && /^[a-zA-Z0-9\s\-_]+$/.test(name)) {
+                    // Extract URI
+                    const uriLengthOffset = nnftIndex + 4; // After "NNFT"
+                    if (uriLengthOffset + 4 < data.length) {
+                      const uriLength = view.getUint32(uriLengthOffset, true);
+                      if (uriLength > 0 && uriLength < 201 && uriLengthOffset + 4 + uriLength <= data.length) {
+                        const uriBytes = data.subarray(uriLengthOffset + 4, uriLengthOffset + 4 + uriLength);
+                        const uri = textDecoder.decode(uriBytes).trim();
+                        
+                        return { name, symbol: 'NNFT', uri };
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      
+             // Generic fallback: extract any readable strings if the structured parsing failed
+       // Look for common metadata patterns in the decoded string
+       const potentialStrings = [];
+       let currentString = '';
+       
+       for (let i = 0; i < dataStr.length; i++) {
+         const char = dataStr[i];
+         const code = char.charCodeAt(0);
+         
+         // Collect printable ASCII characters (letters, numbers, spaces, common symbols)
+         if ((code >= 32 && code <= 126) && char !== '\x00') {
+           currentString += char;
+         } else {
+           if (currentString.length >= 2) {
+             potentialStrings.push(currentString.trim());
+           }
+           currentString = '';
+         }
+       }
+       
+       // Add final string if exists
+       if (currentString.length >= 2) {
+         potentialStrings.push(currentString.trim());
+       }
+       
+       // Filter to reasonable metadata strings (not too long, not too short)
+       const validStrings = potentialStrings.filter(str => 
+         str.length >= 2 && str.length <= 64 && 
+         /^[a-zA-Z0-9\s\-_\.\/\:]+$/.test(str)
+       );
+       
+       if (validStrings.length >= 2) {
+         // Try to identify name, symbol, and URI from the valid strings
+         let name = validStrings[0];
+         let symbol = validStrings[1];
+         let uri = validStrings.find(str => str.includes('http')) || '';
+         
+         // If symbol looks too long, it might be the URI
+         if (symbol.length > 10 && symbol.includes('http')) {
+           uri = symbol;
+           symbol = validStrings[2] || '';
+         }
+         
+         // Validate symbol format (should be short and uppercase-ish)
+         if (symbol.length > 10 || !/^[A-Z0-9]+$/i.test(symbol)) {
+           symbol = '';
+         }
+         
+         if (name && (symbol || uri)) {
+           return { name, symbol, uri };
+         }
+       }
+      
+      return null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
    * Get enhanced token information including NFT detection
    */
   async getTokenInfo(mintAddress: string, commitment?: string): Promise<{
@@ -574,13 +710,53 @@ export class RpcClient {
     
     const isNFT = (
       mintInfo.supply === '1' &&
-      mintInfo.decimals === 0 &&
-      mintInfo.mintAuthority === null
+      mintInfo.decimals === 0
     );
     
     let metadata;
     if (isNFT) {
-      metadata = await this.getTokenMetadata(mintAddress, commitment);
+      // First try Token-2022 metadata extraction
+      const accountInfo = await this.getAccountInfo(mintAddress, commitment);
+      if (accountInfo && accountInfo.data) {
+        const binaryString = atob(accountInfo.data[0]);
+        const data = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          data[i] = binaryString.charCodeAt(i);
+        }
+        
+        const token2022Metadata = this.extractToken2022Metadata(data);
+        if (token2022Metadata) {
+          let finalName = token2022Metadata.name;
+          
+          // If we have a URI, try to fetch the external metadata for the name
+          if (token2022Metadata.uri && token2022Metadata.uri.startsWith('http')) {
+            try {
+              const response = await fetch(token2022Metadata.uri);
+              if (response.ok) {
+                const externalMetadata = await response.json();
+                if (externalMetadata.name) {
+                  finalName = externalMetadata.name;
+                }
+              }
+            } catch (error) {
+              // Fallback to extracted name if external fetch fails
+            }
+          }
+          
+          metadata = {
+            name: finalName,
+            symbol: token2022Metadata.symbol,
+            uri: token2022Metadata.uri,
+            sellerFeeBasisPoints: 0,
+            creators: []
+          };
+        }
+      }
+      
+      // Fallback to Metaplex metadata if Token-2022 extraction failed
+      if (!metadata) {
+        metadata = await this.getTokenMetadata(mintAddress, commitment);
+      }
     }
     
     return {

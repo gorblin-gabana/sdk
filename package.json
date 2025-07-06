@@ -1,6 +1,6 @@
 {
   "name": "@gorbchain-xyz/chaindecode",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Dynamic, fork-aware decoding SDK for Solana transactions. Parse and decode SPL Token, Token-2022, Metaplex metadata, and custom programs using @solana/kit with flexible program ID support.",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -69,9 +69,9 @@
   "dependencies": {
     "@metaplex-foundation/mpl-core": "^1.4.1",
     "@metaplex-foundation/mpl-token-metadata": "^3.4.0",
-    "@metaplex-foundation/umi": "1.0.0",
-    "@metaplex-foundation/umi-bundle-defaults": "1.0.0",
-    "@metaplex-foundation/umi-signer-wallet-adapters": "1.0.0",
+    "@metaplex-foundation/umi": "^1.2.0",
+    "@metaplex-foundation/umi-bundle-defaults": "^1.2.0",
+    "@metaplex-foundation/umi-signer-wallet-adapters": "^1.2.0",
     "@solana-program/token-2022": "^0.4.2",
     "@solana/kit": "^2.1.1",
     "@solana/spl-token": "^0.4.13",
