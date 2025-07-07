@@ -90,7 +90,10 @@ function decodeCreate(instruction: ATAInstructionData, programId: string): Decod
 /**
  * Decode Create Idempotent ATA instruction
  */
-function decodeCreateIdempotent(instruction: ATAInstructionData, programId: string): DecodedInstruction {
+function decodeCreateIdempotent(
+  instruction: ATAInstructionData, 
+  programId: string
+): DecodedInstruction {
   const accounts = instruction.accounts;
 
   return {

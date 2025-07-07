@@ -52,8 +52,8 @@ export async function getAndDecodeTransaction({
       const instructionForRegistry = {
         programId: ix.programId,
         data: ix.data,
-        accounts: (ix.accounts || []).map((accountIndex: number) =>
-          tx.transaction.message.accountKeys[accountIndex] || 'unknown'
+        accounts: (ix.accounts ?? []).map((accountIndex: number) =>
+          tx.transaction.message.accountKeys[accountIndex] ?? 'unknown'
         )
       };
       return registry.decode(instructionForRegistry);
@@ -62,8 +62,8 @@ export async function getAndDecodeTransaction({
         type: 'error',
         programId: ix.programId,
         data: { error: e instanceof Error ? e.message : String(e) },
-        accounts: (ix.accounts || []).map((accountIndex: number) =>
-          tx.transaction.message.accountKeys[accountIndex] || 'unknown'
+        accounts: (ix.accounts ?? []).map((accountIndex: number) =>
+          tx.transaction.message.accountKeys[accountIndex] ?? 'unknown'
         ),
         raw: ix as unknown as Record<string, unknown>
       };

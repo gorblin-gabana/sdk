@@ -35,6 +35,7 @@ export { fetchProgramAccount } from './utils/fetchProgramAccount.js';
 // Error types
 export * from './errors/index.js';
 
-// NOTE: Minting functions are excluded as they require Node.js Buffer and heavy Metaplex dependencies
+// NOTE: Minting functions are excluded as they require Node.js Buffer
+// and heavy Metaplex dependencies
 // For minting functionality, use the full SDK in Node.js environments
 // NOTE: getNetworkHealth is a method of GorbchainSDK class, not a standalone export

@@ -188,7 +188,7 @@ export function decodeToken2022Instruction(instruction: Token2022InstructionData
           instructionType: 219,
           name: 'TokenExtension219',
           description: 'Token-2022 extension operation (type 219)',
-          rawData: Array.from(instruction.data || [])
+          rawData: Array.from(instruction.data ?? [])
         },
         accounts: instruction.accounts,
         raw: instruction as unknown as Record<string, unknown>
@@ -217,9 +217,9 @@ export function decodeToken2022Instruction(instruction: Token2022InstructionData
           name: `UnknownToken2022Instruction${instructionType}`,
           description: `Unknown Token-2022 instruction type: ${instructionType}`,
           error: `Unknown Token-2022 instruction type: ${instructionType}`,
-          rawData: Array.from(instruction.data || [])
+          rawData: Array.from(instruction.data ?? [])
         },
-        accounts: instruction.accounts || [],
+        accounts: instruction.accounts ?? [],
         raw: instruction as unknown as Record<string, unknown>
       };
   }
@@ -374,7 +374,7 @@ function decodeTransfer(instruction: any, programId: string): DecodedInstruction
       destination: instruction.accounts[1],
       authority: instruction.accounts[2]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -395,7 +395,7 @@ function decodeMintTo(instruction: any, programId: string): DecodedInstruction {
       destination: instruction.accounts[1],
       authority: instruction.accounts[2]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -416,7 +416,7 @@ function decodeBurn(instruction: any, programId: string): DecodedInstruction {
       mint: instruction.accounts[1],
       authority: instruction.accounts[2]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -440,7 +440,7 @@ function decodeInitializeMint(instruction: any, programId: string): DecodedInstr
       freezeAuthority,
       mint: instruction.accounts[0]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -454,7 +454,7 @@ function decodeInitializeAccount(instruction: any, programId: string): DecodedIn
       owner: instruction.accounts[2],
       rent: instruction.accounts[3]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -476,7 +476,7 @@ function decodeSetAuthority(instruction: any, programId: string): DecodedInstruc
       newAuthority,
       currentAuthority: instruction.accounts[1]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -497,7 +497,7 @@ function decodeApprove(instruction: any, programId: string): DecodedInstruction 
       delegate: instruction.accounts[1],
       authority: instruction.accounts[2]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -509,7 +509,7 @@ function decodeRevoke(instruction: any, programId: string): DecodedInstruction {
       source: instruction.accounts[0],
       authority: instruction.accounts[1]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -522,7 +522,7 @@ function decodeCloseAccount(instruction: any, programId: string): DecodedInstruc
       destination: instruction.accounts[1],
       authority: instruction.accounts[2]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -535,7 +535,7 @@ function decodeFreezeAccount(instruction: any, programId: string): DecodedInstru
       mint: instruction.accounts[1],
       authority: instruction.accounts[2]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -548,7 +548,7 @@ function decodeThawAccount(instruction: any, programId: string): DecodedInstruct
       mint: instruction.accounts[1],
       authority: instruction.accounts[2]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -572,7 +572,7 @@ function decodeTransferChecked(instruction: any, programId: string): DecodedInst
       destination: instruction.accounts[2],
       authority: instruction.accounts[3]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -596,7 +596,7 @@ function decodeApproveChecked(instruction: any, programId: string): DecodedInstr
       delegate: instruction.accounts[2],
       authority: instruction.accounts[3]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -619,7 +619,7 @@ function decodeMintToChecked(instruction: any, programId: string): DecodedInstru
       destination: instruction.accounts[1],
       authority: instruction.accounts[2]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -642,7 +642,7 @@ function decodeBurnChecked(instruction: any, programId: string): DecodedInstruct
       mint: instruction.accounts[1],
       authority: instruction.accounts[2]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -666,7 +666,7 @@ function decodeInitializeMint2(instruction: any, programId: string): DecodedInst
       freezeAuthority,
       mint: instruction.accounts[0]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -687,7 +687,7 @@ function decodeInitializeAccount2(instruction: any, programId: string): DecodedI
       owner,
       rent: instruction.accounts[2]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -707,7 +707,7 @@ function decodeInitializeAccount3(instruction: any, programId: string): DecodedI
       mint: instruction.accounts[1],
       owner
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -718,7 +718,7 @@ function decodeSyncNative(instruction: any, programId: string): DecodedInstructi
     data: {
       account: instruction.accounts[0]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -730,7 +730,7 @@ function decodeGetAccountDataSize(instruction: any, programId: string): DecodedI
     data: {
       mint: instruction.accounts[0]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -742,7 +742,7 @@ function decodeInitializeImmutableOwner(instruction: any, programId: string): De
       account: instruction.accounts[0],
       extension: 'ImmutableOwner'
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -761,7 +761,7 @@ function decodeAmountToUiAmount(instruction: any, programId: string): DecodedIns
       amount,
       mint: instruction.accounts[0]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -780,7 +780,7 @@ function decodeUiAmountToAmount(instruction: any, programId: string): DecodedIns
       uiAmount,
       mint: instruction.accounts[0]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -800,7 +800,7 @@ function decodeInitializeMintCloseAuthority(instruction: any, programId: string)
       closeAuthority,
       extension: 'MintCloseAuthority'
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -824,7 +824,7 @@ function decodeReallocate(instruction: any, programId: string): DecodedInstructi
       systemProgram: instruction.accounts[2],
       extensionTypes
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -837,7 +837,7 @@ function decodeCreateNativeMint(instruction: any, programId: string): DecodedIns
       nativeMint: instruction.accounts[1],
       systemProgram: instruction.accounts[2]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -849,7 +849,7 @@ function decodeInitializeNonTransferableMint(instruction: any, programId: string
       mint: instruction.accounts[0],
       extension: 'NonTransferable'
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -862,7 +862,7 @@ function decodeWithdrawExcessLamports(instruction: any, programId: string): Deco
       destination: instruction.accounts[1],
       authority: instruction.accounts[2]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -882,7 +882,7 @@ function decodeInitializePermanentDelegate(instruction: any, programId: string):
       delegate,
       extension: 'PermanentDelegate'
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 
@@ -934,10 +934,10 @@ function decodeInitializeNFTMetadata(instruction: any, programId: string): Decod
         },
         extension: 'NFTMetadata'
       },
-      accounts: instruction.accounts || []
+      accounts: instruction.accounts ?? []
     };
   } catch (error) {
-    console.warn('🔥 TOKEN2022: Failed to parse NFT metadata:', error);
+    // Failed to parse NFT metadata
     return {
       type: 'token2022-initialize-nft-metadata-error',
       programId,
@@ -947,7 +947,7 @@ function decodeInitializeNFTMetadata(instruction: any, programId: string): Decod
         rawData: Array.from(data),
         extension: 'NFTMetadata'
       },
-      accounts: instruction.accounts || []
+      accounts: instruction.accounts ?? []
     };
   }
 }

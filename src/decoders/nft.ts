@@ -387,7 +387,7 @@ function decodeCreateMasterEdition(instruction: NFTInstruction, programId: strin
       payer: instruction.accounts[4],
       metadata: instruction.accounts[5]
     },
-    accounts: instruction.accounts || []
+    accounts: instruction.accounts ?? []
   };
 }
 

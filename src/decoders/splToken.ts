@@ -318,7 +318,7 @@ function decodeBurn(instruction: SPLTokenInstructionData, programId: string): De
   }
 
   const amount = readU64LE(data, 1);
-  const accounts = instruction.accounts || [];
+  const accounts = instruction.accounts ?? [];
 
   return {
     type: 'spl-token-burn',
@@ -358,7 +358,7 @@ function decodeInitializeMint(instruction: any, programId: string): DecodedInstr
       mintAuthority: bufferToBase58(mintAuthority),
       freezeAuthority: freezeAuthority ? bufferToBase58(freezeAuthority) : null
     },
-    accounts: instruction.accounts || [],
+    accounts: instruction.accounts ?? [],
     raw: instruction as unknown as Record<string, unknown>
   };
 }
@@ -367,16 +367,16 @@ function decodeInitializeMint(instruction: any, programId: string): DecodedInstr
  * Decode InitializeAccount instruction (1)
  */
 function decodeInitializeAccount(instruction: any, programId: string): DecodedInstruction {
-  const accounts = instruction.accounts || [];
+  const accounts = instruction.accounts ?? [];
 
   return {
     type: 'spl-token-initialize-account',
     programId,
     data: {
-      account: accounts[0]?.address || accounts[0],
-      mint: accounts[1]?.address || accounts[1],
-      owner: accounts[2]?.address || accounts[2],
-      rentSysvar: accounts[3]?.address || accounts[3]
+      account: accounts[0]?.address ?? accounts[0],
+      mint: accounts[1]?.address ?? accounts[1],
+      owner: accounts[2]?.address ?? accounts[2],
+      rentSysvar: accounts[3]?.address ?? accounts[3]
     },
     accounts,
     raw: instruction as unknown as Record<string, unknown>
@@ -404,7 +404,7 @@ function decodeSetAuthority(instruction: any, programId: string): DecodedInstruc
       authorityType: getAuthorityTypeName(authorityType),
       newAuthority: newAuthority ? bufferToBase58(newAuthority) : null
     },
-    accounts: instruction.accounts || [],
+    accounts: instruction.accounts ?? [],
     raw: instruction as unknown as Record<string, unknown>
   };
 }
@@ -420,7 +420,7 @@ function decodeApprove(instruction: any, programId: string): DecodedInstruction 
     type: 'spl-token-approve',
     programId,
     data: { amount: amount.toString() },
-    accounts: instruction.accounts || [],
+    accounts: instruction.accounts ?? [],
     raw: instruction as unknown as Record<string, unknown>
   };
 }
@@ -430,7 +430,7 @@ function decodeRevoke(instruction: any, programId: string): DecodedInstruction {
     type: 'spl-token-revoke',
     programId,
     data: {},
-    accounts: instruction.accounts || [],
+    accounts: instruction.accounts ?? [],
     raw: instruction as unknown as Record<string, unknown>
   };
 }
@@ -440,7 +440,7 @@ function decodeCloseAccount(instruction: any, programId: string): DecodedInstruc
     type: 'spl-token-close-account',
     programId,
     data: {},
-    accounts: instruction.accounts || [],
+    accounts: instruction.accounts ?? [],
     raw: instruction as unknown as Record<string, unknown>
   };
 }
@@ -450,7 +450,7 @@ function decodeFreezeAccount(instruction: any, programId: string): DecodedInstru
     type: 'spl-token-freeze-account',
     programId,
     data: {},
-    accounts: instruction.accounts || [],
+    accounts: instruction.accounts ?? [],
     raw: instruction as unknown as Record<string, unknown>
   };
 }
@@ -460,7 +460,7 @@ function decodeThawAccount(instruction: any, programId: string): DecodedInstruct
     type: 'spl-token-thaw-account',
     programId,
     data: {},
-    accounts: instruction.accounts || [],
+    accounts: instruction.accounts ?? [],
     raw: instruction as unknown as Record<string, unknown>
   };
 }
@@ -474,7 +474,7 @@ function decodeTransferChecked(instruction: any, programId: string): DecodedInst
     type: 'spl-token-transfer-checked',
     programId,
     data: { amount: amount.toString(), decimals },
-    accounts: instruction.accounts || [],
+    accounts: instruction.accounts ?? [],
     raw: instruction as unknown as Record<string, unknown>
   };
 }
@@ -488,7 +488,7 @@ function decodeApproveChecked(instruction: any, programId: string): DecodedInstr
     type: 'spl-token-approve-checked',
     programId,
     data: { amount: amount.toString(), decimals },
-    accounts: instruction.accounts || [],
+    accounts: instruction.accounts ?? [],
     raw: instruction as unknown as Record<string, unknown>
   };
 }
@@ -502,7 +502,7 @@ function decodeMintToChecked(instruction: any, programId: string): DecodedInstru
     type: 'spl-token-mint-to-checked',
     programId,
     data: { amount: amount.toString(), decimals },
-    accounts: instruction.accounts || [],
+    accounts: instruction.accounts ?? [],
     raw: instruction as unknown as Record<string, unknown>
   };
 }
@@ -516,7 +516,7 @@ function decodeBurnChecked(instruction: any, programId: string): DecodedInstruct
     type: 'spl-token-burn-checked',
     programId,
     data: { amount: amount.toString(), decimals },
-    accounts: instruction.accounts || [],
+    accounts: instruction.accounts ?? [],
     raw: instruction as unknown as Record<string, unknown>
   };
 }
@@ -526,7 +526,7 @@ function decodeSyncNative(instruction: any, programId: string): DecodedInstructi
     type: 'spl-token-sync-native',
     programId,
     data: {},
-    accounts: instruction.accounts || [],
+    accounts: instruction.accounts ?? [],
     raw: instruction as unknown as Record<string, unknown>
   };
 }

@@ -1,5 +1,4 @@
 // RPC Transaction Methods - Our own implementation based on Solana RPC specs
-import { getGorbchainConfig } from '../utils/gorbchainConfig.js';
 import type { RpcClient } from './client.js';
 
 export interface TransactionSignature {
@@ -50,9 +49,9 @@ export async function sendTransaction(
   return client.request<string>('sendTransaction', [
     transaction,
     {
-      skipPreflight: options?.skipPreflight || false,
-      preflightCommitment: options?.preflightCommitment || 'finalized',
-      encoding: options?.encoding || 'base64'
+      skipPreflight: options?.skipPreflight ?? false,
+      preflightCommitment: options?.preflightCommitment ?? 'finalized',
+      encoding: options?.encoding ?? 'base64'
     }
   ]);
 }
@@ -73,8 +72,8 @@ export async function getTransaction(
     signature,
     {
       encoding: options?.encoding || 'json',
-      commitment: options?.commitment || 'finalized',
-      maxSupportedTransactionVersion: options?.maxSupportedTransactionVersion || 0
+      commitment: options?.commitment ?? 'finalized',
+      maxSupportedTransactionVersion: options?.maxSupportedTransactionVersion ?? 0
     }
   ]);
 }
@@ -105,36 +104,31 @@ export async function getSignatureStatus(
 
 // Legacy functions for backward compatibility (deprecated)
 export async function sendRpcTransaction(
-  connection: any,
-  transaction: any,
-  signers: any[],
-  options?: any
+  _connection: any,
+  _transaction: any,
+  _signers: any[],
+  _options?: any
 ): Promise<string> {
-  console.warn('sendRpcTransaction is deprecated. Use sendTransaction with RpcClient instead.');
-  throw new Error('Please use the new RPC client structure');
+  throw new Error('sendRpcTransaction is deprecated. Use sendTransaction with RpcClient instead.');
 }
 
 export async function getTransactionStatus(
-  connection: any,
-  signature: string
+  _connection: any,
+  _signature: string
 ): Promise<any> {
-  console.warn('getTransactionStatus is deprecated. Use getSignatureStatus with RpcClient instead.');
-  throw new Error('Please use the new RPC client structure');
+  throw new Error('getTransactionStatus is deprecated. Use getSignatureStatus with RpcClient instead.');
 }
 
-export async function getCurrentSlot(connection: any): Promise<number> {
-  console.warn('getCurrentSlot is deprecated. Use RpcClient.getSlot() instead.');
-  throw new Error('Please use the new RPC client structure');
+export async function getCurrentSlot(_connection: any): Promise<number> {
+  throw new Error('getCurrentSlot is deprecated. Use RpcClient.getSlot() instead.');
 }
 
-export async function getBlockHeight(connection: any): Promise<number> {
-  console.warn('getBlockHeight is deprecated. Use RpcClient.getBlockHeight() instead.');
-  throw new Error('Please use the new RPC client structure');
+export async function getBlockHeight(_connection: any): Promise<number> {
+  throw new Error('getBlockHeight is deprecated. Use RpcClient.getBlockHeight() instead.');
 }
 
-export async function getLatestBlockhash(connection: any): Promise<{ blockhash: string; lastValidBlockHeight: number }> {
-  console.warn('getLatestBlockhash is deprecated. Use RpcClient.getLatestBlockhash() instead.');
-  throw new Error('Please use the new RPC client structure');
+export async function getLatestBlockhash(_connection: any): Promise<{ blockhash: string; lastValidBlockHeight: number }> {
+  throw new Error('getLatestBlockhash is deprecated. Use RpcClient.getLatestBlockhash() instead.');
 }
 
 export * from './fetchTransactionBySignature.js';

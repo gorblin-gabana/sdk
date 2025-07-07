@@ -83,9 +83,9 @@ export interface RichTransaction {
 
   // Raw data (only when requested)
   raw?: {
-    meta: any;
+    meta: Record<string, unknown>;
     accountKeys: string[];
-    fullInstructions: any[];
+    fullInstructions: Record<string, unknown>[];
   };
 }
 
@@ -98,7 +98,7 @@ export interface SimpleInstruction {
   action: string; // e.g., "Create NFT", "Mint Tokens", "Transfer SOL"
   description: string; // Human-readable description
   data?: {
-    [key: string]: any; // Relevant data for this instruction
+    [key: string]: unknown; // Relevant data for this instruction
   };
 }
 
@@ -149,7 +149,7 @@ export interface TokenOperationInfo {
   description: string;
   program: string;
   data?: {
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
@@ -162,14 +162,14 @@ export interface RichInstruction {
   index: number;
   programId: string;
   programName: string;
-  data: any;
+  data: Record<string, unknown>;
   accounts: string[];
   decoded: {
     type: string;
     description: string;
-    data: any;
+    data: Record<string, unknown>;
     accountDetails: AccountDetail[];
-    metadata?: any;
+    metadata?: Record<string, unknown>;
   };
 }
 
@@ -185,7 +185,7 @@ export interface TokenOperation {
   account: string | null;
   programId: string;
   accounts: string[];
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -254,7 +254,7 @@ export interface AccountDetail {
   owner?: string;
   dataLength?: number;
   error?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -332,5 +332,5 @@ export interface TransactionDecodingOptions {
   /** Include NFT metadata */
   includeNftMetadata?: boolean;
   /** Custom decoder registry to use */
-  customRegistry?: any;
+  customRegistry?: Record<string, unknown>;
 }

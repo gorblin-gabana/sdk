@@ -203,12 +203,12 @@ describe('GorbchainSDK', () => {
         blockhash: 'test-blockhash',
         lastValidBlockHeight: 12345
       };
-      mockRpcClient.request.mockResolvedValue(mockBlockhash);
+      mockRpcClient.getLatestBlockhash.mockResolvedValue(mockBlockhash);
 
       const blockhash = await sdk.getLatestBlockhash('processed');
 
       expect(blockhash).toBe(mockBlockhash);
-      expect(mockRpcClient.request).toHaveBeenCalledWith('getLatestBlockhash', [{ commitment: 'processed' }]);
+      expect(mockRpcClient.getLatestBlockhash).toHaveBeenCalledWith('processed');
     });
   });
 });

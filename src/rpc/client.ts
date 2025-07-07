@@ -6,7 +6,7 @@ import {
   RpcTimeoutError,
   RpcServerError,
   RpcConnectionError,
-  RpcInvalidResponseError,
+
   RpcRateLimitError,
   RpcMethodNotSupportedError,
   type ErrorContext
@@ -30,20 +30,20 @@ export class RpcClient {
 
   constructor(options: RpcClientOptions = {}) {
     const config = getGorbchainConfig();
-    this.rpcUrl = options.rpcUrl || config.rpcUrl || 'https://rpc.gorbchain.xyz';
-    this.timeout = options.timeout || 30000; // 30 seconds
-    this.retries = options.retries || 3;
+    this.rpcUrl = options.rpcUrl ?? config.rpcUrl ?? 'https://rpc.gorbchain.xyz';
+    this.timeout = options.timeout ?? 30000; // 30 seconds
+    this.retries = options.retries ?? 3;
 
     // Initialize retry manager with custom options
     this.retryManager = new RetryManager(
-      options.retryOptions || {
+      options.retryOptions ?? {
         maxAttempts: this.retries,
         initialDelay: 1000,
         maxDelay: 10000,
         backoffMultiplier: 2,
         jitter: true
       },
-      options.circuitBreakerOptions || {
+      options.circuitBreakerOptions ?? {
         failureThreshold: 5,
         resetTimeout: 30000,
         successThreshold: 2
@@ -174,7 +174,7 @@ export class RpcClient {
   private extractRetryAfter(responseText: string): number | undefined {
     try {
       const parsed = JSON.parse(responseText);
-      return parsed.retryAfter || parsed['retry-after'];
+      return parsed.retryAfter ?? parsed['retry-after'];
     } catch {
       return undefined;
     }
@@ -240,7 +240,7 @@ export class RpcClient {
     }>('getLatestBlockhash', params);
 
     // Handle both direct response and wrapped response
-    return result.value || result;
+    return result.value ?? result;
   }
 
   /**
@@ -456,7 +456,7 @@ export class RpcClient {
         creators
       };
     } catch (error) {
-      console.error('Error decoding metadata:', error);
+      // Error decoding metadata
       return null;
     }
   }
@@ -628,58 +628,58 @@ export class RpcClient {
         }
       }
 
-             // Generic fallback: extract any readable strings if the structured parsing failed
-       // Look for common metadata patterns in the decoded string
-       const potentialStrings = [];
-       let currentString = '';
+      // Generic fallback: extract any readable strings if the structured parsing failed
+      // Look for common metadata patterns in the decoded string
+      const potentialStrings = [];
+      let currentString = '';
 
-       for (let i = 0; i < dataStr.length; i++) {
-         const char = dataStr[i];
-         const code = char.charCodeAt(0);
+      for (let i = 0; i < dataStr.length; i++) {
+        const char = dataStr[i];
+        const code = char.charCodeAt(0);
 
-         // Collect printable ASCII characters (letters, numbers, spaces, common symbols)
-         if ((code >= 32 && code <= 126) && char !== '\x00') {
-           currentString += char;
-         } else {
-           if (currentString.length >= 2) {
-             potentialStrings.push(currentString.trim());
-           }
-           currentString = '';
-         }
-       }
+        // Collect printable ASCII characters (letters, numbers, spaces, common symbols)
+        if ((code >= 32 && code <= 126) && char !== '\x00') {
+          currentString += char;
+        } else {
+          if (currentString.length >= 2) {
+            potentialStrings.push(currentString.trim());
+          }
+          currentString = '';
+        }
+      }
 
-       // Add final string if exists
-       if (currentString.length >= 2) {
-         potentialStrings.push(currentString.trim());
-       }
+      // Add final string if exists
+      if (currentString.length >= 2) {
+        potentialStrings.push(currentString.trim());
+      }
 
-       // Filter to reasonable metadata strings (not too long, not too short)
-       const validStrings = potentialStrings.filter(str =>
-         str.length >= 2 && str.length <= 64 &&
-         /^[a-zA-Z0-9\s\-_./:]+$/.test(str)
-       );
+      // Filter to reasonable metadata strings (not too long, not too short)
+      const validStrings = potentialStrings.filter(str =>
+        str.length >= 2 && str.length <= 64 &&
+        /^[a-zA-Z0-9\s\-_./:]+$/.test(str)
+      );
 
-       if (validStrings.length >= 2) {
-         // Try to identify name, symbol, and URI from the valid strings
-         const name = validStrings[0];
-         let symbol = validStrings[1];
-         let uri = validStrings.find(str => str.includes('http')) || '';
+      if (validStrings.length >= 2) {
+        // Try to identify name, symbol, and URI from the valid strings
+        const name = validStrings[0];
+        let symbol = validStrings[1];
+        let uri = validStrings.find(str => str.includes('http')) ?? '';
 
-         // If symbol looks too long, it might be the URI
-         if (symbol.length > 10 && symbol.includes('http')) {
-           uri = symbol;
-           symbol = validStrings[2] || '';
-         }
+        // If symbol looks too long, it might be the URI
+        if (symbol.length > 10 && symbol.includes('http')) {
+          uri = symbol;
+          symbol = validStrings[2] ?? '';
+        }
 
-         // Validate symbol format (should be short and uppercase-ish)
-         if (symbol.length > 10 || !/^[A-Z0-9]+$/i.test(symbol)) {
-           symbol = '';
-         }
+        // Validate symbol format (should be short and uppercase-ish)
+        if (symbol.length > 10 || !/^[A-Z0-9]+$/i.test(symbol)) {
+          symbol = '';
+        }
 
-         if (name && (symbol || uri)) {
-           return { name, symbol, uri };
-         }
-       }
+        if (name && (symbol ?? uri)) {
+          return { name, symbol, uri };
+        }
+      }
 
       return null;
     } catch (error) {
@@ -771,7 +771,7 @@ export class RpcClient {
       mint: mintAddress,
       ...mintInfo,
       isNFT,
-      metadata: metadata || undefined
+      metadata: metadata ?? undefined
     };
   }
 }

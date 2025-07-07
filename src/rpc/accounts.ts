@@ -28,7 +28,7 @@ export async function getAccountInfo(
   options?: { encoding?: string; commitment?: string }
 ): Promise<AccountInfo | null> {
   const config = getGorbchainConfig();
-  const rpcUrl = config.rpcUrl || 'https://rpc.gorbchain.xyz';
+  const rpcUrl = config.rpcUrl ?? 'https://rpc.gorbchain.xyz';
 
   const response = await fetch(rpcUrl, {
     method: 'POST',
@@ -40,15 +40,15 @@ export async function getAccountInfo(
       params: [
         pubkey,
         {
-          encoding: options?.encoding || 'base64',
-          commitment: options?.commitment || 'finalized'
+          encoding: options?.encoding ?? 'base64',
+          commitment: options?.commitment ?? 'finalized'
         }
       ]
     })
   });
 
   const data: RpcResponse<{ value: AccountInfo }> = await response.json();
-  return data.result?.value || null;
+  return data.result?.value ?? null;
 }
 
 /**
@@ -60,7 +60,7 @@ export async function getMultipleAccounts(
   options?: { encoding?: string; commitment?: string }
 ): Promise<(AccountInfo | null)[]> {
   const config = getGorbchainConfig();
-  const rpcUrl = config.rpcUrl || 'https://rpc.gorbchain.xyz';
+  const rpcUrl = config.rpcUrl ?? 'https://rpc.gorbchain.xyz';
 
   const response = await fetch(rpcUrl, {
     method: 'POST',
@@ -72,15 +72,15 @@ export async function getMultipleAccounts(
       params: [
         pubkeys,
         {
-          encoding: options?.encoding || 'base64',
-          commitment: options?.commitment || 'finalized'
+          encoding: options?.encoding ?? 'base64',
+          commitment: options?.commitment ?? 'finalized'
         }
       ]
     })
   });
 
   const data: RpcResponse<{ value: (AccountInfo | null)[] }> = await response.json();
-  return data.result?.value || [];
+  return data.result?.value ?? [];
 }
 
 /**
@@ -99,7 +99,7 @@ export async function getProgramAccounts(
   }
 ): Promise<Array<{ pubkey: string; account: AccountInfo }>> {
   const config = getGorbchainConfig();
-  const rpcUrl = config.rpcUrl || 'https://rpc.gorbchain.xyz';
+  const rpcUrl = config.rpcUrl ?? 'https://rpc.gorbchain.xyz';
 
   const response = await fetch(rpcUrl, {
     method: 'POST',
@@ -111,8 +111,8 @@ export async function getProgramAccounts(
       params: [
         programId,
         {
-          encoding: options?.encoding || 'base64',
-          commitment: options?.commitment || 'finalized',
+          encoding: options?.encoding ?? 'base64',
+          commitment: options?.commitment ?? 'finalized',
           filters: options?.filters || []
         }
       ]
@@ -120,7 +120,7 @@ export async function getProgramAccounts(
   });
 
   const data: RpcResponse<Array<{ pubkey: string; account: AccountInfo }>> = await response.json();
-  return data.result || [];
+  return data.result ?? [];
 }
 
 /**
@@ -132,7 +132,7 @@ export async function getBalance(
   commitment?: string
 ): Promise<number> {
   const config = getGorbchainConfig();
-  const rpcUrl = config.rpcUrl || 'https://rpc.gorbchain.xyz';
+  const rpcUrl = config.rpcUrl ?? 'https://rpc.gorbchain.xyz';
 
   const response = await fetch(rpcUrl, {
     method: 'POST',
@@ -144,7 +144,7 @@ export async function getBalance(
       params: [
         pubkey,
         {
-          commitment: commitment || 'finalized'
+          commitment: commitment ?? 'finalized'
         }
       ]
     })

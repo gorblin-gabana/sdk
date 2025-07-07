@@ -37,7 +37,7 @@ export interface RawInstruction {
  * @param instruction - Raw instruction object to decode
  * @returns Decoded instruction with structured data
  */
-export type DecoderFunction = (instruction: any) => DecodedInstruction;
+export type DecoderFunction = (instruction: RawInstruction) => DecodedInstruction;
 
 /**
  * Registry for managing instruction decoders across multiple programs

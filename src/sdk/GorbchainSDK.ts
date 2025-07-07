@@ -29,7 +29,7 @@ import { getDefaultConfig, validateConfig } from './config.js';
 import type { GorbchainSDKConfig, RichTransaction, TransactionDecodingOptions } from './types.js';
 import type { Keypair, PublicKey } from '@solana/web3.js';
 import type { TokenCreationParams, TransactionOptions, TokenMintResult, NFTCreationParams, NFTMintResult } from './minting.js';
-import type { DecodedInstruction } from '../decoders/registry.js';
+import type { DecodedInstruction, DecoderFunction } from '../decoders/registry.js';
 
 // Import utility modules
 import { createDecoderRegistry, getProgramName } from '../utils/decoderRegistrySetup.js';
@@ -58,23 +58,9 @@ interface RawInstruction {
   program?: string;
 }
 
-interface RawTransactionMessage {
-  accountKeys: Array<string | { pubkey: string }>;
-  instructions: RawInstruction[];
-}
+// RawTransactionMessage interface removed as it was unused
 
-interface RawTransaction {
-  transaction: {
-    message: RawTransactionMessage;
-  };
-  meta?: {
-    fee?: number;
-    err?: unknown;
-    computeUnitsConsumed?: number;
-  };
-  slot?: number;
-  blockTime?: number;
-}
+// RawTransaction interface removed as it was unused
 
 /**
  * Main SDK class for Gorbchain transaction decoding and blockchain interaction
@@ -90,7 +76,7 @@ export class GorbchainSDK {
   public rpc: RpcClient;
 
   /** Placeholder for future transaction utilities */
-  public transactions: any;
+  public transactions: Record<string, unknown>;
 
   /**
    * Creates a new instance of the GorbchainSDK
@@ -228,7 +214,7 @@ export class GorbchainSDK {
 
           simpleInstructions.push(simple);
         } catch (error) {
-          console.warn('Failed to decode instruction:', error);
+          // Skip failed instruction decoding
         }
       }
 
@@ -302,7 +288,7 @@ export class GorbchainSDK {
    * }));
    * ```
    */
-  registerDecoder(programName: string, programId: string, decoder: any) {
+  registerDecoder(programName: string, programId: string, decoder: DecoderFunction) {
     this.decoders.register(programName, programId, decoder);
   }
 
@@ -385,8 +371,8 @@ export class GorbchainSDK {
     status: 'healthy' | 'degraded' | 'unavailable';
     currentSlot: number;
     blockHeight: number;
-    epochInfo: any;
-    version: any;
+    epochInfo: Record<string, unknown> | null;
+    version: Record<string, unknown> | null;
     rpcEndpoint: string;
     responseTime: number;
   }> {
@@ -415,8 +401,8 @@ export class GorbchainSDK {
         status,
         currentSlot: slotInfo as number,
         blockHeight: blockHeight as number,
-        epochInfo,
-        version,
+        epochInfo: epochInfo as Record<string, unknown> | null,
+        version: version as Record<string, unknown> | null,
         rpcEndpoint: this.config.rpcEndpoint,
         responseTime
       };
@@ -529,7 +515,7 @@ export class GorbchainSDK {
    * @returns NFT minting result with addresses and signature
    */
   async createNFT(
-    wallet: any, // Wallet adapter
+    wallet: { signTransaction: (transaction: unknown) => Promise<unknown>; publicKey: unknown }, // Wallet adapter
     params: NFTCreationParams,
     options?: TransactionOptions
   ): Promise<NFTMintResult> {

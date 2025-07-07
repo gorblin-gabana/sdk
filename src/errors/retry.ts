@@ -1,4 +1,4 @@
-import { SDKError, type ErrorContext } from './base.js';
+import { SDKError } from './base.js';
 
 /**
  * Retry configuration options

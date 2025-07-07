@@ -59,7 +59,7 @@ export function createDecoderRegistry(config: GorbchainSDKConfig): DecoderRegist
         space: decoded.space,
         seed: decoded.seed
       } as Record<string, unknown>,
-      accounts: instruction.accounts || [],
+      accounts: instruction.accounts ?? [],
       raw: instruction as unknown as Record<string, unknown>
     };
   });
@@ -72,7 +72,7 @@ export function createDecoderRegistry(config: GorbchainSDKConfig): DecoderRegist
       type: decoded.type,
       programId: instruction.programId,
       data: decoded.data,
-      accounts: instruction.accounts || [],
+      accounts: instruction.accounts ?? [],
       raw: instruction as unknown as Record<string, unknown>
     };
   });
@@ -85,7 +85,7 @@ export function createDecoderRegistry(config: GorbchainSDKConfig): DecoderRegist
       type: decoded.type,
       programId: instruction.programId,
       data: decoded.data,
-      accounts: instruction.accounts || [],
+      accounts: instruction.accounts ?? [],
       raw: instruction as unknown as Record<string, unknown>
     };
   });
@@ -98,7 +98,7 @@ export function createDecoderRegistry(config: GorbchainSDKConfig): DecoderRegist
       type: decoded.type,
       programId: instruction.programId,
       data: decoded.data,
-      accounts: instruction.accounts || [],
+      accounts: instruction.accounts ?? [],
       raw: instruction as unknown as Record<string, unknown>
     };
   });
@@ -111,7 +111,7 @@ export function createDecoderRegistry(config: GorbchainSDKConfig): DecoderRegist
       type: decoded.type,
       programId: instruction.programId,
       data: decoded.data,
-      accounts: instruction.accounts || [],
+      accounts: instruction.accounts ?? [],
       raw: instruction as unknown as Record<string, unknown>
     };
   });

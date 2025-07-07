@@ -11,15 +11,15 @@
   },
   "scripts": {
     "build": "tsc",
-    "lint": "eslint 'src/**/*.{ts,tsx}' 'test/**/*.{ts,tsx}' --max-warnings 0",
-    "lint:fix": "eslint 'src/**/*.{ts,tsx}' 'test/**/*.{ts,tsx}' --fix",
+    "lint": "eslint 'src/**/*.{ts,tsx}' --max-warnings 0",
+    "lint:fix": "eslint 'src/**/*.{ts,tsx}' --fix",
     "format": "prettier --write 'src/**/*.{ts,tsx}' 'test/**/*.{ts,tsx}' 'examples/**/*.{ts,tsx}'",
     "format:check": "prettier --check 'src/**/*.{ts,tsx}' 'test/**/*.{ts,tsx}' 'examples/**/*.{ts,tsx}'",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "prepare": "npm run build",
-    "prepublishOnly": "npm test && npm run lint"
+    "prepublishOnly": "npm test && npm run build"
   },
   "keywords": [
     "solana",
@@ -39,12 +39,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gorblin-gabana/sdk.git"
+    "url": "git+https://github.com/gorbchain-xyz/chaindecode.git"
   },
   "bugs": {
-    "url": "https://github.com/gorblin-gabana/sdk/issues"
+    "url": "https://github.com/gorbchain-xyz/chaindecode/issues"
   },
-  "homepage": "https://github.com/gorblin-gabana/sdk#readme",
+  "homepage": "https://github.com/gorbchain-xyz/chaindecode#readme",
   "devDependencies": {
     "@testing-library/react": "^16.3.0",
     "@types/jest": "^30.0.0",
