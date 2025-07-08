@@ -3,6 +3,8 @@ import { DecoderRegistry, type RawInstruction, type DecodedInstruction } from '.
 import { decodeSPLTokenInstruction } from './splToken.js';
 import { decodeToken2022Instruction } from './token2022.js';
 import { decodeNFTInstruction } from './nft.js';
+import { decodeSystemInstruction } from './system.js';
+import { decodeATAInstruction } from './ata.js';
 import { getGorbchainConfig } from '../utils/gorbchainConfig.js';
 
 // Wrapper functions to convert RawInstruction to specific instruction types
@@ -33,6 +35,29 @@ function wrapNFTDecoder(instruction: RawInstruction): DecodedInstruction {
   return decodeNFTInstruction(convertedInstruction as any);
 }
 
+function wrapSystemDecoder(instruction: RawInstruction): DecodedInstruction {
+  const data = instruction.data ?? new Uint8Array(0);
+  // Ensure data is Uint8Array
+  const uint8Data = data instanceof Uint8Array ? data : new Uint8Array(data);
+  const systemResult = decodeSystemInstruction(uint8Data);
+  return {
+    type: systemResult.type,
+    programId: instruction.programId,
+    data: systemResult as unknown as Record<string, unknown>,
+    accounts: instruction.accounts ?? [],
+    raw: instruction as unknown as Record<string, unknown>
+  };
+}
+
+function wrapATADecoder(instruction: RawInstruction): DecodedInstruction {
+  const convertedInstruction = {
+    programId: instruction.programId,
+    data: instruction.data ?? new Uint8Array(0),
+    accounts: instruction.accounts ?? []
+  };
+  return decodeATAInstruction(convertedInstruction as any);
+}
+
 /**
  * Create a pre-configured decoder registry with common decoders
  */
@@ -53,6 +78,14 @@ export function createDefaultDecoderRegistry(): DecoderRegistry {
   // Register NFT/Metaplex decoder
   const metaplexProgramId = config.programIds?.metaplex ?? 'BvoSmPBF6mBRxBMY9FPguw1zUoUg3xrc5CaWf7y5ACkc';
   registry.register('nft', metaplexProgramId, wrapNFTDecoder);
+
+  // Register System program decoder
+  const systemProgramId = '11111111111111111111111111111111';
+  registry.register('system', systemProgramId, wrapSystemDecoder);
+
+  // Register ATA decoder
+  const ataProgramId = config.programIds?.ata ?? 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL';
+  registry.register('ata', ataProgramId, wrapATADecoder);
 
   return registry;
 }

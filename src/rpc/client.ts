@@ -774,4 +774,24 @@ export class RpcClient {
       metadata: metadata ?? undefined
     };
   }
+
+  /**
+   * Get transaction details by signature
+   */
+  async getTransaction(signature: string, options?: {
+    encoding?: string;
+    commitment?: string;
+    maxSupportedTransactionVersion?: number;
+  }): Promise<any> {
+    const config: any = {
+      encoding: options?.encoding || 'json',
+      commitment: options?.commitment || 'finalized'
+    };
+    
+    if (options?.maxSupportedTransactionVersion !== undefined) {
+      config.maxSupportedTransactionVersion = options.maxSupportedTransactionVersion;
+    }
+
+    return this.request('getTransaction', [signature, config]);
+  }
 }

@@ -3,27 +3,27 @@ import {
   ErrorCategory,
   GorbchainSDKError,
   ConfigurationError
-} from '../src/errors/base.js';
+} from '../src/errors/base';
 import {
   RpcNetworkError,
   RpcTimeoutError,
   RpcServerError
-} from '../src/errors/rpc.js';
+} from '../src/errors/rpc';
 import {
   DecoderNotFoundError
-} from '../src/errors/decoder.js';
+} from '../src/errors/decoder';
 import {
   TransactionNotFoundError
-} from '../src/errors/transaction.js';
+} from '../src/errors/transaction';
 import {
   InvalidAddressError
-} from '../src/errors/validation.js';
+} from '../src/errors/validation';
 import {
   retry,
   RetryManager,
   CircuitBreaker,
   CircuitBreakerState
-} from '../src/errors/retry.js';
+} from '../src/errors/retry';
 
 describe('Error Handling System', () => {
   describe('Base Error Classes', () => {

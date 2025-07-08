@@ -1,6 +1,6 @@
 {
   "name": "@gorbchain-xyz/chaindecode",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Dynamic, fork-aware decoding SDK for Solana transactions. Parse and decode SPL Token, Token-2022, Metaplex metadata, and custom programs using @solana/kit with flexible program ID support.",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",

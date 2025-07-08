@@ -153,7 +153,10 @@ export async function retry<T>(
   const config = { ...DEFAULT_RETRY_OPTIONS, ...options };
   let lastError: Error;
 
-  for (let attempt = 1; attempt <= config.maxAttempts; attempt++) {
+  // Ensure at least one attempt is made
+  const attempts = Math.max(1, config.maxAttempts);
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
       return await fn();
     } catch (error) {
@@ -165,7 +168,7 @@ export async function retry<T>(
       }
 
       // If this is the last attempt, throw the error
-      if (attempt === config.maxAttempts) {
+      if (attempt === attempts) {
         throw lastError;
       }
 

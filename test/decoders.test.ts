@@ -1,5 +1,5 @@
-import { decodeSPLTokenInstruction, SPLTokenInstruction } from '../src/decoders/splToken.js';
-import { DecoderRegistry } from '../src/decoders/registry.js';
+import { decodeSPLTokenInstruction, SPLTokenInstruction } from '../src/decoders/splToken';
+import { DecoderRegistry } from '../src/decoders/registry';
 
 describe('SPL Token Decoders', () => {
   it('decodes transfer instruction', () => {
@@ -53,11 +53,24 @@ describe('SPL Token Decoders', () => {
 describe('Decoder Registry', () => {
   it('registers and decodes instructions', () => {
     const registry = new DecoderRegistry();
-    registry.register('spl-token', 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA', decodeSPLTokenInstruction);
+    
+    // Create a wrapper to adapt the interface
+    const splTokenWrapper = (instruction: any) => {
+      return decodeSPLTokenInstruction({
+        programId: instruction.programId,
+        data: instruction.data as Uint8Array,
+        accounts: instruction.accounts || []
+      });
+    };
+    
+    registry.register('spl-token', 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA', splTokenWrapper);
 
     const mockInstruction = {
       programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-      data: new Uint8Array([SPLTokenInstruction.Transfer, 25]), // transfer 25 tokens
+      data: new Uint8Array([
+        SPLTokenInstruction.Transfer, // instruction type
+        25, 0, 0, 0, 0, 0, 0, 0  // amount: 25 (8 bytes little endian)
+      ]), 
       accounts: ['source', 'destination', 'authority']
     };
 

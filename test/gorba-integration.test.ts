@@ -1,4 +1,4 @@
-import { GorbchainSDK } from '../src/sdk/GorbchainSDK.js';
+import { GorbchainSDK } from '../src/sdk/GorbchainSDK';
 
 describe('GORBA Token Integration Tests', () => {
   let sdk: GorbchainSDK;
@@ -118,19 +118,28 @@ describe('GORBA Token Integration Tests', () => {
     it('should validate Gorbchain RPC endpoint configuration', async () => {
       expect(sdk.config.rpcEndpoint).toBe('https://rpc.gorbchain.xyz');
 
-      // Mock the RPC client to avoid actual network calls in tests
+      // Mock the RPC client methods that getNetworkHealth() actually calls
+      const mockGetSlot = jest.fn().mockResolvedValue(12345);
+      const mockRequest = jest.fn().mockImplementation((method) => {
+        if (method === 'getBlockHeight') {
+          return Promise.resolve(67890);
+        }
+        return Promise.resolve({});
+      });
+
       const mockRpcClient = {
         getHealth: jest.fn().mockResolvedValue({ status: 'healthy' }),
-        getSlot: jest.fn().mockResolvedValue(12345),
+        getSlot: mockGetSlot,
         getBlockHeight: jest.fn().mockResolvedValue(67890),
-        request: jest.fn()
+        request: mockRequest
       };
 
-      // Replace the RPC client with our mock
-      (sdk as any).rpc = mockRpcClient;
+      // Replace the private RPC client with our mock
+      (sdk as any).rpcClient = mockRpcClient;
 
       const health = await sdk.getNetworkHealth();
-      expect((health as any).status).toBe('healthy');
+      expect(health.status).toBe('healthy');
+      expect(health.currentSlot).toBe(12345);
 
       const slot = await sdk.getCurrentSlot();
       expect(slot).toBe(12345);

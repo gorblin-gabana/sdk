@@ -1,4 +1,4 @@
-import { DecoderRegistry } from '../src/decoders/registry.js';
+import { DecoderRegistry } from '../src/decoders/registry';
 
 describe('DecoderRegistry', () => {
   it('registers and decodes using a custom decoder', () => {

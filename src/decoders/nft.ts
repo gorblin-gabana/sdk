@@ -310,6 +310,28 @@ export function isNFTToken(tokenInfo: {
   // NFTs typically have:
   // - Supply of 1
   // - 0 decimals
+  // Note: We don't require mintAuthority to be null as many custom NFTs
+  // may still have mint authority but are functionally NFTs
+  const supply = BigInt(tokenInfo.supply);
+
+  return (
+    supply === BigInt(1) &&
+    tokenInfo.decimals === 0
+  );
+}
+
+/**
+ * Check if a token is a strict standard NFT (following Metaplex standards)
+ */
+export function isStandardNFT(tokenInfo: {
+  supply: string;
+  decimals: number;
+  mintAuthority?: string | null;
+  freezeAuthority?: string | null;
+}): boolean {
+  // Standard NFTs have:
+  // - Supply of 1
+  // - 0 decimals
   // - No mint authority (supply is fixed)
   const supply = BigInt(tokenInfo.supply);
 

@@ -1,5 +1,6 @@
 // Decoder Module - Central export for all decoders
-export { DecoderRegistry, DecodedInstruction, DecoderFunction } from './registry.js';
+export { DecoderRegistry } from './registry.js';
+export type { DecodedInstruction, DecoderFunction } from './registry.js';
 export {
   decodeSPLTokenInstruction,
   SPLTokenInstruction,

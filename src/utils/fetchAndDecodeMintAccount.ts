@@ -1,5 +1,6 @@
 import { decodeMintAccount, DecodedMintAccount } from '../utils/decodeMintAccount.js';
-export { decodeMintAccount, DecodedMintAccount };
+export { decodeMintAccount };
+export type { DecodedMintAccount };
 
 // SDK helper to fetch and decode a mint account using Gor API
 // Moved to utils as a private helper, not exported from decoders

@@ -1,9 +1,9 @@
-import { GorbchainSDK } from '../src/sdk/GorbchainSDK.js';
-import { RpcClient } from '../src/rpc/client.js';
-import { getTransaction, getAccountInfo, getBalance } from '../src/rpc/index.js';
+import { GorbchainSDK } from '../src/sdk/GorbchainSDK';
+import { RpcClient } from '../src/rpc/client';
+import { getTransaction, getAccountInfo, getBalance } from '../src/rpc/index';
 import {
   RpcNetworkError
-} from '../src/errors/index.js';
+} from '../src/errors/index';
 
 // Real RPC integration tests - hits actual Gorbchain network
 describe('RPC Integration Tests (Real Network)', () => {

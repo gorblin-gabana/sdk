@@ -1,256 +1,314 @@
-import { GorbchainSDK } from '../src/sdk/GorbchainSDK.js';
-import { SPLTokenInstruction } from '../src/decoders/splToken.js';
-import { setGorbchainConfig } from '../src/utils/gorbchainConfig.js';
+import { GorbchainSDK } from '../src/sdk/GorbchainSDK';
+import { SPLTokenInstruction } from '../src/decoders/splToken';
+import { setGorbchainConfig } from '../src/utils/gorbchainConfig';
 
-describe('GorbchainSDK Integration Tests', () => {
+describe('Gorbchain SDK Integration Tests with V2 Features', () => {
   let sdk: GorbchainSDK;
+  const testWallet = '2CHVCwMA5i75GdBQJW1TRXh8M8hy18rqMawMcbGuwfAp';
 
   beforeEach(() => {
-    // Reset config before each test
-    setGorbchainConfig({
-      rpcUrl: 'https://test-rpc.gorbchain.xyz',
-      programIds: {
-        splToken: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-        token2022: 'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn',
-        ata: '4YpYoLVTQ8bxcne9GneN85RUXeN7pqGTwgPcY71ZL5gX',
-        metaplex: 'BvoSmPBF6mBRxBMY9FPguw1zUoUg3xrc5CaWf7y5ACkc'
+    sdk = new GorbchainSDK({
+      rpcEndpoint: 'https://rpc.gorbchain.xyz',
+      tokenAnalysis: {
+        enabled: true,
+        maxConcurrentRequests: 5
+      },
+      timeout: 30000,
+      retries: 3
+    });
+  });
+
+  describe('V2 Network Configuration', () => {
+    test('should auto-detect network configuration', () => {
+      const networkConfig = sdk.getNetworkConfig();
+      
+      expect(networkConfig).toBeDefined();
+      expect(networkConfig?.name).toBe('Gorbchain Network');
+      expect(networkConfig?.features).toBeDefined();
+      expect(networkConfig?.tokenPrograms).toBeDefined();
+    });
+
+    test('should provide network capabilities', () => {
+      const capabilities = sdk.getNetworkCapabilities();
+      
+      expect(capabilities).toBeDefined();
+      expect(capabilities.supportedMethods).toBeInstanceOf(Array);
+      expect(capabilities.features).toBeDefined();
+      expect(capabilities.tokenPrograms).toBeInstanceOf(Array);
+      expect(capabilities.supportedMethods.length).toBeGreaterThan(0);
+    });
+
+    test('should support feature checking', () => {
+      const customTokensSupported = sdk.supportsFeature('customTokens');
+      const nftSupported = sdk.supportsFeature('nftSupport');
+      const transactionDecodingSupported = sdk.supportsFeature('transactionDecoding');
+      
+      expect(typeof customTokensSupported).toBe('boolean');
+      expect(typeof nftSupported).toBe('boolean');
+      expect(typeof transactionDecodingSupported).toBe('boolean');
+    });
+
+    test('should support method checking', () => {
+      const getProgramAccountsSupported = sdk.supportsMethod('getProgramAccounts');
+      const getAccountInfoSupported = sdk.supportsMethod('getAccountInfo');
+      
+      expect(typeof getProgramAccountsSupported).toBe('boolean');
+      expect(typeof getAccountInfoSupported).toBe('boolean');
+    });
+  });
+
+  describe('V2 Enhanced RPC Client', () => {
+    test('should provide enhanced RPC client', () => {
+      const enhancedClient = sdk.getEnhancedRpcClient();
+      
+      expect(enhancedClient).toBeDefined();
+      expect(typeof enhancedClient.getSupportedMethods).toBe('function');
+      expect(typeof enhancedClient.getNetworkConfig).toBe('function');
+      expect(typeof enhancedClient.getProgramAccounts).toBe('function');
+    });
+
+    test('should detect supported methods dynamically', async () => {
+      const enhancedClient = sdk.getEnhancedRpcClient();
+      const supportedMethods = await enhancedClient.getSupportedMethods();
+      
+      expect(supportedMethods).toBeInstanceOf(Array);
+      expect(supportedMethods.length).toBeGreaterThan(0);
+      expect(supportedMethods).toContain('getAccountInfo');
+    }, 10000);
+
+    test('should check method support individually', async () => {
+      const enhancedClient = sdk.getEnhancedRpcClient();
+      
+      const getAccountInfoSupported = await enhancedClient.isMethodSupported('getAccountInfo');
+      const getProgramAccountsSupported = await enhancedClient.isMethodSupported('getProgramAccounts');
+      
+      expect(typeof getAccountInfoSupported).toBe('boolean');
+      expect(typeof getProgramAccountsSupported).toBe('boolean');
+    }, 10000);
+  });
+
+  describe('V2 Token Analysis Features', () => {
+    test('should provide enhanced token holdings analysis', async () => {
+      const holdings = await sdk.getAllTokenHoldings(testWallet, {
+        includeCustomTokens: true,
+        customPrograms: ['TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']
+      });
+      
+      expect(holdings).toBeDefined();
+      expect(holdings.summary).toBeDefined();
+      expect(typeof holdings.summary.totalTokens).toBe('number');
+      expect(typeof holdings.summary.totalFungibleTokens).toBe('number');
+      expect(typeof holdings.summary.totalNFTs).toBe('number');
+      expect(holdings.holdings).toBeInstanceOf(Array);
+    }, 15000);
+
+    test('should provide portfolio analysis', async () => {
+      const analysis = await sdk.analyzePortfolio(testWallet);
+      
+      expect(analysis).toBeDefined();
+      expect(analysis.diversification).toBeDefined();
+      expect(analysis.tokenTypes).toBeDefined();
+      expect(typeof analysis.diversification.mintCount).toBe('number');
+      expect(typeof analysis.diversification.largestHoldingPercentage).toBe('number');
+      expect(typeof analysis.diversification.concentrationRisk).toBe('string');
+    }, 15000);
+
+    test('should analyze custom program tokens', async () => {
+      const customTokens = await sdk.getCustomProgramTokens(
+        testWallet,
+        'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'
+      );
+      
+      expect(customTokens).toBeInstanceOf(Array);
+      
+      if (customTokens.length > 0) {
+        const token = customTokens[0];
+        expect(token.mint).toBeDefined();
+        expect(token.tokenAccount).toBeDefined();
+        expect(token.balance).toBeDefined();
+        expect(typeof token.decimals).toBe('number');
+        expect(typeof token.isNFT).toBe('boolean');
       }
-    });
-    sdk = new GorbchainSDK();
+    }, 15000);
+
+    test('should categorize tokens by type', async () => {
+      const categories = await sdk.getTokensByCategory(testWallet);
+      
+      expect(categories).toBeDefined();
+      expect(categories.fungibleTokens).toBeInstanceOf(Array);
+      expect(categories.nfts).toBeInstanceOf(Array);
+      
+      // Check structure of fungible tokens if any exist
+      if (categories.fungibleTokens.length > 0) {
+        const fungibleToken = categories.fungibleTokens[0];
+        expect(fungibleToken.mint).toBeDefined();
+        expect(fungibleToken.isNFT).toBe(false);
+      }
+      
+      // Check structure of NFTs if any exist
+      if (categories.nfts.length > 0) {
+        const nft = categories.nfts[0];
+        expect(nft.mint).toBeDefined();
+        expect(nft.isNFT).toBe(true);
+      }
+    }, 15000);
+
+    test('should provide top holdings analysis', async () => {
+      const topHoldings = await sdk.getTopHoldings(testWallet, 5);
+      
+      expect(topHoldings).toBeInstanceOf(Array);
+      expect(topHoldings.length).toBeLessThanOrEqual(5);
+      
+      if (topHoldings.length > 0) {
+        const holding = topHoldings[0];
+        expect(holding.mint).toBeDefined();
+        expect(holding.balance).toBeDefined();
+        expect(holding.balance.formatted).toBeDefined();
+      }
+    }, 15000);
   });
 
-  describe('SDK Initialization', () => {
-    test('should initialize with gorbchain config defaults', () => {
-      expect(sdk.config.rpcEndpoint).toBe('https://test-rpc.gorbchain.xyz');
-      expect(sdk.config.network).toBe('custom');
-      expect(sdk.config.programIds?.splToken).toBe('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
-    });
+  describe('V2 Network Health and Monitoring', () => {
+    test('should provide network health status', async () => {
+      const health = await sdk.getNetworkHealth();
+      
+      expect(health).toBeDefined();
+      expect(health.status).toMatch(/^(healthy|degraded|unhealthy)$/);
+      expect(typeof health.currentSlot).toBe('number');
+      expect(typeof health.responseTime).toBe('number');
+      expect(typeof health.networkName).toBe('string');
+      expect(health.responseTime).toBeGreaterThan(0);
+    }, 10000);
 
-    test('should allow custom config override', () => {
-      const customSdk = new GorbchainSDK({
-        rpcEndpoint: 'https://custom.rpc.url',
-        network: 'devnet'
-      });
-
-      expect(customSdk.config.rpcEndpoint).toBe('https://custom.rpc.url');
-      expect(customSdk.config.network).toBe('devnet');
-      // Should still have program IDs from gorbchain config
-      expect(customSdk.config.programIds?.splToken).toBe('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
-    });
-
-    test('should validate config properly', () => {
-      expect(() => {
-        new GorbchainSDK({ rpcEndpoint: '' });
-      }).toThrow('Invalid or missing rpcEndpoint');
-
-      expect(() => {
-        new GorbchainSDK({ network: 'invalid' as any });
-      }).toThrow('Invalid network');
-    });
+    test('should detect network capabilities dynamically', async () => {
+      const capabilities = await sdk.detectNetworkCapabilities();
+      
+      expect(capabilities).toBeDefined();
+      expect(capabilities.supportedMethods).toBeInstanceOf(Array);
+      expect(capabilities.detectedFeatures).toBeDefined();
+      expect(typeof capabilities.detectedFeatures).toBe('object');
+    }, 10000);
   });
 
-  describe('Decoder Registry', () => {
-    test('should have default decoders registered', () => {
+  describe('V2 Advanced Features', () => {
+    test('should provide supported programs list', () => {
       const supportedPrograms = sdk.getSupportedPrograms();
-      expect(supportedPrograms).toContain('spl-token');
+      
+      expect(supportedPrograms).toBeDefined();
+      expect(typeof supportedPrograms).toBe('object');
+      expect(Object.keys(supportedPrograms).length).toBeGreaterThan(0);
     });
 
-    test('should allow custom decoder registration', () => {
-      const customDecoder = (instruction: any) => ({
-        type: 'custom-test',
-        programId: 'CustomProgram111111111111111111111111111',
-        data: { custom: true },
-        accounts: instruction.accounts || [],
-        raw: instruction
+         test('should provide token analyzer instance', () => {
+       const tokenAnalyzer = sdk.getTokenAnalyzer();
+       
+       expect(tokenAnalyzer).toBeDefined();
+       expect(typeof tokenAnalyzer.getAllTokens).toBe('function');
+     });
+
+    test('should support batch wallet analysis', async () => {
+      const wallets = [testWallet];
+      const batchResults = await sdk.batchAnalyzeWallets(wallets, {
+        maxConcurrentRequests: 2
       });
-
-      sdk.registerDecoder('custom-program', 'CustomProgram111111111111111111111111111', customDecoder);
-
-      const supportedPrograms = sdk.getSupportedPrograms();
-      expect(supportedPrograms).toContain('custom-program');
-    });
+      
+      expect(batchResults).toBeInstanceOf(Array);
+      expect(batchResults.length).toBe(wallets.length);
+      
+             if (batchResults.length > 0) {
+         const result = batchResults[0];
+         expect(result.walletAddress).toBe(testWallet);
+         expect(result.summary).toBeDefined();
+       }
+    }, 20000);
   });
 
-  describe('SPL Token Decoding', () => {
-    test('should decode SPL Token Transfer instruction correctly', () => {
-      const mockInstruction = {
-        programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-        data: new Uint8Array([
-          SPLTokenInstruction.Transfer, // instruction type = 3
-          0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 // amount: 4096 (little-endian)
-        ]),
-        accounts: [
-          'SourceAccount1111111111111111111111111111',
-          'DestAccount11111111111111111111111111111',
-          'Authority111111111111111111111111111111'
-        ]
-      };
-
-      const decoded = sdk.decodeInstruction(mockInstruction);
-
-      expect(decoded.type).toBe('spl-token-transfer');
-      expect(decoded.programId).toBe('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
-      expect(decoded.data.amount).toBe('4096');
-      expect(decoded.data.source).toBe('SourceAccount1111111111111111111111111111');
-      expect(decoded.data.destination).toBe('DestAccount11111111111111111111111111111');
-      expect(decoded.data.authority).toBe('Authority111111111111111111111111111111');
-    });
-
-    test('should decode SPL Token MintTo instruction correctly', () => {
-      const mockInstruction = {
-        programAddress: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-        data: new Uint8Array([
-          SPLTokenInstruction.MintTo, // instruction type = 7
-          0x40, 0x42, 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00 // amount: 1000000 (little-endian)
-        ]),
-        accounts: [
-          { address: 'MintAccount1111111111111111111111111111111' },
-          { address: 'TokenAccount111111111111111111111111111' },
-          { address: 'MintAuthority11111111111111111111111111' }
-        ]
-      };
-
-      const decoded = sdk.decodeInstruction(mockInstruction);
-
-      expect(decoded.type).toBe('spl-token-mint-to');
-      expect(decoded.data.amount).toBe('1000000');
-      expect(decoded.data.mint).toBe('MintAccount1111111111111111111111111111111');
-      expect(decoded.data.account).toBe('TokenAccount111111111111111111111111111');
-      expect(decoded.data.authority).toBe('MintAuthority11111111111111111111111111');
-    });
-
-    test('should handle unknown SPL Token instructions gracefully', () => {
-      const mockInstruction = {
-        programAddress: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-        data: new Uint8Array([255]), // Unknown instruction type
-        accounts: []
-      };
-
-      const decoded = sdk.decodeInstruction(mockInstruction);
-
-      expect(decoded.type).toBe('spl-token-unknown');
-      expect(decoded.data.instructionType).toBe(255);
-      expect(decoded.data.error).toContain('Unknown SPL Token instruction type: 255');
-    });
-
-    test('should decode multiple instructions', () => {
-      const instructions = [
-        {
-          programAddress: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-          data: new Uint8Array([SPLTokenInstruction.Transfer, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]),
-          accounts: [
-            { address: 'Source111' },
-            { address: 'Dest1111' },
-            { address: 'Auth11111' }
-          ]
-        },
-        {
-          programAddress: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-          data: new Uint8Array([SPLTokenInstruction.MintTo, 0x40, 0x42, 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00]),
-          accounts: [
-            { address: 'Mint11111' },
-            { address: 'Account11' },
-            { address: 'Authority' }
-          ]
-        }
-      ];
-
-      const decoded = sdk.decodeInstructions(instructions);
-
-      expect(decoded).toHaveLength(2);
-      expect(decoded[0].type).toBe('spl-token-transfer');
-      expect(decoded[1].type).toBe('spl-token-mint-to');
-    });
+  describe('V2 Transaction Decoding', () => {
+    test('should provide enhanced transaction decoding', async () => {
+      // Get a recent transaction from the test wallet
+      const signatures = await sdk.getSignaturesForAddress(testWallet, { limit: 1 });
+      
+      if (signatures.length > 0) {
+        const signature = signatures[0].signature;
+        const decodedTx = await sdk.getAndDecodeTransaction(signature, {
+          richDecoding: true,
+          includeTokenMetadata: true
+        });
+        
+                 expect(decodedTx).toBeDefined();
+         if (decodedTx && decodedTx.decoded) {
+           expect(Array.isArray(decodedTx.decoded)).toBe(true);
+         }
+      }
+    }, 15000);
   });
 
-  describe('RPC Client', () => {
-    test('should initialize RPC client with correct endpoint', () => {
-      expect(sdk.rpc.getRpcUrl()).toBe('https://test-rpc.gorbchain.xyz');
-    });
+  describe('V1 Compatibility', () => {
+    test('should maintain v1 getTokenHoldings compatibility', async () => {
+      const v1Holdings = await sdk.getTokenHoldings(testWallet);
+      
+      expect(v1Holdings).toBeInstanceOf(Array);
+      
+             if (v1Holdings.length > 0) {
+         const holding = v1Holdings[0];
+         expect(holding.mint).toBeDefined();
+         expect(holding.tokenAccount).toBeDefined();
+         expect(holding.balance).toBeDefined();
+       }
+    }, 15000);
 
-    test('should allow RPC endpoint updates', () => {
-      sdk.setRpcEndpoint('https://new-rpc.gorbchain.xyz');
-      expect(sdk.config.rpcEndpoint).toBe('https://new-rpc.gorbchain.xyz');
-      expect(sdk.rpc.getRpcUrl()).toBe('https://new-rpc.gorbchain.xyz');
-    });
+    test('should maintain v1 getBalance compatibility', async () => {
+      const balance = await sdk.getBalance(testWallet);
+      
+      expect(typeof balance).toBe('number');
+      expect(balance).toBeGreaterThanOrEqual(0);
+    }, 10000);
 
-    test('should have RPC convenience methods', () => {
-      expect(typeof sdk.getNetworkHealth).toBe('function');
-      expect(typeof sdk.getCurrentSlot).toBe('function');
-      expect(typeof sdk.getBlockHeight).toBe('function');
-      expect(typeof sdk.getLatestBlockhash).toBe('function');
-    });
+    test('should maintain v1 getAccountInfo compatibility', async () => {
+      const accountInfo = await sdk.getAccountInfo(testWallet);
+      
+      expect(accountInfo).toBeDefined();
+      if (accountInfo) {
+        expect(typeof accountInfo.lamports).toBe('number');
+        expect(typeof accountInfo.owner).toBe('string');
+      }
+    }, 10000);
 
-    test('should provide direct RPC client access', () => {
+    test('should maintain v1 RPC client access', () => {
       const rpcClient = sdk.getRpcClient();
-      expect(rpcClient).toBe(sdk.rpc);
-      expect(typeof rpcClient.request).toBe('function');
+      
+      expect(rpcClient).toBeDefined();
+      expect(typeof rpcClient.getSlot).toBe('function');
+      expect(typeof rpcClient.getAccountInfo).toBe('function');
     });
   });
 
-  describe('Unknown Program Handling', () => {
-    test('should handle unknown programs gracefully', () => {
-      const mockInstruction = {
-        programAddress: 'UnknownProgram111111111111111111111111111',
-        data: new Uint8Array([1, 2, 3, 4, 5]),
-        accounts: []
-      };
-
-      const decoded = sdk.decodeInstruction(mockInstruction);
-
-      expect(decoded.type).toBe('unknown');
-      expect(decoded.programId).toBe('UnknownProgram111111111111111111111111111');
-      expect(decoded.data.raw).toEqual([1, 2, 3, 4, 5]);
-      expect(decoded.data.hex).toBe('0102030405');
+  describe('V2 Error Handling and Resilience', () => {
+    test('should handle invalid wallet addresses gracefully', async () => {
+      const invalidWallet = 'invalid-wallet-address';
+      
+      await expect(sdk.getAllTokenHoldings(invalidWallet)).rejects.toThrow();
     });
-  });
 
-  describe('Config Integration', () => {
-    test('should use gorbchain config for program IDs', () => {
-      // Update config and create new SDK
-      setGorbchainConfig({
-        programIds: {
-          splToken: 'CustomSPLToken11111111111111111111111111'
-        }
+    test('should handle network timeouts gracefully', async () => {
+      const shortTimeoutSDK = new GorbchainSDK({
+        rpcEndpoint: 'https://localhost:99999', // Invalid port that should timeout
+        timeout: 100, // Very short timeout to trigger timeout
+        retries: 1
       });
+      
+      const health = await shortTimeoutSDK.getNetworkHealth();
+      // Either unhealthy or degraded is acceptable for a failed connection
+      expect(['unhealthy', 'degraded']).toContain(health.status);
+      expect(health.responseTime).toBeGreaterThan(0);
+    }, 10000);
 
-      const newSdk = new GorbchainSDK();
-      expect(newSdk.config.programIds?.splToken).toBe('CustomSPLToken11111111111111111111111111');
-    });
-
-    test('should fallback to defaults when config is missing', () => {
-      // Clear config
-      setGorbchainConfig({});
-
-      const newSdk = new GorbchainSDK();
-      expect(newSdk.config.rpcEndpoint).toBe('https://rpc.gorbchain.xyz');
-      expect(newSdk.config.programIds).toEqual({});
-    });
-  });
-
-  describe('Error Handling', () => {
-    test('should handle malformed instruction data', () => {
-      const mockInstruction = {
-        programAddress: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-        data: new Uint8Array([SPLTokenInstruction.Transfer, 0x00]), // Too short for transfer
-        accounts: []
-      };
-
-      expect(() => {
-        sdk.decodeInstruction(mockInstruction);
-      }).toThrow('Invalid Transfer instruction data length');
-    });
-
-    test('should handle empty instruction data', () => {
-      const mockInstruction = {
-        programAddress: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-        data: new Uint8Array([]),
-        accounts: []
-      };
-
-      expect(() => {
-        sdk.decodeInstruction(mockInstruction);
-      }).toThrow('Invalid SPL Token instruction: no data');
-    });
+    test('should handle custom program analysis errors gracefully', async () => {
+      const invalidProgramId = 'InvalidProgramId123';
+      
+      // Should not throw but return empty array or handle gracefully
+      const result = await sdk.getCustomProgramTokens(testWallet, invalidProgramId);
+      expect(result).toBeInstanceOf(Array);
+    }, 10000);
   });
 });

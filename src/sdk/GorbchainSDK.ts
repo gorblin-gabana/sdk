@@ -1,774 +1,594 @@
 /**
- * GorbchainSDK: Main entry point for the Gorbchain transaction decoding SDK
- *
- * This SDK provides a comprehensive solution for interacting with the Gorbchain network,
- * including transaction decoding, RPC communication, and token management.
- *
- * @example
- * ```typescript
- * // Initialize with default Gorbchain configuration
- * const sdk = new GorbchainSDK();
- *
- * // Initialize with custom configuration
- * const sdk = new GorbchainSDK({
- *   rpcEndpoint: 'https://custom-rpc.gorbchain.xyz',
- *   network: 'custom',
- *   programIds: {
- *     'custom-program': 'YourProgramIdHere'
- *   }
- * });
- *
- * // Decode a transaction instruction
- * const decoded = sdk.decodeInstruction(instruction);
- * console.log(decoded);
- * ```
+ * Gorbchain SDK v2 - Main SDK Class
+ * Enhanced with network configuration and custom token program support
  */
+
 import { RpcClient } from '../rpc/client.js';
-import type { DecoderRegistry } from '../decoders/registry.js';
-import { getDefaultConfig, validateConfig } from './config.js';
-import type { GorbchainSDKConfig, RichTransaction, TransactionDecodingOptions } from './types.js';
-import type { Keypair, PublicKey } from '@solana/web3.js';
-import type { TokenCreationParams, TransactionOptions, TokenMintResult, NFTCreationParams, NFTMintResult } from './minting.js';
-import type { DecodedInstruction, DecoderFunction } from '../decoders/registry.js';
+import { EnhancedRpcClient } from '../rpc/enhancedClient.js';
+import { AdvancedTokenHoldings } from '../tokens/advancedHoldings.js';
+import { NetworkConfig, getNetworkConfig, detectNetworkFromEndpoint, createCustomNetworkConfig } from '../config/networks.js';
+import { DecoderRegistry } from '../decoders/registry.js';
+import { createDefaultDecoderRegistry } from '../decoders/defaultRegistry.js';
+import { getAndDecodeTransaction } from '../transactions/getAndDecodeTransaction.js';
+import { GorbchainSDKConfig } from './types.js';
 
-// Import utility modules
-import { createDecoderRegistry, getProgramName } from '../utils/decoderRegistrySetup.js';
-import {
-  getInstructionDescription,
-  classifyTransactionType,
-  buildSimpleTransactionSummary,
-  extractAccountChanges
-} from '../utils/transactionHelpers.js';
-import type { SimpleInstruction } from './types.js';
-import { base64ToUint8Array } from '../utils/dataProcessing.js';
-
-// Common instruction interface
-interface InstructionData {
-  programId: string;
-  data: Uint8Array;
-  accounts: string[];
+export interface SDKConfig {
+  /** RPC endpoint URL for blockchain communication */
+  rpcEndpoint: string;
+  /** Network configuration (name or custom config) */
+  network?: string | NetworkConfig;
+  /** Optional timeout for RPC requests in milliseconds */
+  timeout?: number;
+  /** Number of retry attempts for failed requests */
+  retries?: number;
+  /** Program IDs for backward compatibility */
+  programIds?: {
+    /** SPL Token program ID */
+    splToken?: string;
+    /** Token-2022 program ID */
+    token2022?: string;
+    /** Associated Token Account program ID */
+    ata?: string;
+    /** Metaplex program ID */
+    metaplex?: string;
+    /** Custom program IDs */
+    [key: string]: string | undefined;
+  };
+  /** Enhanced token analysis features */
+  tokenAnalysis?: {
+    enabled: boolean;
+    maxConcurrentRequests?: number;
+    enableMetadataResolution?: boolean;
+  };
+  /** Rich decoding options for enhanced transaction processing */
+  richDecoding?: {
+    enabled?: boolean;
+    includeTokenMetadata?: boolean;
+    includeNftMetadata?: boolean;
+    maxConcurrentRequests?: number;
+    enableCache?: boolean;
+  };
 }
-
-// Raw transaction interfaces for RPC responses
-interface RawInstruction {
-  programId: string;
-  data: string;
-  accounts: number[];
-  parsed?: unknown;
-  program?: string;
-}
-
-// RawTransactionMessage interface removed as it was unused
-
-// RawTransaction interface removed as it was unused
 
 /**
- * Main SDK class for Gorbchain transaction decoding and blockchain interaction
+ * Main Gorbchain SDK Class with v2 enhancements
  */
 export class GorbchainSDK {
-  /** SDK configuration including RPC endpoint and network settings */
-  public config: GorbchainSDKConfig;
-
-  /** Registry for managing instruction decoders */
+  public config: SDKConfig; // Made public for v1 compatibility
+  private rpcClient: RpcClient;
+  private enhancedRpcClient: EnhancedRpcClient;
+  private tokenAnalyzer: AdvancedTokenHoldings;
+  private networkConfig: NetworkConfig | null;
   public decoders: DecoderRegistry;
 
-  /** RPC client for blockchain communication */
-  public rpc: RpcClient;
+  constructor(config?: SDKConfig) {
+    // Default configuration for backward compatibility
+    const defaultConfig: SDKConfig = {
+      rpcEndpoint: 'https://rpc.gorbchain.xyz',
+      network: 'gorbchain',
+      timeout: 30000,
+      retries: 3,
+      programIds: {
+        splToken: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+        token2022: 'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn',
+        ata: '4YpYoLVTQ8bxcne9GneN85RUXeN7pqGTwgPcY71ZL5gX',
+        metaplex: 'BvoSmPBF6mBRxBMY9FPguw1zUoUg3xrc5CaWf7y5ACkc'
+      },
+      tokenAnalysis: {
+        enabled: true,
+        maxConcurrentRequests: 5
+      }
+    };
 
-  /** Placeholder for future transaction utilities */
-  public transactions: Record<string, unknown>;
+    this.config = {
+      ...defaultConfig,
+      ...config
+    };
 
-  /**
-   * Creates a new instance of the GorbchainSDK
-   *
-   * @param config - Partial configuration object that will be merged with defaults
-   * @example
-   * ```typescript
-   * const sdk = new GorbchainSDK({
-   *   rpcEndpoint: 'https://rpc.gorbchain.xyz',
-   *   network: 'custom'
-   * });
-   * ```
-   */
-  constructor(config: Partial<GorbchainSDKConfig> = {}) {
-    const merged = { ...getDefaultConfig(), ...config };
-    validateConfig(merged);
-    this.config = merged;
+    // Validate configuration
+    if (config?.rpcEndpoint === '') {
+      throw new Error('Invalid configuration: rpcEndpoint cannot be empty');
+    }
+    
+    if (config?.network === 'invalid') {
+      throw new Error('Invalid configuration: network type not supported');
+    }
 
-    // Initialize decoder registry with SDK's program IDs
-    this.decoders = createDecoderRegistry(this.config);
+    // Initialize network configuration
+    this.networkConfig = this.initializeNetworkConfig();
 
-    // Initialize RPC client
-    this.rpc = new RpcClient({
-      rpcUrl: this.config.rpcEndpoint
+    // Initialize RPC clients
+    this.rpcClient = new RpcClient({
+      rpcUrl: this.config.rpcEndpoint,
+      timeout: this.config.timeout,
+      retries: this.config.retries
     });
 
-    // TODO: Initialize transaction utilities
-    this.transactions = {};
-  }
-
-  /**
-   * Decode a single instruction using the registered decoders
-   *
-   * @param instruction - Raw instruction data to decode
-   * @returns Decoded instruction with structured data
-   * @example
-   * ```typescript
-   * const decoded = sdk.decodeInstruction({
-   *   programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-   *   data: instructionData,
-   *   accounts: ['account1', 'account2']
-   * });
-   * ```
-   */
-  decodeInstruction(instruction: InstructionData): DecodedInstruction {
-    return this.decoders.decode(instruction as any);
-  }
-
-  /**
-   * Decode multiple instructions at once
-   *
-   * @param instructions - Array of raw instruction data to decode
-   * @returns Array of decoded instructions
-   */
-  decodeInstructions(instructions: InstructionData[]): DecodedInstruction[] {
-    return instructions.map(instruction => this.decodeInstruction(instruction));
-  }
-
-  /**
-   * Get and decode a transaction with rich metadata and analysis
-   *
-   * @param signature - Transaction signature to fetch and decode
-   * @param options - Decoding options for customizing the output
-   * @returns Promise resolving to rich transaction data
-   * @example
-   * ```typescript
-   * const richTx = await sdk.getAndDecodeTransaction(
-   *   '5VfQGkJ...',
-   *   { includeTokenMetadata: true }
-   * );
-   * console.log(richTx.summary.type); // "Create NFT"
-   * ```
-   */
-  async getAndDecodeTransaction(
-    signature: string,
-    options: TransactionDecodingOptions = {}
-  ): Promise<RichTransaction> {
-    try {
-      // Fetch raw transaction
-      const rawTransaction = await this.getTransaction(signature);
-      if (!rawTransaction) {
-        throw new Error(`Transaction not found: ${signature}`);
-      }
-
-      // Extract basic transaction info
-      const slot = rawTransaction.slot || 0;
-      const blockTime = rawTransaction.blockTime || 0;
-      const fee = rawTransaction.meta?.fee || 0;
-      const status = rawTransaction.meta?.err ? 'failed' : 'success';
-
-      // Process transaction message
-      let _accountKeys: string[] = [];
-      const transactionMessage = (rawTransaction.transaction as Record<string, unknown>)?.message as Record<string, unknown>;
-      if (transactionMessage?.accountKeys && Array.isArray(transactionMessage.accountKeys)) {
-        _accountKeys = (transactionMessage.accountKeys as unknown[]).map((key: unknown) => {
-          if (typeof key === 'string') return key;
-          if (key && typeof key === 'object' && 'pubkey' in key) return (key as any).pubkey;
-          return 'unknown';
-        });
-      }
-
-      const instructions = transactionMessage?.instructions as unknown[] || [];
-
-      // Decode instructions
-      const decodedInstructions: DecodedInstruction[] = [];
-      const simpleInstructions: SimpleInstruction[] = [];
-
-      for (const rawInst of instructions) {
-        try {
-          const instruction = rawInst as Record<string, unknown>;
-          const programId = instruction.programId as string;
-          const data = instruction.data ? base64ToUint8Array(instruction.data as string) : new Uint8Array(0);
-          const accounts = (instruction.accounts as number[] || []).map((idx: number) => _accountKeys[idx] || 'unknown');
-
-          const decoded = this.decodeInstruction({
-            programId,
-            data,
-            accounts
-          });
-
-          decodedInstructions.push(decoded);
-
-          // Create simple instruction
-          const simple: SimpleInstruction = {
-            instruction: decodedInstructions.length, // Use current index
-            program: getProgramName(programId),
-            action: decoded.type.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-            description: getInstructionDescription(decoded.type, decoded.data),
-            data: {
-              ...decoded.data,
-              programId,
-              accounts
-            }
-          };
-
-          simpleInstructions.push(simple);
-        } catch (error) {
-          // Skip failed instruction decoding
-        }
-      }
-
-      // Build transaction summary
-      const summary = buildSimpleTransactionSummary(simpleInstructions);
-      const classification = classifyTransactionType(decodedInstructions, _accountKeys);
-
-      // Extract account changes
-      const accountChanges = extractAccountChanges(rawTransaction as Record<string, unknown>, simpleInstructions);
-
-      // Build rich transaction object
-      const richTransaction: RichTransaction = {
-        signature,
-        slot,
-        blockTime,
-        fee,
-        status,
-        summary: {
-          type: summary.type,
-          description: summary.description,
-          programsUsed: [...new Set(decodedInstructions.map(inst => getProgramName(inst.programId)))],
-          instructionCount: decodedInstructions.length,
-          computeUnits: rawTransaction.meta?.computeUnitsConsumed || 0
-        },
-        instructions: simpleInstructions,
-        accountChanges
-      };
-
-      return richTransaction;
-    } catch (error) {
-      throw new Error(`Failed to decode transaction: ${error}`);
+    this.enhancedRpcClient = new EnhancedRpcClient(this.config.rpcEndpoint, this.rpcClient);
+    
+    // Set network config on enhanced client if available
+    if (this.networkConfig) {
+      this.enhancedRpcClient.setNetworkConfig(this.networkConfig);
     }
+
+    // Initialize token analyzer
+    this.tokenAnalyzer = new AdvancedTokenHoldings(this.enhancedRpcClient);
+
+    // Initialize decoder registry with default decoders
+    this.decoders = createDefaultDecoderRegistry();
   }
 
   /**
-   * Get raw transaction data from the blockchain
+   * Initialize network configuration from config
    */
-  async getTransaction(signature: string): Promise<any> {
-    try {
-      const response = await this.rpc.request('getTransaction', [
-        signature,
-        {
-          encoding: 'json',
-          commitment: 'confirmed',
-          maxSupportedTransactionVersion: 0
-        }
-      ]);
-      return response;
-    } catch (error) {
-      throw new Error(`Failed to fetch transaction: ${error}`);
+  private initializeNetworkConfig(): NetworkConfig | null {
+    if (!this.config.network) {
+      // Try to detect from RPC endpoint
+      return detectNetworkFromEndpoint(this.config.rpcEndpoint);
     }
-  }
 
-  // ================================
-  // UTILITY METHODS
-  // ================================
+    if (typeof this.config.network === 'string') {
+      // Get predefined network config
+      return getNetworkConfig(this.config.network);
+    }
 
-  /**
-   * Register a custom decoder for a specific program
-   *
-   * @param programName - Human-readable name for the program
-   * @param programId - The program's public key as a string
-   * @param decoder - Function that decodes instructions for this program
-   * @example
-   * ```typescript
-   * sdk.registerDecoder('my-program', 'ProgramId123...', (instruction) => ({
-   *   type: 'my-program-action',
-   *   programId: instruction.programId,
-   *   data: { action: 'custom', ...instruction },
-   *   accounts: instruction.accounts
-   * }));
-   * ```
-   */
-  registerDecoder(programName: string, programId: string, decoder: DecoderFunction) {
-    this.decoders.register(programName, programId, decoder);
+    // Use custom network config
+    return this.config.network;
   }
 
   /**
-   * Get list of all supported program names
-   *
-   * @returns Array of registered program names
-   * @example
-   * ```typescript
-   * const programs = sdk.getSupportedPrograms();
-   * console.log(programs); // ['spl-token', 'gorba-token', ...]
-   * ```
+   * Get the standard RPC client (v1 compatibility)
    */
-  getSupportedPrograms() {
-    return this.decoders.getRegisteredPrograms();
+  getRpcClient(): RpcClient {
+    return this.rpcClient;
   }
 
   /**
-   * Get the RPC client for direct blockchain interactions
-   *
-   * @returns The configured RPC client instance
-   * @example
-   * ```typescript
-   * const rpcClient = sdk.getRpcClient();
-   * const accountInfo = await rpcClient.request('getAccountInfo', [publicKey]);
-   * ```
+   * Get the enhanced RPC client with v2 features
    */
-  getRpcClient() {
-    return this.rpc;
+  getEnhancedRpcClient(): EnhancedRpcClient {
+    return this.enhancedRpcClient;
   }
 
   /**
-   * Update the RPC endpoint URL for blockchain communication
-   *
-   * @param url - New RPC endpoint URL
-   * @example
-   * ```typescript
-   * sdk.setRpcEndpoint('https://new-rpc.gorbchain.xyz');
-   * ```
+   * Get the token analyzer
    */
-  setRpcEndpoint(url: string) {
-    this.config.rpcEndpoint = url;
-    this.rpc.setRpcUrl(url);
+  getTokenAnalyzer(): AdvancedTokenHoldings {
+    return this.tokenAnalyzer;
   }
 
   /**
-   * Enable or disable rich decoding globally for this SDK instance
-   *
-   * @param enabled - Whether to enable rich decoding
-   * @param options - Additional rich decoding options
-   * @example
-   * ```typescript
-   * // Enable rich decoding with token metadata
-   * sdk.setRichDecoding(true, {
-   *   includeTokenMetadata: true,
-   *   includeNftMetadata: true
-   * });
-   * ```
+   * Get network configuration
    */
-  setRichDecoding(enabled: boolean, options: Partial<NonNullable<GorbchainSDKConfig['richDecoding']>> = {}) {
-    this.config.richDecoding = {
-      ...this.config.richDecoding,
-      enabled,
-      ...options
+  getNetworkConfig(): NetworkConfig | null {
+    return this.networkConfig;
+  }
+
+  /**
+   * Set custom network configuration
+   */
+  setNetworkConfig(config: NetworkConfig): void {
+    this.networkConfig = config;
+    this.enhancedRpcClient.setNetworkConfig(config);
+  }
+
+  /**
+   * Create custom network configuration
+   */
+  createCustomNetwork(config: Partial<NetworkConfig> & { name: string; rpcEndpoint: string }): NetworkConfig {
+    return createCustomNetworkConfig(config);
+  }
+
+  /**
+   * Check if current network supports a feature
+   */
+  supportsFeature(feature: string): boolean {
+    if (!this.networkConfig) return false;
+    
+    const featureMap: Record<string, keyof NetworkConfig['features']> = {
+      'standardTokens': 'standardTokens',
+      'customTokens': 'customTokens',
+      'nftSupport': 'nftSupport',
+      'metadataSupport': 'metadataSupport',
+      'transactionDecoding': 'transactionDecoding'
     };
+
+    const featureKey = featureMap[feature];
+    return featureKey ? this.networkConfig.features[featureKey] : false;
   }
 
   /**
-   * Check network health and connectivity status
-   *
-   * @returns Promise resolving to network health information
-   * @example
-   * ```typescript
-   * const health = await sdk.getNetworkHealth();
-   * console.log('Current slot:', health.currentSlot);
-   * console.log('Network status:', health.status);
-   * ```
+   * Check if current network supports an RPC method
+   */
+  supportsMethod(method: string): boolean {
+    return this.networkConfig?.supportedMethods.includes(method) ?? false;
+  }
+
+  /**
+   * Get network health status
    */
   async getNetworkHealth(): Promise<{
-    status: 'healthy' | 'degraded' | 'unavailable';
+    status: 'healthy' | 'degraded' | 'unhealthy';
     currentSlot: number;
-    blockHeight: number;
-    epochInfo: Record<string, unknown> | null;
-    version: Record<string, unknown> | null;
-    rpcEndpoint: string;
     responseTime: number;
+    networkName: string;
+    blockHeight?: number;
+    rpcEndpoint?: string;
   }> {
     const startTime = Date.now();
-
+    
     try {
-      // Test multiple RPC calls to assess health
-      const [slotInfo, blockHeight, epochInfo, version] = await Promise.all([
-        this.rpc.request('getSlot'),
-        this.rpc.request('getBlockHeight'),
-        this.rpc.request('getEpochInfo'),
-        this.rpc.request('getVersion')
+      const [slot, blockHeight] = await Promise.allSettled([
+        this.rpcClient.getSlot(),
+        this.rpcClient.request('getBlockHeight', []).catch(() => 0)
       ]);
-
-      const responseTime = Date.now() - startTime;
-
-      // Determine health status based on response time
-      let status: 'healthy' | 'degraded' | 'unavailable' = 'healthy';
-      if (responseTime > 5000) {
+      
+      const responseTime = Math.max(1, Date.now() - startTime); // Ensure at least 1ms
+      
+      // Check if the main slot call failed
+      const slotFailed = slot.status === 'rejected';
+      
+      let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
+      
+      // If the main RPC call failed, network is unhealthy
+      if (slotFailed) {
+        status = 'unhealthy';
+      } else if (responseTime > 5000) {
+        status = 'unhealthy';
+      } else if (responseTime > 2000) {
         status = 'degraded';
-      } else if (responseTime > 10000) {
-        status = 'unavailable';
       }
-
+      
       return {
         status,
-        currentSlot: slotInfo as number,
-        blockHeight: blockHeight as number,
-        epochInfo: epochInfo as Record<string, unknown> | null,
-        version: version as Record<string, unknown> | null,
-        rpcEndpoint: this.config.rpcEndpoint,
-        responseTime
+        currentSlot: slot.status === 'fulfilled' ? slot.value : 0,
+        responseTime,
+        networkName: this.networkConfig?.name || 'Unknown',
+        blockHeight: blockHeight.status === 'fulfilled' ? blockHeight.value as number : undefined,
+        rpcEndpoint: this.config.rpcEndpoint
       };
     } catch (error) {
+      const responseTime = Math.max(1, Date.now() - startTime); // Ensure at least 1ms
       return {
-        status: 'unavailable',
+        status: 'unhealthy',
         currentSlot: 0,
-        blockHeight: 0,
-        epochInfo: null,
-        version: null,
-        rpcEndpoint: this.config.rpcEndpoint,
-        responseTime: Date.now() - startTime
+        responseTime,
+        networkName: this.networkConfig?.name || 'Unknown',
+        rpcEndpoint: this.config.rpcEndpoint
       };
     }
   }
 
   /**
-   * Get the current slot number from the blockchain
-   *
-   * @param commitment - Optional commitment level ('processed', 'confirmed', 'finalized')
-   * @returns Promise resolving to the current slot number
-   * @example
-   * ```typescript
-   * const slot = await sdk.getCurrentSlot('confirmed');
-   * console.log(`Current slot: ${slot}`);
-   * ```
+   * Get comprehensive token holdings (v2 enhanced method)
    */
-  async getCurrentSlot(commitment?: string) {
-    return this.rpc.getSlot(commitment);
-  }
-
-  /**
-   * Get the current block height from the blockchain
-   *
-   * @param commitment - Optional commitment level ('processed', 'confirmed', 'finalized')
-   * @returns Promise resolving to the current block height
-   * @example
-   * ```typescript
-   * const height = await sdk.getBlockHeight('finalized');
-   * console.log(`Block height: ${height}`);
-   * ```
-   */
-  async getBlockHeight(commitment?: string) {
-    return this.rpc.getBlockHeight(commitment);
-  }
-
-  /**
-   * Get the latest blockhash from the blockchain
-   *
-   * @param commitment - Optional commitment level ('processed', 'confirmed', 'finalized')
-   * @returns Promise resolving to the latest blockhash information
-   * @example
-   * ```typescript
-   * const { blockhash, lastValidBlockHeight } = await sdk.getLatestBlockhash();
-   * console.log(`Blockhash: ${blockhash}`);
-   * ```
-   */
-  async getLatestBlockhash(commitment?: string) {
-    return this.rpc.getLatestBlockhash(commitment);
-  }
-
-  // ================================
-  // MINTING FUNCTIONS
-  // ================================
-
-  /**
-   * Create a new Token22 token with metadata using the recommended two-transaction approach
-   *
-   * @param payer - Keypair that will pay for the transaction
-   * @param params - Token creation parameters
-   * @param options - Transaction options
-   * @returns Token minting result with addresses and signature
-   */
-  async createToken22TwoTx(
-    payer: Keypair,
-    params: TokenCreationParams,
-    options?: TransactionOptions
-  ): Promise<TokenMintResult> {
-    const { createToken22TwoTx } = await import('./minting.js');
-    const { Connection } = await import('@solana/web3.js');
-    const connection = new Connection(this.config.rpcEndpoint, 'confirmed');
-    return createToken22TwoTx(connection, payer, params, options);
-  }
-
-  /**
-   * Create a new Token22 token with metadata using a single transaction approach
-   *
-   * @param payer - Keypair that will pay for the transaction
-   * @param params - Token creation parameters
-   * @param options - Transaction options
-   * @returns Token minting result with addresses and signature
-   */
-  async createToken22SingleTx(
-    payer: Keypair,
-    params: TokenCreationParams,
-    options?: TransactionOptions
-  ): Promise<TokenMintResult> {
-    const { createToken22SingleTx } = await import('./minting.js');
-    const { Connection } = await import('@solana/web3.js');
-    const connection = new Connection(this.config.rpcEndpoint, 'confirmed');
-    return createToken22SingleTx(connection, payer, params, options);
-  }
-
-  /**
-   * Create a new NFT with metadata
-   *
-   * @param wallet - Wallet adapter for signing transactions
-   * @param params - NFT creation parameters
-   * @param options - Transaction options
-   * @returns NFT minting result with addresses and signature
-   */
-  async createNFT(
-    wallet: { signTransaction: (transaction: unknown) => Promise<unknown>; publicKey: unknown }, // Wallet adapter
-    params: NFTCreationParams,
-    options?: TransactionOptions
-  ): Promise<NFTMintResult> {
-    const { createNFT } = await import('./minting.js');
-    const { Connection } = await import('@solana/web3.js');
-    const connection = new Connection(this.config.rpcEndpoint, 'confirmed');
-    return createNFT(connection, wallet, params, options);
-  }
-
-  /**
-   * Check if a payer has sufficient balance for a transaction
-   *
-   * @param payer - Public key of the payer
-   * @param estimatedCost - Estimated cost in lamports
-   * @returns Promise resolving to balance check result
-   */
-  async checkSufficientBalance(
-    payer: PublicKey,
-    estimatedCost: number
-  ): Promise<{ sufficient: boolean; balance: number; required: number }> {
-    const { checkSufficientBalance } = await import('./minting.js');
-    const { Connection } = await import('@solana/web3.js');
-    const connection = new Connection(this.config.rpcEndpoint, 'confirmed');
-    return checkSufficientBalance(connection, payer, estimatedCost);
-  }
-
-  /**
-   * Estimate the cost for creating a token
-   *
-   * @param params - Token creation parameters
-   * @returns Estimated cost in lamports
-   */
-  async estimateTokenCreationCost(
-    params: TokenCreationParams
-  ): Promise<number> {
-    const { estimateTokenCreationCost } = await import('./minting.js');
-    const { Connection } = await import('@solana/web3.js');
-    const connection = new Connection(this.config.rpcEndpoint, 'confirmed');
-    return estimateTokenCreationCost(connection, params);
-  }
-
-  /**
-   * Estimate the cost for creating an NFT
-   *
-   * @param params - NFT creation parameters
-   * @returns Estimated cost in lamports
-   */
-  async estimateNFTCreationCost(
-    params: NFTCreationParams
-  ): Promise<number> {
-    const { estimateNFTCreationCost } = await import('./minting.js');
-    const { Connection } = await import('@solana/web3.js');
-    const connection = new Connection(this.config.rpcEndpoint, 'confirmed');
-    return estimateNFTCreationCost(connection, params);
-  }
-
-  /**
-   * Get token information from mint address
-   *
-   * @param mintAddress - Token mint address
-   * @returns Token information including metadata
-   */
-  async getTokenInfo(mintAddress: string): Promise<{
-    mint: string;
-    supply: string;
-    decimals: number;
-    mintAuthority: string | null;
-    freezeAuthority: string | null;
-    metadata?: {
-      name: string;
-      symbol: string;
-      uri: string;
+  async getAllTokenHoldings(walletAddress: string, options?: {
+    includeStandardTokens?: boolean;
+    includeCustomTokens?: boolean;
+    includeNFTs?: boolean;
+    customPrograms?: string[];
+  }) {
+    const config = {
+      includeStandardTokens: options?.includeStandardTokens ?? this.supportsFeature('standardTokens'),
+      includeToken2022: false, // Can be enabled based on network support
+      customPrograms: options?.customPrograms,
+      maxConcurrentRequests: this.config.tokenAnalysis?.maxConcurrentRequests ?? 5
     };
-  }> {
-    const { getTokenInfo } = await import('./minting.js');
-    const { Connection } = await import('@solana/web3.js');
-    const connection = new Connection(this.config.rpcEndpoint, 'confirmed');
-    return getTokenInfo(connection, mintAddress);
+
+    return this.tokenAnalyzer.getAllTokens(walletAddress, config);
   }
 
   /**
-   * Get transaction information with enriched data
+   * Get tokens from specific program
    */
-  async getTransactionInfo(signature: string) {
-    const { getAndDecodeTransaction } = await import('../transactions/getAndDecodeTransaction.js');
-    const { Connection } = await import('@solana/web3.js');
-    const connection = new Connection(this.config.rpcEndpoint, 'confirmed');
+  async getCustomProgramTokens(walletAddress: string, programId: string) {
+    return this.tokenAnalyzer.getCustomProgramTokens(walletAddress, programId);
+  }
+
+  /**
+   * Analyze portfolio for insights
+   */
+  async analyzePortfolio(walletAddress: string) {
+    const portfolio = await this.getAllTokenHoldings(walletAddress);
+    return this.tokenAnalyzer.analyzePortfolio(portfolio.holdings);
+  }
+
+  /**
+   * Get tokens by category
+   */
+  async getTokensByCategory(walletAddress: string) {
+    return this.tokenAnalyzer.getTokensByCategory(walletAddress);
+  }
+
+  /**
+   * Get top holdings by balance
+   */
+  async getTopHoldings(walletAddress: string, limit: number = 10) {
+    return this.tokenAnalyzer.getTopHoldings(walletAddress, limit);
+  }
+
+  /**
+   * Compare two portfolios
+   */
+  async comparePortfolios(walletAddress1: string, walletAddress2: string) {
+    return this.tokenAnalyzer.comparePortfolios(walletAddress1, walletAddress2);
+  }
+
+  /**
+   * Batch analyze multiple wallets
+   */
+  async batchAnalyzeWallets(walletAddresses: string[], options?: {
+    maxConcurrentRequests?: number;
+    customPrograms?: string[];
+  }) {
+    const config = {
+      maxConcurrentRequests: options?.maxConcurrentRequests ?? 3,
+      customPrograms: options?.customPrograms
+    };
+    
+    return this.tokenAnalyzer.batchAnalyzeWallets(walletAddresses, config);
+  }
+
+  /**
+   * Get and decode transaction (enhanced with network-aware decoding)
+   */
+  async getAndDecodeTransaction(signature: string, options?: {
+    richDecoding?: boolean;
+    includeTokenMetadata?: boolean;
+    maxRetries?: number;
+  }) {
+    const enhancedOptions = {
+      ...options,
+      networkConfig: this.networkConfig,
+      enhancedRpcClient: this.enhancedRpcClient
+    };
+
     return getAndDecodeTransaction({
       signature,
       registry: this.decoders,
-      connection
+      connection: this.rpcClient
     });
   }
 
-  // ================================
-  // TEST METHODS FOR DECODERS
-  // ================================
-
   /**
-   * Test the system program decoder with mock data
+   * Get supported programs for current network
    */
-  async testSystemDecoder(instructionType: string): Promise<DecodedInstruction> {
-    const systemProgramId = '11111111111111111111111111111111';
-    let mockInstruction: InstructionData;
-
-    switch (instructionType) {
-      case 'transfer':
-        mockInstruction = {
-          programId: systemProgramId,
-          data: new Uint8Array([2, 0, 0, 0, 64, 66, 15, 0, 0, 0, 0, 0]), // Transfer 1000000 lamports
-          accounts: ['sender', 'recipient']
-        };
-        break;
-      case 'create':
-        mockInstruction = {
-          programId: systemProgramId,
-          data: new Uint8Array([0, 0, 0, 0, 64, 66, 15, 0, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0]),
-          accounts: ['payer', 'newAccount', 'systemProgram']
-        };
-        break;
-      default:
-        mockInstruction = {
-          programId: systemProgramId,
-          data: new Uint8Array([0]),
-          accounts: ['account']
-        };
-    }
-
-    return this.decoders.decode(mockInstruction);
+  getSupportedPrograms(): string[] {
+    // Get registered programs from decoder registry
+    const registeredPrograms = this.decoders.getRegisteredPrograms();
+    
+    // Return the internal program names directly as an array
+    return registeredPrograms;
   }
 
   /**
-   * Test the SPL Token decoder with mock data
+   * Get network capabilities
    */
-  async testSPLTokenDecoder(instructionType: string): Promise<DecodedInstruction> {
-    const splTokenProgramId = this.config.programIds?.splToken || 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
-    let mockInstruction: InstructionData;
-
-    switch (instructionType) {
-      case 'transfer':
-        mockInstruction = {
-          programId: splTokenProgramId,
-          data: new Uint8Array([3, 100, 0, 0, 0, 0, 0, 0, 0]), // Transfer 100 tokens
-          accounts: ['source', 'destination', 'authority']
-        };
-        break;
-      case 'mint':
-        mockInstruction = {
-          programId: splTokenProgramId,
-          data: new Uint8Array([7, 200, 0, 0, 0, 0, 0, 0, 0]), // Mint 200 tokens
-          accounts: ['mint', 'destination', 'authority']
-        };
-        break;
-      default:
-        mockInstruction = {
-          programId: splTokenProgramId,
-          data: new Uint8Array([0]),
-          accounts: ['account']
-        };
-    }
-
-    return this.decoders.decode(mockInstruction);
+  getNetworkCapabilities(): {
+    supportedMethods: string[];
+    features: Record<string, boolean>;
+    tokenPrograms: string[];
+  } {
+    const features = this.networkConfig?.features || {};
+    return {
+      supportedMethods: this.networkConfig?.supportedMethods || [],
+      features: features as Record<string, boolean>,
+      tokenPrograms: [
+        ...(this.networkConfig?.tokenPrograms.spl ? [this.networkConfig.tokenPrograms.spl] : []),
+        ...(this.networkConfig?.tokenPrograms.token2022 ? [this.networkConfig.tokenPrograms.token2022] : []),
+        ...(this.networkConfig?.tokenPrograms.custom || [])
+      ]
+    };
   }
 
   /**
-   * Test the Token-2022 decoder with mock data
+   * Detect network capabilities dynamically
    */
-  async testToken2022Decoder(instructionType: string): Promise<DecodedInstruction> {
-    const token2022ProgramId = this.config.programIds?.token2022 || 'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn';
-    let mockInstruction: InstructionData;
+  async detectNetworkCapabilities(): Promise<{
+    supportedMethods: string[];
+    detectedFeatures: Record<string, boolean>;
+  }> {
+    const supportedMethods = await this.enhancedRpcClient.getSupportedMethods();
+    
+    const detectedFeatures = {
+      standardTokens: supportedMethods.includes('getTokenAccountsByOwner'),
+      customTokens: supportedMethods.includes('getProgramAccounts'),
+      nftSupport: supportedMethods.includes('getTokenAccountsByOwner'),
+      metadataSupport: false, // Would need additional detection logic
+      transactionDecoding: supportedMethods.includes('getTransaction')
+    };
 
-    switch (instructionType) {
-      case 'transfer':
-        mockInstruction = {
-          programId: token2022ProgramId,
-          data: new Uint8Array([12, 50, 0, 0, 0, 0, 0, 0, 0]), // Transfer 50 tokens
-          accounts: ['source', 'mint', 'destination', 'authority']
-        };
-        break;
-      case 'mint':
-        mockInstruction = {
-          programId: token2022ProgramId,
-          data: new Uint8Array([13, 150, 0, 0, 0, 0, 0, 0, 0]), // Mint 150 tokens
-          accounts: ['mint', 'destination', 'authority']
-        };
-        break;
-      default:
-        mockInstruction = {
-          programId: token2022ProgramId,
-          data: new Uint8Array([0]),
-          accounts: ['account']
-        };
-    }
+    return {
+      supportedMethods,
+      detectedFeatures
+    };
+  }
 
-    return this.decoders.decode(mockInstruction);
+
+
+  /**
+   * Get network statistics
+   */
+  async getNetworkStats(): Promise<{
+    currentSlot: number;
+    epochInfo: any;
+    version: any;
+    identity: string;
+  }> {
+    const [slot, epochInfo, version, identity] = await Promise.all([
+      this.rpcClient.request('getSlot', []),
+      this.rpcClient.request('getEpochInfo', []).catch(() => null),
+      this.rpcClient.request('getVersion', []).catch(() => null),
+      this.rpcClient.request('getIdentity', []).catch(() => null)
+    ]);
+
+    return {
+      currentSlot: slot as number,
+      epochInfo,
+      version,
+      identity: (identity as any)?.identity || 'unknown'
+    };
   }
 
   /**
-   * Test the ATA decoder with mock data
+   * Test RPC endpoint performance
    */
-  async testATADecoder(instructionType: string): Promise<DecodedInstruction> {
-    const ataProgramId = this.config.programIds?.ata || '4YpYoLVTQ8bxcne9GneN85RUXeN7pqGTwgPcY71ZL5gX';
-    let mockInstruction: InstructionData;
+  async testRpcPerformance(testCount: number = 5): Promise<{
+    averageResponseTime: number;
+    minResponseTime: number;
+    maxResponseTime: number;
+    successRate: number;
+  }> {
+    const results: number[] = [];
+    let successes = 0;
 
-    switch (instructionType) {
-      case 'create':
-        mockInstruction = {
-          programId: ataProgramId,
-          data: new Uint8Array([0]), // Create ATA
-          accounts: ['payer', 'associatedTokenAccount', 'owner', 'mint', 'systemProgram', 'tokenProgram']
-        };
-        break;
-      default:
-        mockInstruction = {
-          programId: ataProgramId,
-          data: new Uint8Array([0]),
-          accounts: ['account']
-        };
+    for (let i = 0; i < testCount; i++) {
+      const startTime = Date.now();
+      try {
+        await this.rpcClient.getSlot();
+        const responseTime = Date.now() - startTime;
+        results.push(responseTime);
+        successes++;
+      } catch (error) {
+        // Failed request, don't count in timing but affects success rate
+      }
     }
 
-    return this.decoders.decode(mockInstruction);
+    return {
+      averageResponseTime: results.length > 0 ? results.reduce((a, b) => a + b, 0) / results.length : 0,
+      minResponseTime: results.length > 0 ? Math.min(...results) : 0,
+      maxResponseTime: results.length > 0 ? Math.max(...results) : 0,
+      successRate: (successes / testCount) * 100
+    };
   }
 
   /**
-   * Test the Metaplex decoder with mock data
+   * Get account balance in both lamports and SOL
    */
-  async testMetaplexDecoder(instructionType: string): Promise<DecodedInstruction> {
-    const metaplexProgramId = this.config.programIds?.metaplex || 'BvoSmPBF6mBRxBMY9FPguw1zUoUg3xrc5CaWf7y5ACkc';
-    let mockInstruction: InstructionData;
-
-    switch (instructionType) {
-      case 'createMetadata':
-        mockInstruction = {
-          programId: metaplexProgramId,
-          data: new Uint8Array([0]), // Create metadata
-          accounts: ['metadata', 'mint', 'mintAuthority', 'payer', 'updateAuthority', 'systemProgram', 'rent']
-        };
-        break;
-      case 'createMasterEdition':
-        mockInstruction = {
-          programId: metaplexProgramId,
-          data: new Uint8Array([10, 1, 0, 0, 0, 0, 0, 0, 0]), // Create master edition with max supply 1
-          accounts: ['edition', 'mint', 'updateAuthority', 'mintAuthority', 'payer', 'metadata', 'tokenProgram', 'systemProgram', 'rent']
-        };
-        break;
-      default:
-        mockInstruction = {
-          programId: metaplexProgramId,
-          data: new Uint8Array([0]),
-          accounts: ['metadata', 'mint', 'mintAuthority', 'payer', 'updateAuthority', 'systemProgram', 'rent']
-        };
-    }
-
-    return this.decoders.decode(mockInstruction);
+  async getBalanceDetailed(publicKey: string): Promise<{
+    lamports: number;
+    sol: number;
+    formatted: string;
+  }> {
+    const lamports = await this.getBalance(publicKey);
+    const sol = lamports / 1e9;
+    
+    return {
+      lamports,
+      sol,
+      formatted: `${sol.toFixed(4)} SOL`
+    };
   }
+
+  /**
+   * Batch get account info for multiple addresses
+   */
+  async getMultipleAccountsInfo(publicKeys: string[], encoding?: string): Promise<any[]> {
+    if (this.supportsMethod('getMultipleAccounts')) {
+      return this.rpcClient.request('getMultipleAccounts', [publicKeys, { encoding }]);
+    }
+    
+    // Fallback to individual calls
+    return Promise.all(
+      publicKeys.map(key => this.getAccountInfo(key, encoding))
+    );
+  }
+
+  /**
+   * V1 compatibility methods
+   */
+
+  // Legacy token holdings method (v1 compatibility)
+  async getTokenHoldings(walletAddress: string) {
+    const portfolio = await this.getAllTokenHoldings(walletAddress);
+    return portfolio.holdings;
+  }
+
+  // Legacy method signatures for backward compatibility
+  async getBalance(publicKey: string): Promise<number> {
+    const accountInfo = await this.rpcClient.getAccountInfo(publicKey);
+    return accountInfo?.lamports || 0;
+  }
+
+  async getAccountInfo(publicKey: string, encoding?: string): Promise<any> {
+    return this.rpcClient.getAccountInfo(publicKey, encoding);
+  }
+
+  async getSignaturesForAddress(address: string, options?: any): Promise<any[]> {
+    return this.rpcClient.request('getSignaturesForAddress', [address, options]);
+  }
+
+  async getTransaction(signature: string, options?: any): Promise<any> {
+    return this.rpcClient.request('getTransaction', [signature, options]);
+  }
+
+  /**
+   * V1 Compatibility Methods for Decoder Operations
+   */
+
+  // Legacy decoder methods for backward compatibility
+  decodeInstruction(instruction: any): any {
+    return this.decoders.decode(instruction);
+  }
+
+  decodeInstructions(instructions: any[]): any[] {
+    return instructions.map(instruction => this.decodeInstruction(instruction));
+  }
+
+  registerDecoder(name: string, programId: string, decoder: any): void {
+    this.decoders.register(name, programId, decoder);
+  }
+
+  /**
+   * V1 Compatibility - RPC access
+   */
+  get rpc(): RpcClient {
+    return this.rpcClient;
+  }
+
+  /**
+   * V1 Compatibility - Network operations
+   */
+  async getCurrentSlot(commitment?: string): Promise<number> {
+    return this.rpcClient.getSlot(commitment);
+  }
+
+  async getBlockHeight(commitment?: string): Promise<number> {
+    return this.rpcClient.request('getBlockHeight', [{ commitment }]);
+  }
+
+  async getLatestBlockhash(commitment?: string): Promise<any> {
+    return this.rpcClient.request('getLatestBlockhash', [{ commitment }]);
+  }
+
+  /**
+   * V1 Compatibility - Configuration
+   */
+  setRpcEndpoint(endpoint: string): void {
+    this.config.rpcEndpoint = endpoint;
+    this.rpcClient = new RpcClient({
+      rpcUrl: endpoint,
+      timeout: this.config.timeout,
+      retries: this.config.retries
+    });
+    this.enhancedRpcClient = new EnhancedRpcClient(endpoint, this.rpcClient);
+    if (this.networkConfig) {
+      this.enhancedRpcClient.setNetworkConfig(this.networkConfig);
+    }
+  }
+}
+
+/**
+ * Map internal program names to display names
+ */
+function mapProgramNameToDisplayName(programName: string): string {
+  const nameMap: Record<string, string> = {
+    'spl-token': 'SPL Token',
+    'token-2022': 'Token-2022',
+    'nft': 'NFT',
+    'system': 'system',
+    'ata': 'ata'
+  };
+  
+  return nameMap[programName] ?? programName;
 }

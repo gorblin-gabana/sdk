@@ -415,12 +415,19 @@ function decodeSetAuthority(instruction: any, programId: string): DecodedInstruc
 function decodeApprove(instruction: any, programId: string): DecodedInstruction {
   const data = instruction.data;
   const amount = readU64LE(data, 1);
+  const accounts = instruction.accounts;
 
   return {
     type: 'spl-token-approve',
     programId,
-    data: { amount: amount.toString() },
-    accounts: instruction.accounts ?? [],
+    data: {
+      amount: amount.toString(),
+      source: accounts[0] ?? null,           // Token account
+      delegate: accounts[1] ?? null,         // Delegate account
+      authority: accounts[2] ?? null,        // Authority (owner)
+      signers: accounts.slice(3)
+    },
+    accounts,
     raw: instruction as unknown as Record<string, unknown>
   };
 }

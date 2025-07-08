@@ -105,26 +105,14 @@ export class DecoderRegistry {
     const programName = this.programIdToName.get(instruction.programId);
 
     if (!programName) {
-      return {
-        type: 'unknown',
-        programId: instruction.programId,
-        data: { raw: instruction.data },
-        accounts: instruction.accounts ?? [],
-        raw: instruction as unknown as Record<string, unknown>
-      };
+      return this.createRawResult(instruction);
     }
 
     // Now get the decoder using the program name
     const decoder = this.decoders.get(programName);
 
     if (!decoder) {
-      return {
-        type: 'unknown',
-        programId: instruction.programId,
-        data: { raw: instruction.data },
-        accounts: instruction.accounts ?? [],
-        raw: instruction as unknown as Record<string, unknown>
-      };
+      return this.createRawResult(instruction);
     }
 
     try {
