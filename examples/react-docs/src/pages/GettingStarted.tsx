@@ -51,12 +51,15 @@ const transaction = await sdk.getAndDecodeTransaction(
 )
 
 // Example 2: Create a token
-const tokenResult = await sdk.createToken22TwoTx({
-  name: 'My Token',
-  symbol: 'MTK',
-  decimals: 6,
-  supply: 1000000
-})
+const tokenResult = await sdk.createToken22TwoTx(
+  payer, // Keypair object
+  {
+    name: 'My Token',
+    symbol: 'MTK',
+    decimals: 6,
+    supply: 1000000
+  }
+)
 
 // Example 3: Get RPC client for advanced operations
 const rpcClient = sdk.getRpcClient()

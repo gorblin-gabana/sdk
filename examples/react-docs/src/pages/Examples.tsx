@@ -62,7 +62,8 @@ if (health.status !== 'healthy') {
 // rich metadata without requiring additional parameters!`
 
   const transactionAnalysisCode = `// Transaction Analysis Workflow
-import { GorbchainSDK, RpcNetworkError, TransactionNotFoundError } from '@gorbchain-xyz/chaindecode'
+import { GorbchainSDK, RpcNetworkError, TransactionNotFoundError, NetworkConnectionError } from '@gorbchain-xyz/chaindecode'
+import { PublicKey } from '@solana/web3.js'
 
 async function analyzeTransaction(signature: string) {
   try {
@@ -74,60 +75,73 @@ async function analyzeTransaction(signature: string) {
 
     console.log('📊 Transaction Analysis:')
     console.log('Status:', transaction.status)
-    console.log('Type:', transaction.transactionType)
-    console.log('Subtype:', transaction.transactionSubtype)
+    console.log('Type:', transaction.summary.type)
+    console.log('Description:', transaction.summary.description)
     console.log('Fee:', transaction.fee, 'lamports')
     console.log('Instructions:', transaction.instructions.length)
+    console.log('Programs used:', transaction.summary.programsUsed)
+    console.log('Compute units:', transaction.summary.computeUnits)
     
-    // Enhanced analysis available automatically
-    if (transaction.analysis) {
-      console.log('\\n🔍 Enhanced Analysis:')
-      console.log('Compute units used:', transaction.analysis.computeUnitsUsed)
-      console.log('Programs involved:', transaction.analysis.programNames)
-      console.log('Token operations:', transaction.analysis.tokenOperations)
-      console.log('Unique tokens:', transaction.analysis.uniqueTokens)
-      console.log('Total value:', transaction.analysis.totalValue)
-      console.log('Timestamp:', transaction.analysis.timestamp)
-    }
-
-    // Token metadata available automatically
-    if (transaction.tokenInfo) {
+    // Token information available automatically
+    if (transaction.tokens) {
       console.log('\\n🪙 Token Information:')
-      console.log('Operations:', transaction.tokenInfo.operations.length)
-      console.log('Mints involved:', transaction.tokenInfo.mints)
-      console.log('Accounts:', transaction.tokenInfo.accounts)
-      console.log('Total value:', transaction.tokenInfo.totalValue)
+      console.log('Operations:', transaction.tokens.operations.length)
       
-      // Detailed operation analysis
-      transaction.tokenInfo.operations.forEach((op: any, index: number) => {
-        console.log(\`Operation \${index + 1}: \${op.type}\`)
-        if (op.amount) console.log(\`  Amount: \${op.amount}\`)
-        if (op.mint) console.log(\`  Mint: \${op.mint}\`)
-        if (op.accountData) console.log(\`  Account Data: \${op.accountData}\`)
-        if (op.mintData) console.log(\`  Mint Data: \${op.mintData}\`)
+      // Token operations analysis
+      transaction.tokens.operations.forEach((op: any, index: number) => {
+        console.log(\`Operation \${index + 1}: \${op.action}\`)
+        console.log(\`  Type: \${op.type}\`)
+        console.log(\`  Program: \${op.program}\`)
+        if (op.data) console.log(\`  Data: \${JSON.stringify(op.data)}\`)
       })
+      
+      // Token transfers
+      if (transaction.tokens.transferred) {
+        console.log('\\n💸 Token Transfers:')
+        transaction.tokens.transferred.forEach((transfer: any) => {
+          console.log(\`  \${transfer.amount} \${transfer.tokenSymbol || 'tokens'} from \${transfer.from} to \${transfer.to}\`)
+        })
+      }
+      
+      // Created tokens
+      if (transaction.tokens.created) {
+        console.log('\\n🆕 Created Tokens:')
+        transaction.tokens.created.forEach((token: any) => {
+          console.log(\`  \${token.name} (\${token.symbol}) - \${token.mint}\`)
+        })
+      }
     }
     
-    // Analyze each instruction (still available)
+    // Account changes
+    if (transaction.accountChanges) {
+      console.log('\\n📊 Account Changes:')
+      if (transaction.accountChanges.solTransfers) {
+        console.log('SOL Transfers:')
+        transaction.accountChanges.solTransfers.forEach((transfer: any) => {
+          console.log(\`  \${transfer.amount} SOL from \${transfer.from} to \${transfer.to}\`)
+        })
+      }
+    }
+    
+    // Analyze each instruction
     transaction.instructions.forEach((instruction, index) => {
-      console.log(\`\${index + 1}. \${instruction.programName}: \${instruction.decoded.type}\`)
-      console.log('   Description:', instruction.decoded.description)
+      console.log(\`\${index + 1}. \${instruction.program}: \${instruction.action}\`)
+      console.log('   Description:', instruction.description)
       
-      if (instruction.decoded.data) {
-        console.log('   Data:', instruction.decoded.data)
+      if (instruction.data) {
+        console.log('   Data:', instruction.data)
       }
     })
 
     return {
       success: true,
-      transactionType: transaction.transactionType,
-      transactionSubtype: transaction.transactionSubtype,
+      transactionType: transaction.summary.type,
+      description: transaction.summary.description,
       fee: transaction.fee,
       instructionCount: transaction.instructions.length,
-      programs: transaction.analysis?.programNames || [],
-      tokenOperations: transaction.analysis?.tokenOperations || 0,
-      uniqueTokens: transaction.analysis?.uniqueTokens || 0,
-      totalValue: transaction.analysis?.totalValue || 0
+      programs: transaction.summary.programsUsed,
+      computeUnits: transaction.summary.computeUnits,
+      tokenOperations: transaction.tokens?.operations.length || 0
     }
 
   } catch (error) {
@@ -159,36 +173,40 @@ async function createTokenSafely(params: {
 }) {
   // 1. Estimate costs
   const costEstimate = await sdk.estimateTokenCreationCost({
-    decimals: params.decimals,
-    hasFreezeMint: false,
-    hasUpdateAuthority: true
+    name: params.name,
+    symbol: params.symbol,
+    supply: params.supply,
+    decimals: params.decimals
   })
 
-  console.log('💰 Estimated cost:', costEstimate.totalCost, 'SOL')
-  console.log('Breakdown:', costEstimate.breakdown)
+  console.log('💰 Estimated cost:', costEstimate, 'SOL')
 
   // 2. Check wallet balance
-  const hasBalance = await sdk.checkSufficientBalance(
-    params.walletPublicKey,
-    costEstimate.totalCost + 0.001 // Buffer for fees
+  const balanceCheck = await sdk.checkSufficientBalance(
+    new PublicKey(params.walletPublicKey),
+    costEstimate + 0.001 // Buffer for fees
   )
 
-  if (!hasBalance) {
-    throw new Error(\`Insufficient balance. Need \${costEstimate.totalCost + 0.001} SOL\`)
+  if (!balanceCheck.sufficient) {
+    throw new Error(\`Insufficient balance. Need \${balanceCheck.required / 1e9} SOL, have \${balanceCheck.balance / 1e9} SOL\`)
   }
 
   // 3. Create token
   console.log('🪙 Creating token...')
-  const result = await sdk.createToken22TwoTx({
-    name: params.name,
-    symbol: params.symbol,
-    decimals: params.decimals,
-    supply: params.supply
-  })
+  const result = await sdk.createToken22TwoTx(
+    payer, // Keypair object
+    {
+      name: params.name,
+      symbol: params.symbol,
+      decimals: params.decimals,
+      supply: params.supply
+    }
+  )
 
   console.log('✅ Token created successfully!')
-  console.log('Mint address:', result.mintAddress)
-  console.log('Transaction signatures:', result.signatures)
+  console.log('Token address:', result.tokenAddress)
+  console.log('Associated token address:', result.associatedTokenAddress)
+  console.log('Transaction signature:', result.signature)
 
   return result
 }
@@ -228,11 +246,15 @@ async function createNFTWithMetadata(params: {
   console.log('📄 Metadata uploaded to:', metadataUri)
 
   // 3. Create NFT
-  const result = await sdk.createNFT({
-    name: params.name,
-    uri: metadataUri,
-    sellerFeeBasisPoints: 500 // 5% royalty
-  })
+  const result = await sdk.createNFT(
+    wallet, // Wallet adapter
+    {
+      name: params.name,
+      uri: metadataUri,
+      description: params.description,
+      royaltyBasisPoints: 500 // 5% royalty
+    }
+  )
 
   console.log('🎨 NFT created successfully!')
   console.log('Asset address:', result.assetAddress)
@@ -282,9 +304,9 @@ async function processBatchTransactions(signatures: string[]) {
           success: true,
           fee: transaction.fee || 0,
           instructionCount: transaction.instructions.length,
-          transactionType: transaction.transactionType,
-          tokenOperations: transaction.analysis?.tokenOperations || 0,
-          computeUnits: transaction.analysis?.computeUnitsUsed || 0
+          transactionType: transaction.summary.type,
+          tokenOperations: transaction.tokens?.operations.length || 0,
+          computeUnits: transaction.summary.computeUnits || 0
         }
       } catch (error) {
         return {
@@ -342,6 +364,220 @@ const signatures = [
   '2QhjK8Xr9QAb7G8K4mfCp3DdnJ7VvTrYbqR8Fg2N5HjLmW9Q'
 ]
 const batchResult = await processBatchTransactions(signatures)`
+
+  const tokenHoldingsCode = `// Token Holdings Analyzer - Get All Tokens for an Address
+import { GorbchainSDK } from '@gorbchain-xyz/chaindecode'
+import { PublicKey } from '@solana/web3.js'
+
+class TokenHoldingsAnalyzer {
+  private sdk: GorbchainSDK
+  private rpcClient: any
+
+  constructor(sdk: GorbchainSDK) {
+    this.sdk = sdk
+    this.rpcClient = sdk.getRpcClient()
+  }
+
+  async getAllTokenHoldings(walletAddress: string) {
+    console.log(\`🔍 Analyzing token holdings for: \${walletAddress}\`)
+    
+    try {
+      // Get all token accounts owned by the address
+      const tokenAccounts = await this.rpcClient.getTokenAccountsByOwner(
+        walletAddress,
+        { programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' }, // SPL Token Program
+        'confirmed'
+      )
+
+      // Also get Token-2022 accounts
+      const token2022Accounts = await this.rpcClient.getTokenAccountsByOwner(
+        walletAddress,
+        { programId: 'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn' }, // Token-2022 Program
+        'confirmed'
+      )
+
+      const allTokenAccounts = [...tokenAccounts, ...token2022Accounts]
+      console.log(\`📊 Found \${allTokenAccounts.length} token accounts\`)
+
+      const holdings = []
+      const processedMints = new Set()
+
+      // Process each token account
+      for (const accountInfo of allTokenAccounts) {
+        try {
+          // Get detailed token account info
+          const tokenAccountData = await this.rpcClient.getTokenAccountInfo(
+            accountInfo.pubkey,
+            'confirmed'
+          )
+
+          if (!tokenAccountData || !tokenAccountData.tokenAmount) {
+            continue
+          }
+
+          const { mint, tokenAmount } = tokenAccountData
+          
+          // Skip if we already processed this mint
+          if (processedMints.has(mint)) {
+            continue
+          }
+          processedMints.add(mint)
+
+          // Skip accounts with zero balance
+          if (parseFloat(tokenAmount.amount) === 0) {
+            continue
+          }
+
+          // Get comprehensive token info including metadata
+          const tokenInfo = await this.rpcClient.getTokenInfo(mint)
+          
+          const holding = {
+            mint: mint,
+            tokenAccount: accountInfo.pubkey,
+            balance: {
+              raw: tokenAmount.amount,
+              decimal: tokenAmount.uiAmount,
+              formatted: tokenAmount.uiAmountString
+            },
+            decimals: tokenAmount.decimals,
+            isNFT: tokenInfo?.isNFT || false,
+            metadata: tokenInfo?.metadata || null,
+            mintInfo: {
+              supply: tokenInfo?.supply,
+              mintAuthority: tokenInfo?.mintAuthority,
+              freezeAuthority: tokenInfo?.freezeAuthority,
+              isInitialized: tokenInfo?.isInitialized
+            }
+          }
+
+          holdings.push(holding)
+          
+          console.log(\`  🪙 \${holding.metadata?.name || mint}: \${holding.balance.formatted} \${holding.metadata?.symbol || 'tokens'}\`)
+          
+                 } catch (error: any) {
+           console.warn(\`⚠️  Error processing token account \${accountInfo.pubkey}:\`, error.message)
+         }
+      }
+
+             // Sort holdings: NFTs first, then by balance value
+       holdings.sort((a: any, b: any) => {
+         if (a.isNFT && !b.isNFT) return -1
+         if (!a.isNFT && b.isNFT) return 1
+         return parseFloat(b.balance.decimal || '0') - parseFloat(a.balance.decimal || '0')
+       })
+
+      const summary = {
+        totalTokens: holdings.length,
+        totalNFTs: holdings.filter(h => h.isNFT).length,
+        totalFungibleTokens: holdings.filter(h => !h.isNFT).length,
+        uniqueMints: processedMints.size,
+        hasMetadata: holdings.filter(h => h.metadata).length
+      }
+
+             console.log(\`\\n📈 Portfolio Summary:\`)
+       console.log(\`  Total Holdings: \${summary.totalTokens}\`)
+       console.log(\`  NFTs: \${summary.totalNFTs}\`)
+       console.log(\`  Fungible Tokens: \${summary.totalFungibleTokens}\`)
+       console.log(\`  With Metadata: \${summary.hasMetadata}\`)
+
+      return {
+        walletAddress,
+        holdings,
+        summary,
+        timestamp: new Date().toISOString()
+      }
+
+    } catch (error) {
+      console.error('❌ Error fetching token holdings:', error)
+      throw error
+    }
+  }
+
+  async getTokensByCategory(walletAddress: string) {
+    const allHoldings = await this.getAllTokenHoldings(walletAddress)
+    
+    return {
+      nfts: allHoldings.holdings.filter(h => h.isNFT),
+      fungibleTokens: allHoldings.holdings.filter(h => !h.isNFT && h.metadata),
+      unknownTokens: allHoldings.holdings.filter(h => !h.isNFT && !h.metadata),
+      summary: allHoldings.summary
+    }
+  }
+
+  async getTopHoldings(walletAddress: string, limit: number = 10) {
+    const allHoldings = await this.getAllTokenHoldings(walletAddress)
+    
+    return {
+      topByBalance: allHoldings.holdings
+        .filter(h => !h.isNFT)
+        .slice(0, limit),
+      allNFTs: allHoldings.holdings.filter(h => h.isNFT),
+      summary: allHoldings.summary
+    }
+  }
+}
+
+// Usage Examples
+const analyzer = new TokenHoldingsAnalyzer(sdk)
+
+// Get all token holdings
+const allHoldings = await analyzer.getAllTokenHoldings('wallet-address-here')
+
+// Get categorized holdings
+const categorized = await analyzer.getTokensByCategory('wallet-address-here')
+console.log('NFTs:', categorized.nfts.length)
+console.log('Fungible Tokens:', categorized.fungibleTokens.length)
+
+// Get top holdings
+const topHoldings = await analyzer.getTopHoldings('wallet-address-here', 5)`
+
+  const simpleTokenHoldingsCode = `// Simple Token Holdings Example
+async function getWalletTokens(walletAddress: string) {
+  const rpcClient = sdk.getRpcClient()
+  
+  try {
+    // Get all SPL token accounts
+    const tokenAccounts = await rpcClient.getTokenAccountsByOwner(
+      walletAddress,
+      { programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' }
+    )
+
+    console.log(\`Found \${tokenAccounts.length} token accounts\`)
+
+    const tokens = []
+
+    for (const account of tokenAccounts) {
+      // Get token account details
+      const tokenData = await rpcClient.getTokenAccountInfo(account.pubkey)
+      
+      if (tokenData && parseFloat(tokenData.tokenAmount.amount) > 0) {
+        // Get token metadata
+        const tokenInfo = await rpcClient.getTokenInfo(tokenData.mint)
+        
+        tokens.push({
+          mint: tokenData.mint,
+          account: account.pubkey,
+          balance: tokenData.tokenAmount.uiAmountString,
+          decimals: tokenData.tokenAmount.decimals,
+          name: tokenInfo?.metadata?.name || 'Unknown',
+          symbol: tokenInfo?.metadata?.symbol || 'UNKNOWN',
+          isNFT: tokenInfo?.isNFT || false
+        })
+      }
+    }
+
+    return tokens
+  } catch (error) {
+    console.error('Error fetching tokens:', error)
+    return []
+  }
+}
+
+// Usage
+const walletTokens = await getWalletTokens('your-wallet-address')
+walletTokens.forEach(token => {
+  console.log(\`\${token.name} (\${token.symbol}): \${token.balance}\`)
+})`
 
   const portfolioAnalyzerCode = `// Portfolio Analyzer - Real-world Application
 class PortfolioAnalyzer {
@@ -646,6 +882,22 @@ const tokenResult = await operations.safeTokenCreation({
       code: batchOperationsCode
     },
     {
+      id: 'token-holdings',
+      title: 'Token Holdings Analyzer',
+      description: 'Get all token holdings for any wallet address',
+      icon: <WifiIcon className="w-5 h-5" />,
+      color: 'emerald',
+      code: tokenHoldingsCode
+    },
+    {
+      id: 'simple-holdings',
+      title: 'Simple Token Holdings',
+      description: 'Quick way to get wallet token balances',
+      icon: <CubeIcon className="w-5 h-5" />,
+      color: 'cyan',
+      code: simpleTokenHoldingsCode
+    },
+    {
       id: 'portfolio',
       title: 'Portfolio Analyzer',
       description: 'Real-world application for wallet analysis',
@@ -742,6 +994,29 @@ const tokenResult = await operations.safeTokenCreation({
                       <li>• Sets up automatic retry and timeout configuration</li>
                       <li>• Verifies network connectivity before proceeding</li>
                     </ul>
+                  </div>
+                )}
+                
+                {example.id === 'token-holdings' && (
+                  <div className="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                    <h4 className="font-medium text-emerald-900 mb-2">🪙 Token Holdings Features</h4>
+                    <ul className="text-sm text-emerald-800 space-y-1">
+                      <li>• Fetches both SPL Token and Token-2022 holdings</li>
+                      <li>• Automatically detects NFTs vs fungible tokens</li>
+                      <li>• Retrieves token metadata (name, symbol, URI)</li>
+                      <li>• Provides portfolio summary and categorization</li>
+                      <li>• Handles errors gracefully for problematic tokens</li>
+                    </ul>
+                  </div>
+                )}
+                
+                {example.id === 'simple-holdings' && (
+                  <div className="mt-4 p-4 bg-cyan-50 border border-cyan-200 rounded-lg">
+                    <h4 className="font-medium text-cyan-900 mb-2">⚡ Quick Implementation</h4>
+                    <p className="text-sm text-cyan-800">
+                      A simplified version for basic token balance checking. Perfect for getting started 
+                      or when you only need basic token information without detailed categorization.
+                    </p>
                   </div>
                 )}
                 

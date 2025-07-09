@@ -217,34 +217,33 @@ export default function ErrorHandling() {
             <h3 className="text-lg font-semibold text-docs-heading mb-3">1. Structured Error Handling</h3>
             <div className="code-block">
               <pre><code>{`import { 
-  NetworkError, 
-  RpcError, 
+  NetworkConnectionError, 
+  RpcNetworkError, 
   DecoderError, 
-  TransactionError 
+  TransactionNotFoundError 
 } from '@gorbchain-xyz/chaindecode'
 
 try {
   const result = await sdk.getAndDecodeTransaction(signature)
   return result
 } catch (error) {
-  if (error instanceof NetworkError) {
+  if (error instanceof NetworkConnectionError) {
     // Network issues - retry with backoff
     console.log('Network error:', error.message)
     return await retryWithBackoff(() => 
       sdk.getAndDecodeTransaction(signature)
     )
-  } else if (error instanceof RpcError) {
+  } else if (error instanceof RpcNetworkError) {
     // RPC-specific handling
-    if (error.code === -32601) {
-      console.log('Method not found:', error.message)
-    }
+    console.log('RPC network error:', error.message)
+    // Retry with exponential backoff
   } else if (error instanceof DecoderError) {
     // Fallback to raw transaction data
     console.log('Decoder failed, using raw data')
-    return await sdk.getRawTransaction(signature)
-  } else if (error instanceof TransactionError) {
+    return await sdk.getTransaction(signature)
+  } else if (error instanceof TransactionNotFoundError) {
     // Transaction-specific logic
-    console.log('Transaction error:', error.message)
+    console.log('Transaction not found:', error.message)
     throw error // Don't retry transaction errors
   }
 }`}</code></pre>

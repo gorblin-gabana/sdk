@@ -7,7 +7,7 @@ interface JsonViewerProps {
   collapsible?: boolean
 }
 
-function renderValue(value: any, key: string, depth: number = 0): JSX.Element {
+function renderValue(value: any, _key: string, depth: number = 0): JSX.Element {
   if (value === null) {
     return <span className="text-gray-400">null</span>
   }

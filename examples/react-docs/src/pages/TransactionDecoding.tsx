@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import CodeBlock from '../components/CodeBlock'
 import { 
-  CubeIcon,
   CodeBracketIcon,
   WifiIcon,
   ShieldCheckIcon,
@@ -33,17 +32,20 @@ const transaction = await sdk.getAndDecodeTransaction(signature, {
   includeTokenMetadata: true
 })
 
-console.log('Transaction Status:', transaction.meta?.err ? 'Failed' : 'Success')
-console.log('Fee:', transaction.meta?.fee, 'lamports')
+console.log('Transaction Status:', transaction.status)
+console.log('Fee:', transaction.fee, 'lamports')
 console.log('Block Time:', new Date(transaction.blockTime * 1000))
 console.log('Instructions:', transaction.instructions.length)
+console.log('Transaction Type:', transaction.summary.type)
+console.log('Description:', transaction.summary.description)
 
 // Analyze each instruction
 transaction.instructions.forEach((instruction, index) => {
-  const decoded = sdk.decodeInstruction(instruction)
-  console.log(\`\${index + 1}. \${decoded.programName}: \${decoded.instructionName}\`)
-  console.log('   Data:', decoded.data)
-  console.log('   Accounts:', decoded.accounts)
+  console.log(\`\${index + 1}. \${instruction.program}: \${instruction.action}\`)
+  console.log('   Description:', instruction.description)
+  if (instruction.data) {
+    console.log('   Data:', instruction.data)
+  }
 })`
 
   const instructionDecodingCode = `// Individual Instruction Decoding
@@ -81,26 +83,24 @@ if (decoded.success) {
 }`
 
   const decoderRegistryCode = `// Working with Decoder Registry
-const registry = sdk.getDecoderRegistry()
+const registry = sdk.decoders
 
 // Get list of supported programs
 const supportedPrograms = registry.getRegisteredPrograms()
 console.log('Supported programs:', supportedPrograms)
 
 // Register a custom decoder
-const customDecoder = {
-  programId: 'YourCustomProgramId',
-  decode: (instruction) => {
-    // Your custom decoding logic
-    return {
-      instructionName: 'customInstruction',
-      data: parseCustomData(instruction.data),
-      accounts: parseCustomAccounts(instruction.accounts)
-    }
+const customDecoder = (instruction: any) => {
+  // Your custom decoding logic
+  return {
+    type: 'customInstruction',
+    description: 'Custom instruction',
+    data: parseCustomData(instruction.data),
+    accounts: instruction.accounts
   }
 }
 
-registry.register(customDecoder.programId, customDecoder)
+registry.register('custom-program', 'YourCustomProgramId', customDecoder)
 
 // Check if a decoder exists for a program
 const hasDecoder = registry.hasDecoder('TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb')
@@ -124,12 +124,10 @@ async function decodeMultipleTransactions(signatures: string[]) {
           signature,
           success: true,
           data: {
-            fee: transaction.meta?.fee || 0,
+            fee: transaction.fee || 0,
             instructionCount: transaction.instructions.length,
-            programs: [...new Set(transaction.instructions.map(i => 
-              sdk.decodeInstruction(i).programName
-            ))],
-            status: transaction.meta?.err ? 'failed' : 'success'
+            programs: transaction.summary.programsUsed,
+            status: transaction.status
           }
         }
       } catch (error) {
@@ -185,16 +183,12 @@ class TransactionAnalyzer {
   }
   
   private generateSummary(transaction: any) {
-    const instructionTypes = transaction.instructions.map(i => 
-      this.sdk.decodeInstruction(i).instructionName
-    )
+    const instructionTypes = transaction.instructions.map(i => i.action)
     
     return {
-      status: transaction.meta?.err ? 'Failed' : 'Success',
+      status: transaction.status,
       instructionCount: transaction.instructions.length,
-      uniquePrograms: [...new Set(transaction.instructions.map(i => 
-        this.sdk.decodeInstruction(i).programName
-      ))].length,
+      uniquePrograms: transaction.summary.programsUsed.length,
       complexity: this.calculateComplexity(instructionTypes),
       category: this.categorizeTransaction(instructionTypes)
     }

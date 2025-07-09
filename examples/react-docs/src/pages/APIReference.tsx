@@ -1,5 +1,5 @@
 
-import { CodeBracketIcon, ClockIcon, GlobeAltIcon, CubeIcon, WifiIcon, DocumentTextIcon, ShieldCheckIcon } from '@heroicons/react/24/outline'
+import { CodeBracketIcon, GlobeAltIcon, CubeIcon, WifiIcon, DocumentTextIcon } from '@heroicons/react/24/outline'
 
 export default function APIReference() {
   return (
@@ -233,7 +233,7 @@ const slot = await rpcClient.getSlot()`}</code>
               Access the decoder registry for custom decoder management.
             </p>
             <div className="bg-gray-50 rounded p-3 mb-3">
-              <code className="text-sm">{`const registry = sdk.getDecoderRegistry()
+              <code className="text-sm">{`const registry = sdk.decoders
 registry.register('programId', customDecoder)`}</code>
             </div>
             <div className="text-xs text-gray-500">
@@ -275,10 +275,10 @@ registry.register('programId', customDecoder)`}</code>
               Encoding and decoding utilities for Base58 data.
             </p>
             <div className="bg-gray-50 rounded p-3 mb-3">
-              <code className="text-sm">{`import { base58Encode, base58Decode } from '@gorbchain-xyz/chaindecode'
+              <code className="text-sm">{`import { bytesToBase58, base58ToBytes } from '@gorbchain-xyz/chaindecode'
 
-const encoded = base58Encode(buffer)
-const decoded = base58Decode(string)`}</code>
+const encoded = bytesToBase58(buffer)
+const decoded = base58ToBytes(string)`}</code>
             </div>
           </div>
 
@@ -331,7 +331,8 @@ const hex = base64ToHex(base64String)`}</code>
             <div className="text-sm text-red-700 space-y-1">
               <div>• RpcNetworkError</div>
               <div>• RpcTimeoutError</div>
-              <div>• ConnectionError</div>
+              <div>• NetworkConnectionError</div>
+              <div>• NetworkTimeoutError</div>
             </div>
           </div>
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
@@ -339,15 +340,17 @@ const hex = base64ToHex(base64String)`}</code>
             <div className="text-sm text-yellow-700 space-y-1">
               <div>• TransactionNotFoundError</div>
               <div>• TransactionFailedError</div>
-              <div>• InvalidSignatureError</div>
+              <div>• InvalidTransactionSignatureError</div>
+              <div>• TransactionTimeoutError</div>
             </div>
           </div>
           <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
             <h4 className="font-semibold text-purple-800 mb-2">Decoder Errors</h4>
             <div className="text-sm text-purple-700 space-y-1">
               <div>• DecoderNotFoundError</div>
-              <div>• DecodingFailedError</div>
+              <div>• DecoderError</div>
               <div>• InvalidInstructionDataError</div>
+              <div>• TokenMetadataDecodingError</div>
             </div>
           </div>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -355,7 +358,8 @@ const hex = base64ToHex(base64String)`}</code>
             <div className="text-sm text-blue-700 space-y-1">
               <div>• InvalidAddressError</div>
               <div>• InvalidParameterError</div>
-              <div>• ConfigurationError</div>
+              <div>• InvalidConfigurationError</div>
+              <div>• InvalidPublicKeyError</div>
             </div>
           </div>
         </div>
