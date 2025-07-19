@@ -501,20 +501,32 @@ export class UniversalWalletManager {
   private async checkWalletInstalled(walletType: WalletType): Promise<boolean> {
     if (typeof window === 'undefined') return false;
 
-    const checks: Record<WalletType, () => boolean> = {
-      phantom: () => !!(window as any)?.phantom?.solana,
-      solflare: () => !!(window as any)?.solflare,
-      backpack: () => !!(window as any)?.backpack,
-      glow: () => !!(window as any)?.glow,
-      slope: () => !!(window as any)?.slope,
-      sollet: () => !!(window as any)?.sollet,
-      walletconnect: () => true, // Always available
-      ledger: () => true, // Check would be more complex
-      custom: () => false,
-      injected: () => false
-    };
-
-    return checks[walletType]?.() || false;
+    // Optimized wallet detection with standardized checks
+    const globalWindow = window as any;
+    
+    switch (walletType) {
+      case 'phantom':
+        return !!(globalWindow.phantom?.solana?.isPhantom);
+      case 'solflare':
+        return !!(globalWindow.solflare?.isSolflare);
+      case 'backpack':
+        return !!(globalWindow.backpack?.isBackpack);
+      case 'glow':
+        return !!(globalWindow.glow?.isGlow);
+      case 'slope':
+        return !!(globalWindow.slope?.isSlope);
+      case 'sollet':
+        return !!(globalWindow.sollet);
+      case 'walletconnect':
+        return true; // Always available as a protocol
+      case 'ledger':
+        return await this.checkLedgerSupport();
+      case 'custom':
+      case 'injected':
+        return false;
+      default:
+        return false;
+    }
   }
 
   private async checkLedgerSupport(): Promise<boolean> {
@@ -522,41 +534,60 @@ export class UniversalWalletManager {
     return !!(navigator as any)?.usb || !!(navigator as any)?.hid;
   }
 
+  // Cache for localStorage operations to avoid repeated parsing
+  private connectionCache: Set<WalletType> | null = null;
+  private readonly STORAGE_KEY = 'gorbchain_wallet_connections';
+
   private wasWalletPreviouslyConnected(walletType: WalletType): boolean {
-    if (typeof localStorage === 'undefined') return false;
-    
-    const connections = localStorage.getItem('gorbchain_wallet_connections');
-    if (!connections) return false;
-    
-    try {
-      const parsed = JSON.parse(connections);
-      return parsed.includes(walletType);
-    } catch {
-      return false;
-    }
+    const connections = this.getCachedConnections();
+    return connections.has(walletType);
   }
 
   private rememberWalletConnection(walletType: WalletType): void {
     if (typeof localStorage === 'undefined') return;
     
-    const connections = this.getPreviousConnections();
-    if (!connections.includes(walletType)) {
-      connections.push(walletType);
-      localStorage.setItem('gorbchain_wallet_connections', JSON.stringify(connections));
+    const connections = this.getCachedConnections();
+    if (!connections.has(walletType)) {
+      connections.add(walletType);
+      this.saveConnections(connections);
+    }
+  }
+
+  private getCachedConnections(): Set<WalletType> {
+    if (this.connectionCache === null) {
+      this.connectionCache = this.loadConnectionsFromStorage();
+    }
+    return this.connectionCache;
+  }
+
+  private loadConnectionsFromStorage(): Set<WalletType> {
+    if (typeof localStorage === 'undefined') return new Set();
+    
+    try {
+      const stored = localStorage.getItem(this.STORAGE_KEY);
+      if (!stored) return new Set();
+      
+      const parsed = JSON.parse(stored) as WalletType[];
+      return new Set(Array.isArray(parsed) ? parsed : []);
+    } catch {
+      return new Set();
+    }
+  }
+
+  private saveConnections(connections: Set<WalletType>): void {
+    if (typeof localStorage === 'undefined') return;
+    
+    try {
+      const array = Array.from(connections);
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(array));
+      this.connectionCache = connections; // Update cache
+    } catch {
+      // Silently fail if localStorage is not available
     }
   }
 
   private getPreviousConnections(): WalletType[] {
-    if (typeof localStorage === 'undefined') return [];
-    
-    const connections = localStorage.getItem('gorbchain_wallet_connections');
-    if (!connections) return [];
-    
-    try {
-      return JSON.parse(connections);
-    } catch {
-      return [];
-    }
+    return Array.from(this.getCachedConnections());
   }
 
   private getConnectionCount(walletType: WalletType): number {
@@ -568,45 +599,108 @@ export class UniversalWalletManager {
   }
 
   private async getWalletProvider(walletType: WalletType, params: Record<string, any>): Promise<WalletProvider | null> {
-    // This would create actual wallet provider instances
-    // For now, return a mock provider structure
-    
     if (typeof window === 'undefined') return null;
 
-    const provider = (window as any)?.[walletType];
-    if (!provider) return null;
+    try {
+      // Get the actual wallet provider based on type
+      let provider = null;
+      const globalWindow = window as any;
 
-    return {
-      isConnected: false,
-      publicKey: null,
-      signTransaction: async (tx) => provider.signTransaction(tx),
-      signMessage: async (msg) => provider.signMessage(msg),
-      connect: async () => {
-        const response = await provider.connect();
-        return response;
-      },
-      disconnect: async () => provider.disconnect(),
-      features: provider.features || []
+      switch (walletType) {
+        case 'phantom':
+          provider = globalWindow.phantom?.solana;
+          break;
+        case 'solflare':
+          provider = globalWindow.solflare;
+          break;
+        case 'backpack':
+          provider = globalWindow.backpack;
+          break;
+        case 'glow':
+          provider = globalWindow.glow;
+          break;
+        case 'slope':
+          provider = globalWindow.slope;
+          break;
+        case 'sollet':
+          provider = globalWindow.sollet;
+          break;
+        default:
+          return null;
+      }
+
+      if (!provider) return null;
+
+      // Create standardized wallet provider interface
+      return {
+        isConnected: provider.isConnected || false,
+        publicKey: provider.publicKey?.toString() || null,
+        signTransaction: async (tx) => {
+          if (!provider.signTransaction) {
+            throw new Error(`${walletType} does not support transaction signing`);
+          }
+          return await provider.signTransaction(tx);
+        },
+        signMessage: async (msg) => {
+          if (!provider.signMessage) {
+            throw new Error(`${walletType} does not support message signing`);
+          }
+          return await provider.signMessage(msg);
+        },
+        connect: async () => {
+          if (!provider.connect) {
+            throw new Error(`${walletType} does not support connection`);
+          }
+          const response = await provider.connect();
+          return response;
+        },
+        disconnect: async () => {
+          if (provider.disconnect) {
+            await provider.disconnect();
+          }
+        },
+        features: provider.features || this.getWalletFeatures(walletType)
+      };
+    } catch (error) {
+      console.warn(`Failed to get wallet provider for ${walletType}:`, error);
+      return null;
+    }
+  }
+
+  private getWalletFeatures(walletType: WalletType): string[] {
+    const features: Record<WalletType, string[]> = {
+      phantom: ['signTransaction', 'signMessage', 'connect', 'disconnect'],
+      solflare: ['signTransaction', 'signMessage', 'connect', 'disconnect'],
+      backpack: ['signTransaction', 'signMessage', 'connect', 'disconnect'],
+      glow: ['signTransaction', 'signMessage', 'connect', 'disconnect'],
+      slope: ['signTransaction', 'signMessage', 'connect', 'disconnect'],
+      sollet: ['signTransaction', 'connect', 'disconnect'],
+      walletconnect: ['signTransaction', 'signMessage', 'connect', 'disconnect'],
+      ledger: ['signTransaction', 'connect', 'disconnect'],
+      custom: [],
+      injected: []
     };
+    return features[walletType] || [];
   }
 
   private async loadWalletPortfolio(address: string): Promise<RichWallet['portfolio']> {
     try {
       // Get SOL balance
-      const solBalance = await this.sdk.getBalance(address);
+      const accountInfo = await this.sdk.rpc.getAccountInfo(address);
+      const solBalance = accountInfo?.lamports || 0;
       
       // Get token holdings
       const holdings = await this.sdk.getAllTokenHoldings(address);
       
       // Get recent transactions count
-      const signatures = await this.sdk.getSignaturesForAddress(address, { limit: 50 });
+      const signatures = await this.sdk.rpc.request('getSignaturesForAddress', [address, { limit: 50 }]) as any[];
       
       return {
         solBalance: solBalance / 1e9,
         solBalanceFormatted: `${(solBalance / 1e9).toFixed(4)} SOL`,
         totalTokens: holdings.holdings.filter(h => !h.isNFT).length,
         totalNFTs: holdings.holdings.filter(h => h.isNFT).length,
-        recentTransactions: signatures.length,
+        recentTransactions: Array.isArray(signatures) ? signatures.length : 0,
         topTokens: holdings.holdings
           .filter(h => !h.isNFT)
           .slice(0, 5)

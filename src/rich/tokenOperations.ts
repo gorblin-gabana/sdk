@@ -268,8 +268,8 @@ async function enrichTokenAccount(
 ): Promise<RichTokenAccount> {
   const { includeMetadata, includeMarketData } = options;
 
-  // Get basic account information
-  const accountInfo = await sdk.getAccountInfo(holding.account || holding.address);
+  // Note: Could get basic account information for enhanced data
+  // const accountInfo = await sdk.rpc.getAccountInfo(holding.account || holding.address);
   
   // Start with basic token data
   const richAccount: RichTokenAccount = {
@@ -294,8 +294,8 @@ async function enrichTokenAccount(
       version: holding.programVersion
     },
     created: {
-      slot: accountInfo?.slot,
-      timestamp: accountInfo?.blockTime ? accountInfo.blockTime * 1000 : undefined
+      // Note: Basic getAccountInfo doesn't include slot/blockTime
+      // Would need enhanced account info for creation data
     }
   };
 
@@ -374,15 +374,30 @@ function determineTokenType(programId?: string): 'spl-token' | 'token-2022' | 'n
   }
 }
 
+// Token metadata cache for better performance
+const tokenMetadataCache = new Map<string, { data: any; timestamp: number }>();
+const TOKEN_CACHE_DURATION = 10 * 60 * 1000; // 10 minutes for token metadata
+
 /**
- * Fetch additional token metadata from various sources
+ * Fetch additional token metadata from various sources with caching
  */
 async function fetchTokenMetadata(sdk: GorbchainSDK, mintAddress: string): Promise<Partial<RichTokenAccount['metadata']> | null> {
+  // Check cache first
+  const now = Date.now();
+  const cached = tokenMetadataCache.get(mintAddress);
+  if (cached && (now - cached.timestamp < TOKEN_CACHE_DURATION)) {
+    return cached.data;
+  }
+
   try {
     // Try to get account info for the mint
-    const mintInfo = await sdk.getAccountInfo(mintAddress);
+    const mintInfo = await sdk.rpc.getAccountInfo(mintAddress);
     
-    if (!mintInfo) return null;
+    if (!mintInfo) {
+      // Cache null result to avoid repeated failed requests
+      tokenMetadataCache.set(mintAddress, { data: null, timestamp: now });
+      return null;
+    }
 
     // Basic metadata structure
     const metadata: Partial<RichTokenAccount['metadata']> = {};
@@ -396,21 +411,25 @@ async function fetchTokenMetadata(sdk: GorbchainSDK, mintAddress: string): Promi
           programId === 'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s') {
         metadata.isNFT = true;
         
-        // Try to fetch NFT metadata
+        // Try to fetch NFT metadata (only if not cached separately)
         try {
           const nftMetadata = await fetchNFTMetadata(sdk, mintAddress);
           if (nftMetadata) {
             Object.assign(metadata, nftMetadata);
           }
         } catch (error) {
-          console.warn('Failed to fetch NFT metadata:', error);
+          // Silently fail for better performance
         }
       }
     }
 
+    // Cache the result
+    tokenMetadataCache.set(mintAddress, { data: metadata, timestamp: now });
+    
     return metadata;
   } catch (error) {
-    console.warn('Error fetching token metadata:', error);
+    // Cache failed attempts to avoid retrying immediately
+    tokenMetadataCache.set(mintAddress, { data: null, timestamp: now });
     return null;
   }
 }
@@ -418,7 +437,7 @@ async function fetchTokenMetadata(sdk: GorbchainSDK, mintAddress: string): Promi
 /**
  * Fetch NFT-specific metadata
  */
-async function fetchNFTMetadata(sdk: GorbchainSDK, mintAddress: string): Promise<Partial<RichTokenAccount['metadata']> | null> {
+async function fetchNFTMetadata(_sdk: GorbchainSDK, _mintAddress: string): Promise<Partial<RichTokenAccount['metadata']> | null> {
   // This would integrate with NFT metadata standards
   // For now, return basic structure
   return {
@@ -434,7 +453,7 @@ async function fetchNFTMetadata(sdk: GorbchainSDK, mintAddress: string): Promise
 /**
  * Fetch market data for a token (placeholder - would integrate with price APIs)
  */
-async function fetchMarketData(mintAddress: string, symbol?: string): Promise<RichTokenAccount['market'] | null> {
+async function fetchMarketData(_mintAddress: string, _symbol?: string): Promise<RichTokenAccount['market'] | null> {
   // This would integrate with price APIs like CoinGecko, Jupiter, etc.
   // For now, return null as this requires external API integration
   return null;

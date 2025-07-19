@@ -209,14 +209,14 @@ describe('Real User Journey Tests', () => {
           accounts: [TEST_DATA.wallets.diverse, TEST_DATA.wallets.token, TEST_DATA.wallets.diverse]
         };
 
-        const decoded = sdk.decodeInstruction(simulatedInstruction);
+        const decoded = sdk.decoderRegistry.decode(simulatedInstruction);
         expect(decoded).toBeDefined();
         expect(decoded.programId).toBe('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
         
         console.log(`   🔬 Simulated instruction decoded:`, {
           type: decoded.type,
           programId: decoded.programId,
-          accounts: decoded.accounts.length
+          accounts: decoded.accounts?.length || 0
         });
         
         return;
@@ -282,7 +282,7 @@ describe('Real User Journey Tests', () => {
       ];
 
       perfTracker.start();
-      const decodedInstructions = sdk.decodeInstructions(instructions);
+      const decodedInstructions = instructions.map(ix => sdk.decoderRegistry.decode(ix));
       perfTracker.expectUnder(100, 'Bulk instruction decoding');
 
       expect(Array.isArray(decodedInstructions)).toBe(true);

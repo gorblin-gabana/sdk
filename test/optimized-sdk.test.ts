@@ -217,7 +217,7 @@ describe('Optimized SDK Tests', () => {
         accounts: []
       };
 
-      const decoded = sdk.decodeInstruction(unknownInstruction);
+      const decoded = sdk.decoderRegistry.decode(unknownInstruction);
       expect(decoded).toBeDefined();
       expect(decoded.type).toBe('unknown');
       expect(decoded.programId).toBe('UnknownProgram11111111111111111111111111111');
@@ -230,7 +230,7 @@ describe('Optimized SDK Tests', () => {
         accounts: null as any
       };
 
-      const decoded = sdk.decodeInstruction(malformedInstruction);
+      const decoded = sdk.decoderRegistry.decode(malformedInstruction);
       expect(decoded).toBeDefined();
       expect(decoded.type).toBe('unknown');
     });
@@ -246,7 +246,7 @@ describe('Optimized SDK Tests', () => {
 
       perfTracker.start();
       for (let i = 0; i < 100; i++) {
-        sdk.decodeInstruction(instruction);
+        sdk.decoderRegistry.decode(instruction);
       }
       perfTracker.expectUnder(1000, '100 instruction decodings');
     });
@@ -261,7 +261,7 @@ describe('Optimized SDK Tests', () => {
           data: new Uint8Array([2, 0, 0, 0, 0, 0, 0, 0, 64, 66, 15, 0, 0, 0, 0, 0]),
           accounts: [`sender${i}`, `recipient${i}`]
         };
-        sdk.decodeInstruction(instruction);
+        sdk.decoderRegistry.decode(instruction);
       }
 
       // Force garbage collection if available
@@ -375,7 +375,7 @@ describe('Optimized SDK Tests', () => {
         accounts: ['sender123', 'recipient456']
       };
 
-      const decoded = sdk.decodeInstruction(systemInstruction);
+      const decoded = sdk.decoderRegistry.decode(systemInstruction);
       expect(decoded).toBeDefined();
       expect(decoded.programId).toBe('11111111111111111111111111111111');
     });
@@ -387,7 +387,7 @@ describe('Optimized SDK Tests', () => {
         accounts: ['sourceAccount', 'destinationAccount', 'authority']
       };
 
-      const decoded = sdk.decodeInstruction(splTokenInstruction);
+      const decoded = sdk.decoderRegistry.decode(splTokenInstruction);
       expect(decoded).toBeDefined();
       expect(decoded.programId).toBe('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
     });
@@ -399,7 +399,7 @@ describe('Optimized SDK Tests', () => {
         accounts: ['sourceAccount', 'destinationAccount', 'authority']
       };
 
-      const decoded = sdk.decodeInstruction(token2022Instruction);
+      const decoded = sdk.decoderRegistry.decode(token2022Instruction);
       expect(decoded).toBeDefined();
       expect(decoded.programId).toBe('FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn');
     });
@@ -421,7 +421,7 @@ describe('Optimized SDK Tests', () => {
         accounts: ['account1']
       };
 
-      const decoded = sdk.decodeInstruction(customInstruction);
+      const decoded = sdk.decoderRegistry.decode(customInstruction);
       expect(customDecoder).toHaveBeenCalledWith(customInstruction);
       expect(decoded.type).toBe('custom-instruction');
       expect(decoded.data.custom).toBe(true);
@@ -466,15 +466,20 @@ describe('Optimized SDK Tests', () => {
     });
   });
 
-  describe('10. Backwards Compatibility', () => {
-    test('should maintain v1 compatibility methods', () => {
-      // V1 methods should still be available
-      expect(typeof sdk.getBalance).toBe('function');
-      expect(typeof sdk.getAccountInfo).toBe('function');
-      expect(typeof sdk.getTransaction).toBe('function');
-      expect(typeof sdk.getCurrentSlot).toBe('function');
-      expect(typeof sdk.decodeInstruction).toBe('function');
-      expect(typeof sdk.registerDecoder).toBe('function');
+  describe('10. Direct Access to Core Components', () => {
+    test('should provide direct access to RPC and decoder components', () => {
+      // Direct access to core components instead of wrapper methods
+      expect(typeof sdk.rpc).toBe('object');
+      expect(typeof sdk.enhancedRpc).toBe('object');
+      expect(typeof sdk.decoderRegistry).toBe('object');
+      
+      // Test RPC client methods
+      expect(typeof sdk.rpc.request).toBe('function');
+      expect(typeof sdk.rpc.getAccountInfo).toBe('function');
+      
+      // Test decoder registry methods
+      expect(typeof sdk.decoderRegistry.decode).toBe('function');
+      expect(typeof sdk.decoderRegistry.register).toBe('function');
     });
 
     test('should have RPC client access', () => {
@@ -491,12 +496,12 @@ describe('Optimized SDK Tests', () => {
       };
 
       // V1 style decoding
-      const decoded = sdk.decodeInstruction(instruction);
+      const decoded = sdk.decoderRegistry.decode(instruction);
       expect(decoded).toBeDefined();
       expect(decoded.programId).toBe('11111111111111111111111111111111');
 
       // Batch decoding
-      const decodedBatch = sdk.decodeInstructions([instruction, instruction]);
+      const decodedBatch = [instruction, instruction].map(ix => sdk.decoderRegistry.decode(ix));
       expect(Array.isArray(decodedBatch)).toBe(true);
       expect(decodedBatch).toHaveLength(2);
     });

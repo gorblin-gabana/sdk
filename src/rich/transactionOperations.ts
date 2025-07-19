@@ -271,10 +271,10 @@ export async function getRichTransaction(
     }
 
     // Get raw transaction for additional metadata
-    const rawTx = await sdk.getTransaction(signature, {
+    const rawTx = await sdk.rpc.request('getTransaction', [signature, {
       commitment,
       maxSupportedTransactionVersion: 0
-    });
+    }]);
 
     if (!rawTx) {
       throw new Error('Raw transaction data not found');
@@ -306,7 +306,7 @@ export async function getRichTransaction(
       tokens: []
     };
 
-    if (includeBalanceChanges && rawTx.meta) {
+    if (includeBalanceChanges && rawTx && (rawTx as any).meta) {
       balanceChanges = await analyzeBalanceChanges(
         sdk,
         rawTx,
@@ -317,11 +317,14 @@ export async function getRichTransaction(
     // Generate transaction summary
     const summary = generateTransactionSummary(richInstructions, balanceChanges);
 
-    // Extract metadata
+    // Extract metadata safely
+    const txMeta = (rawTx as any).meta;
+    const txData = (rawTx as any).transaction;
+    
     const meta = {
-      computeUnitsConsumed: rawTx.meta?.computeUnitsConsumed,
-      innerInstructionsCount: rawTx.meta?.innerInstructions?.length || 0,
-      totalAccounts: rawTx.transaction?.message?.accountKeys?.length || 0,
+      computeUnitsConsumed: txMeta?.computeUnitsConsumed,
+      innerInstructionsCount: txMeta?.innerInstructions?.length || 0,
+      totalAccounts: txData?.message?.accountKeys?.length || 0,
       programsInvolved: [...new Set(richInstructions.map(ix => ix.programId))],
       analysisDuration: Date.now() - startTime,
       metadataResolved: includeTokenMetadata
@@ -329,12 +332,12 @@ export async function getRichTransaction(
 
     return {
       signature,
-      slot: rawTx.slot,
-      blockTime: rawTx.blockTime ? rawTx.blockTime * 1000 : undefined,
+      slot: (rawTx as any).slot,
+      blockTime: (rawTx as any).blockTime ? (rawTx as any).blockTime * 1000 : undefined,
       confirmationStatus: commitment,
-      fee: rawTx.meta?.fee || 0,
-      success: !rawTx.meta?.err,
-      error: rawTx.meta?.err ? JSON.stringify(rawTx.meta.err) : undefined,
+      fee: txMeta?.fee || 0,
+      success: !txMeta?.err,
+      error: txMeta?.err ? JSON.stringify(txMeta.err) : undefined,
       instructions: richInstructions,
       summary,
       balanceChanges,
@@ -484,7 +487,7 @@ function isSOLRelatedInstruction(instruction: any): boolean {
 }
 
 /**
- * Analyze token operations in an instruction
+ * Analyze token operations in an instruction with optimized metadata fetching
  */
 async function analyzeTokenOperations(
   sdk: GorbchainSDK,
@@ -514,15 +517,24 @@ async function analyzeTokenOperations(
       }
     };
 
-    // Fetch additional metadata if requested
-    if (options.includeTokenMetadata && transfer.mint !== 'unknown') {
+    // Only fetch additional metadata if not already present and requested
+    if (options.includeTokenMetadata && 
+        transfer.mint !== 'unknown' && 
+        (!transfer.token.name || !transfer.token.symbol)) {
       try {
         const metadata = await fetchTokenMetadataForTransfer(sdk, transfer.mint);
         if (metadata) {
-          Object.assign(transfer.token, metadata);
+          // Only override if current values are empty
+          transfer.token = {
+            ...transfer.token,
+            name: transfer.token.name || metadata.name,
+            symbol: transfer.token.symbol || metadata.symbol,
+            decimals: transfer.token.decimals || metadata.decimals,
+            isNFT: transfer.token.isNFT || metadata.isNFT
+          };
         }
       } catch (error) {
-        console.warn('Failed to fetch token metadata:', error);
+        // Silently fail for better performance - metadata is not critical
       }
     }
 
@@ -719,22 +731,63 @@ function formatTokenAmount(amount: string, decimals: number): string {
   });
 }
 
+// Simple in-memory cache for token metadata to improve performance
+const metadataCache = new Map<string, any>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CACHE_CLEANUP_INTERVAL = 10 * 60 * 1000; // 10 minutes
+
+// Periodic cache cleanup
+let lastCleanup = Date.now();
+
 /**
- * Fetch token metadata for transfer analysis
+ * Fetch token metadata for transfer analysis with caching
  */
 async function fetchTokenMetadataForTransfer(sdk: GorbchainSDK, mint: string): Promise<any> {
+  // Cleanup cache periodically
+  const now = Date.now();
+  if (now - lastCleanup > CACHE_CLEANUP_INTERVAL) {
+    cleanupMetadataCache();
+    lastCleanup = now;
+  }
+
+  // Check cache first
+  const cached = metadataCache.get(mint);
+  if (cached && (now - cached.timestamp < CACHE_DURATION)) {
+    return cached.data;
+  }
+
   try {
-    const accountInfo = await sdk.getAccountInfo(mint);
+    const accountInfo = await sdk.rpc.getAccountInfo(mint);
     if (!accountInfo) return null;
 
     // Basic metadata - would be enhanced with actual metadata fetching
-    return {
+    const metadata = {
       name: `Token ${mint.substring(0, 8)}...`,
       symbol: 'TOKEN',
       decimals: 9,
       isNFT: false
     };
+
+    // Cache the result
+    metadataCache.set(mint, {
+      data: metadata,
+      timestamp: now
+    });
+
+    return metadata;
   } catch (error) {
     return null;
+  }
+}
+
+/**
+ * Clean up expired cache entries
+ */
+function cleanupMetadataCache(): void {
+  const now = Date.now();
+  for (const [key, value] of metadataCache.entries()) {
+    if (now - value.timestamp > CACHE_DURATION) {
+      metadataCache.delete(key);
+    }
   }
 }

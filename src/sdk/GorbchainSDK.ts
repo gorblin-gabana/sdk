@@ -388,67 +388,17 @@ export class GorbchainSDK {
   }
 
   /**
-   * Test RPC endpoint performance
+   * Direct access to underlying RPC client for advanced usage
    */
-  async testRpcPerformance(testCount: number = 5): Promise<{
-    averageResponseTime: number;
-    minResponseTime: number;
-    maxResponseTime: number;
-    successRate: number;
-  }> {
-    const results: number[] = [];
-    let successes = 0;
-
-    for (let i = 0; i < testCount; i++) {
-      const startTime = Date.now();
-      try {
-        await this.rpcClient.getSlot();
-        const responseTime = Date.now() - startTime;
-        results.push(responseTime);
-        successes++;
-      } catch (error) {
-        // Failed request, don't count in timing but affects success rate
-      }
-    }
-
-    return {
-      averageResponseTime: results.length > 0 ? results.reduce((a, b) => a + b, 0) / results.length : 0,
-      minResponseTime: results.length > 0 ? Math.min(...results) : 0,
-      maxResponseTime: results.length > 0 ? Math.max(...results) : 0,
-      successRate: (successes / testCount) * 100
-    };
+  get rpc(): RpcClient {
+    return this.rpcClient;
   }
 
   /**
-   * Get account balance in both lamports and SOL
+   * Direct access to enhanced RPC client for enhanced features
    */
-  async getBalanceDetailed(publicKey: string): Promise<{
-    lamports: number;
-    sol: number;
-    formatted: string;
-  }> {
-    const lamports = await this.getBalance(publicKey);
-    const sol = lamports / 1e9;
-    
-    return {
-      lamports,
-      sol,
-      formatted: `${sol.toFixed(4)} SOL`
-    };
-  }
-
-  /**
-   * Batch get account info for multiple addresses
-   */
-  async getMultipleAccountsInfo(publicKeys: string[], encoding?: string): Promise<any[]> {
-    if (this.supportsMethod('getMultipleAccounts')) {
-      return this.rpcClient.request('getMultipleAccounts', [publicKeys, { encoding }]);
-    }
-    
-    // Fallback to individual calls
-    return Promise.all(
-      publicKeys.map(key => this.getAccountInfo(key, encoding))
-    );
+  get enhancedRpc(): EnhancedRpcClient {
+    return this.enhancedRpcClient;
   }
 
   /**
@@ -509,77 +459,99 @@ export class GorbchainSDK {
   }
 
   /**
-   * V1 compatibility methods
+   * Direct access to decoder registry for custom decoder management
    */
-
-  // Legacy token holdings method (v1 compatibility)
-  async getTokenHoldings(walletAddress: string) {
-    const portfolio = await this.getAllTokenHoldings(walletAddress);
-    return portfolio.holdings;
+  get decoderRegistry(): DecoderRegistry {
+    return this.decoders;
   }
 
-  // Legacy method signatures for backward compatibility
-  async getBalance(publicKey: string): Promise<number> {
-    const accountInfo = await this.rpcClient.getAccountInfo(publicKey);
-    return accountInfo?.lamports || 0;
-  }
+  // ============================================
+  // Compatibility Methods (v1 API compatibility)
+  // ============================================
 
-  async getAccountInfo(publicKey: string, encoding?: string): Promise<any> {
-    return this.rpcClient.getAccountInfo(publicKey, encoding);
-  }
-
-  async getSignaturesForAddress(address: string, options?: any): Promise<any[]> {
-    return this.rpcClient.request('getSignaturesForAddress', [address, options]);
-  }
-
-  async getTransaction(signature: string, options?: any): Promise<any> {
-    return this.rpcClient.request('getTransaction', [signature, options]);
+  /**
+   * Register a decoder for a program (v1 compatibility method)
+   * @deprecated Use sdk.decoderRegistry.register() instead
+   */
+  registerDecoder(programName: string, programId: string, decoder: any): void {
+    this.decoders.register(programName, programId, decoder);
   }
 
   /**
-   * V1 Compatibility Methods for Decoder Operations
+   * Decode a single instruction (v1 compatibility method)
+   * @deprecated Use sdk.decoderRegistry.decode() instead
    */
-
-  // Legacy decoder methods for backward compatibility
   decodeInstruction(instruction: any): any {
     return this.decoders.decode(instruction);
   }
 
+  /**
+   * Decode multiple instructions (v1 compatibility method)
+   * @deprecated Use instructions.map(ix => sdk.decoderRegistry.decode(ix)) instead
+   */
   decodeInstructions(instructions: any[]): any[] {
-    return instructions.map(instruction => this.decodeInstruction(instruction));
-  }
-
-  registerDecoder(name: string, programId: string, decoder: any): void {
-    this.decoders.register(name, programId, decoder);
+    return instructions.map(ix => this.decoders.decode(ix));
   }
 
   /**
-   * V1 Compatibility - RPC access
+   * Get current slot (v1 compatibility method)
+   * @deprecated Use sdk.rpc.getSlot() instead
    */
-  get rpc(): RpcClient {
-    return this.rpcClient;
+  async getCurrentSlot(): Promise<number> {
+    return this.rpcClient.getSlot();
   }
 
   /**
-   * V1 Compatibility - Network operations
+   * Get block height (v1 compatibility method)
+   * @deprecated Use sdk.rpc.getBlockHeight() instead
    */
-  async getCurrentSlot(commitment?: string): Promise<number> {
-    return this.rpcClient.getSlot(commitment);
-  }
-
-  async getBlockHeight(commitment?: string): Promise<number> {
-    return this.rpcClient.request('getBlockHeight', [{ commitment }]);
-  }
-
-  async getLatestBlockhash(commitment?: string): Promise<any> {
-    return this.rpcClient.request('getLatestBlockhash', [{ commitment }]);
+  async getBlockHeight(): Promise<number> {
+    return this.rpcClient.getBlockHeight();
   }
 
   /**
-   * V1 Compatibility - Configuration
+   * Get basic balance (v1 compatibility method)
+   * @deprecated Use sdk.rpc.getAccountInfo(address).lamports instead
+   */
+  async getBalance(address: string): Promise<number> {
+    const accountInfo = await this.rpcClient.getAccountInfo(address);
+    return accountInfo?.lamports || 0;
+  }
+
+  /**
+   * Get detailed balance information (v1 compatibility method)
+   */
+  async getBalanceDetailed(address: string): Promise<{
+    lamports: number;
+    sol: number;
+    formatted: string;
+  }> {
+    const accountInfo = await this.rpcClient.getAccountInfo(address);
+    const lamports = accountInfo?.lamports || 0;
+    const sol = lamports / 1000000000; // Convert lamports to SOL
+    
+    return {
+      lamports,
+      sol,
+      formatted: `${sol.toFixed(9)} SOL`
+    };
+  }
+
+  /**
+   * Get account info (v1 compatibility method)
+   * @deprecated Use sdk.rpc.getAccountInfo() instead
+   */
+  async getAccountInfo(address: string): Promise<any> {
+    return this.rpcClient.getAccountInfo(address);
+  }
+
+  /**
+   * Set RPC endpoint (v1 compatibility method)
+   * @deprecated Create a new SDK instance with the desired endpoint instead
    */
   setRpcEndpoint(endpoint: string): void {
     this.config.rpcEndpoint = endpoint;
+    // Update the RPC clients with new endpoint
     this.rpcClient = new RpcClient({
       rpcUrl: endpoint,
       timeout: this.config.timeout,
@@ -589,5 +561,37 @@ export class GorbchainSDK {
     if (this.networkConfig) {
       this.enhancedRpcClient.setNetworkConfig(this.networkConfig);
     }
+  }
+
+  /**
+   * Test RPC performance (v1 compatibility method)
+   */
+  async testRpcPerformance(iterations: number = 5): Promise<{
+    averageResponseTime: number;
+    successRate: number;
+    minResponseTime: number;
+    maxResponseTime: number;
+  }> {
+    const results: { success: boolean; time: number }[] = [];
+    
+    for (let i = 0; i < iterations; i++) {
+      const startTime = Date.now();
+      try {
+        await this.rpcClient.getSlot();
+        results.push({ success: true, time: Date.now() - startTime });
+      } catch (error) {
+        results.push({ success: false, time: Date.now() - startTime });
+      }
+    }
+    
+    const successCount = results.filter(r => r.success).length;
+    const times = results.map(r => r.time);
+    
+    return {
+      averageResponseTime: Math.round(times.reduce((sum, time) => sum + time, 0) / times.length),
+      successRate: (successCount / results.length) * 100,
+      minResponseTime: Math.min(...times),
+      maxResponseTime: Math.max(...times)
+    };
   }
 }

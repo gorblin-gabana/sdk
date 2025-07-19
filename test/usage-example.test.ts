@@ -217,7 +217,7 @@ describe('GorbchainSDK Usage Examples', () => {
 
     test('should provide block height', async () => {
       // Mock the request method since getBlockHeight calls rpcClient.request internally
-      jest.spyOn(sdk.rpc, 'request').mockImplementation((method, params) => {
+      jest.spyOn(sdk.rpc, 'request').mockImplementation((method) => {
         if (method === 'getBlockHeight') {
           return Promise.resolve(98765);
         }
