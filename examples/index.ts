@@ -5,11 +5,11 @@
  * of GorbchainSDK V1 for rapid Solana application development.
  */
 
-import { basicUsageExample } from './01-basic-usage.js';
-import { richTokenAnalysisExample } from './02-rich-token-analysis.js';
-import { richTransactionAnalysisExample } from './03-transaction-analysis.js';
-import { walletIntegrationExample } from './04-wallet-integration.js';
-import { advancedPortfolioExample } from './05-advanced-portfolio.js';
+import { basicUsageExample } from './typescript/basic-usage.js';
+import { richTokenAnalysisExample } from './typescript/token-analysis.js';
+import { richTransactionAnalysisExample } from './typescript/transaction-analysis.js';
+import { walletIntegrationExample } from './typescript/wallet-integration.js';
+import { advancedPortfolioExample } from './typescript/portfolio-management.js';
 
 /**
  * Run all GorbchainSDK V1 examples in sequence
@@ -30,11 +30,11 @@ async function runAllExamples() {
   console.log('');
 
   const examples = [
-    { name: 'Basic Usage & Setup', fn: basicUsageExample },
-    { name: 'Rich Token Analysis', fn: richTokenAnalysisExample },
-    { name: 'Transaction Analysis', fn: richTransactionAnalysisExample },
-    { name: 'Wallet Integration', fn: walletIntegrationExample },
-    { name: 'Advanced Portfolio', fn: advancedPortfolioExample }
+    { name: 'Basic SDK Usage & Setup', fn: basicUsageExample },
+    { name: 'Token Portfolio Analysis', fn: richTokenAnalysisExample },
+    { name: 'Transaction Analysis & Decoding', fn: richTransactionAnalysisExample },
+    { name: 'Universal Wallet Integration', fn: walletIntegrationExample },
+    { name: 'Advanced Portfolio Management', fn: advancedPortfolioExample }
   ];
 
   for (const [index, example] of examples.entries()) {
@@ -74,7 +74,7 @@ async function runAllExamples() {
   console.log('import { GorbchainSDK } from "@gorbchain-xyz/chaindecode";');
   console.log('');
   console.log('const sdk = new GorbchainSDK({');
-  console.log('  rpcEndpoint: "https://api.mainnet-beta.solana.com"');
+  console.log('  rpcEndpoint: "https://rpc.gorbchain.xyz"');
   console.log('});');
   console.log('');
   console.log('// Rich token analysis');
@@ -111,12 +111,12 @@ if (require.main === module) {
     console.log('🚀 GorbchainSDK V1 Examples');
     console.log('\nUsage: npm run example [name]');
     console.log('\nAvailable examples:');
-    console.log('  basic      - Basic SDK setup and usage');
-    console.log('  tokens     - Rich token portfolio analysis'); 
-    console.log('  transactions - Enhanced transaction decoding');
-    console.log('  wallets    - Universal wallet integration');
-    console.log('  portfolio  - Advanced portfolio management');
-    console.log('  all        - Run all examples in sequence');
+    console.log('  basic        - Basic SDK setup and usage');
+    console.log('  tokens       - Token portfolio analysis with metadata'); 
+    console.log('  transactions - Transaction analysis and decoding');
+    console.log('  wallets      - Universal wallet integration');
+    console.log('  portfolio    - Advanced portfolio management');
+    console.log('  all          - Run all examples in sequence');
     console.log('\nExample: npm run example tokens');
     process.exit(0);
   }

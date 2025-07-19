@@ -2,15 +2,16 @@ import { useState } from 'react'
 import CodeBlock from '../components/CodeBlock'
 import { 
   CubeIcon,
-  WifiIcon,
-  ShieldCheckIcon,
-  ClockIcon,
-  DocumentDuplicateIcon,
+  WalletIcon,
+  ChartBarIcon,
+  MagnifyingGlassIcon,
+  BeakerIcon,
   ChevronDownIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  DocumentDuplicateIcon
 } from '@heroicons/react/24/outline'
 
-export default function Examples() {
+export default function ExamplesV1() {
   const [copied, setCopied] = useState<{ [key: string]: boolean }>({})
   const [openSections, setOpenSections] = useState<Set<string>>(new Set(['basic']))
 
@@ -34,903 +35,535 @@ export default function Examples() {
     })
   }
 
-  const initializationCode = `// Basic SDK setup
-import { GorbchainSDK } from '@gorbchain-xyz/chaindecode'
+  const basicUsageCode = `/**
+ * GorbchainSDK V1 - Basic Usage Example
+ * Demonstrates SDK initialization and basic operations
+ */
+import { GorbchainSDK } from '@gorbchain-xyz/chaindecode';
 
-const sdk = new GorbchainSDK({
-  rpcEndpoint: 'https://rpc.gorbchain.xyz',
-  network: 'custom',
-  timeout: 30000,
-  retries: 3,
-  // Enable rich decoding for enhanced transaction analysis
-  richDecoding: {
-    enabled: true,
-    includeTokenMetadata: true,
-    includeNftMetadata: true,
-    maxConcurrentRequests: 10,
-    enableCache: true
+async function basicUsageExample() {
+  console.log('🚀 GorbchainSDK V1 - Basic Usage Example\\n');
+
+  // Initialize the SDK with Gorbchain custom program addresses
+  const sdk = new GorbchainSDK({
+    rpcEndpoint: 'https://rpc.gorbchain.xyz',
+    network: 'gorbchain',
+    timeout: 30000,
+    // Gorbchain custom program addresses
+    programIds: {
+      splToken: 'Gorbj8Dp27NkXMQUkeHBSmpf6iQ3yT4b2uVe8kM4s6br',
+      splToken2022: 'G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6',
+      associatedToken: 'GoATGVNeSXerFerPqTJ8hcED1msPWHHLxao2vwBYqowm',
+      metadata: 'GMTAp1moCdGh4TEwFTcCJKeKL3UMEDB6vKpo2uxM9h4s'
+    }
+  });
+
+  console.log('✅ SDK initialized successfully');
+  console.log('Network:', sdk.config.network);
+  console.log('RPC Endpoint:', sdk.config.rpcEndpoint);
+
+  // Example wallet address (Solana Foundation)
+  const walletAddress = 'GThUX1Atko4tqhN2NaiTazWSeFWMuiUiswQrunPiLaFU';
+
+  console.log('\\n📊 Network Health Check...');
+  try {
+    const health = await sdk.getNetworkHealth();
+    console.log(\`Network Status: \${health.status}\`);
+    console.log(\`Current Slot: \${health.currentSlot}\`);
+    console.log(\`Response Time: \${health.responseTime}ms\`);
+  } catch (error) {
+    console.log('Network health check failed (expected for demo)');
   }
-})
 
-// Check network connectivity
-const health = await sdk.getNetworkHealth()
-if (health.status !== 'healthy') {
-  console.warn('Network issues detected:', health)
+  console.log('\\n🔧 Network Capabilities...');
+  try {
+    const capabilities = await sdk.detectNetworkCapabilities();
+    console.log(\`Supported Methods: \${capabilities.supportedMethods.length}\`);
+    console.log(\`Token Support: \${capabilities.detectedFeatures.standardTokens ? '✅' : '❌'}\`);
+    console.log(\`NFT Support: \${capabilities.detectedFeatures.nftSupport ? '✅' : '❌'}\`);
+  } catch (error) {
+    console.log('Capabilities detection failed (expected for demo)');
+  }
+
+  console.log('\\n💡 Direct RPC Access Examples:');
+  console.log('For basic operations, use direct RPC access:');
+  console.log('- sdk.rpc.getAccountInfo(address)');
+  console.log('- sdk.rpc.getSlot()');
+  console.log('- sdk.enhancedRpc for network-aware operations');
+
+  console.log('\\n🎯 Rich Operations Examples:');
+  console.log('Use GorbchainSDK for enhanced operations:');
+  console.log('- sdk.getRichTokenAccounts(address) - Portfolio with metadata');
+  console.log('- sdk.getRichTransaction(signature) - Decoded transaction context');
+  console.log('- sdk.createWalletManager() - Universal wallet integration');
+
+  console.log('\\n✨ Ready to build super apps with GorbchainSDK V1!');
 }
 
-// Now all getAndDecodeTransaction calls will automatically include
-// rich metadata without requiring additional parameters!`
+export { basicUsageExample };`
 
-  const transactionAnalysisCode = `// Transaction Analysis Workflow
-import { GorbchainSDK, RpcNetworkError, TransactionNotFoundError, NetworkConnectionError } from '@gorbchain-xyz/chaindecode'
-import { PublicKey } from '@solana/web3.js'
+  const richTokenAnalysisCode = `/**
+ * GorbchainSDK V1 - Rich Token Analysis Example
+ * Demonstrates portfolio analysis with metadata and insights
+ */
+import { GorbchainSDK, getRichTokenAccountsByOwner } from '@gorbchain-xyz/chaindecode';
 
-async function analyzeTransaction(signature: string) {
+async function richTokenAnalysisExample() {
+  console.log('🎯 GorbchainSDK V1 - Rich Token Analysis Example\\n');
+
+  // Initialize SDK with Gorbchain custom program addresses
+  const sdk = new GorbchainSDK({
+    rpcEndpoint: 'https://rpc.gorbchain.xyz',
+    network: 'gorbchain',
+    programIds: {
+      splToken: 'Gorbj8Dp27NkXMQUkeHBSmpf6iQ3yT4b2uVe8kM4s6br',
+      splToken2022: 'G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6',
+      associatedToken: 'GoATGVNeSXerFerPqTJ8hcED1msPWHHLxao2vwBYqowm',
+      metadata: 'GMTAp1moCdGh4TEwFTcCJKeKL3UMEDB6vKpo2uxM9h4s'
+    }
+  });
+
+  // Example wallet with diverse portfolio (replace with real address)
+  const walletAddress = 'GThUX1Atko4tqhN2NaiTazWSeFWMuiUiswQrunPiLaFU';
+
+  console.log(\`📱 Analyzing portfolio for: \${walletAddress.substring(0, 8)}...\\n\`);
+
   try {
-    // Decode transaction with rich metadata (automatically fetches token metadata)
-    const transaction = await sdk.getAndDecodeTransaction(signature, {
-      richDecoding: true,
-      includeTokenMetadata: true
-    })
+    // Method 1: Using SDK instance method
+    console.log('Method 1: Using SDK instance method');
+    const portfolioSDK = await sdk.getRichTokenAccounts(walletAddress, {
+      includeMetadata: true,
+      includeMarketData: false, // Set to true if you have market data API
+      includeNFTs: true,
+      includeZeroBalance: false,
+      maxConcurrentRequests: 5
+    });
 
-    console.log('📊 Transaction Analysis:')
-    console.log('Status:', transaction.status)
-    console.log('Type:', transaction.summary.type)
-    console.log('Description:', transaction.summary.description)
-    console.log('Fee:', transaction.fee, 'lamports')
-    console.log('Instructions:', transaction.instructions.length)
-    console.log('Programs used:', transaction.summary.programsUsed)
-    console.log('Compute units:', transaction.summary.computeUnits)
-    
-    // Token information available automatically
-    if (transaction.tokens) {
-      console.log('\\n🪙 Token Information:')
-      console.log('Operations:', transaction.tokens.operations.length)
-      
-      // Token operations analysis
-      transaction.tokens.operations.forEach((op: any, index: number) => {
-        console.log(\`Operation \${index + 1}: \${op.action}\`)
-        console.log(\`  Type: \${op.type}\`)
-        console.log(\`  Program: \${op.program}\`)
-        if (op.data) console.log(\`  Data: \${JSON.stringify(op.data)}\`)
-      })
-      
-      // Token transfers
-      if (transaction.tokens.transferred) {
-        console.log('\\n💸 Token Transfers:')
-        transaction.tokens.transferred.forEach((transfer: any) => {
-          console.log(\`  \${transfer.amount} \${transfer.tokenSymbol || 'tokens'} from \${transfer.from} to \${transfer.to}\`)
-        })
-      }
-      
-      // Created tokens
-      if (transaction.tokens.created) {
-        console.log('\\n🆕 Created Tokens:')
-        transaction.tokens.created.forEach((token: any) => {
-          console.log(\`  \${token.name} (\${token.symbol}) - \${token.mint}\`)
-        })
-      }
-    }
-    
-    // Account changes
-    if (transaction.accountChanges) {
-      console.log('\\n📊 Account Changes:')
-      if (transaction.accountChanges.solTransfers) {
-        console.log('SOL Transfers:')
-        transaction.accountChanges.solTransfers.forEach((transfer: any) => {
-          console.log(\`  \${transfer.amount} SOL from \${transfer.from} to \${transfer.to}\`)
-        })
-      }
-    }
-    
-    // Analyze each instruction
-    transaction.instructions.forEach((instruction, index) => {
-      console.log(\`\${index + 1}. \${instruction.program}: \${instruction.action}\`)
-      console.log('   Description:', instruction.description)
-      
-      if (instruction.data) {
-        console.log('   Data:', instruction.data)
-      }
-    })
+    console.log('📊 Portfolio Summary (SDK Method):');
+    console.log(\`  Total Tokens: \${portfolioSDK.summary.totalTokens}\`);
+    console.log(\`  Total NFTs: \${portfolioSDK.summary.totalNFTs}\`);
+    console.log(\`  Diversity Score: \${(portfolioSDK.summary.diversityScore * 100).toFixed(1)}%\`);
+    console.log(\`  Analysis Duration: \${portfolioSDK.meta.duration}ms\`);
 
-    return {
-      success: true,
-      transactionType: transaction.summary.type,
-      description: transaction.summary.description,
-      fee: transaction.fee,
-      instructionCount: transaction.instructions.length,
-      programs: transaction.summary.programsUsed,
-      computeUnits: transaction.summary.computeUnits,
-      tokenOperations: transaction.tokens?.operations.length || 0
+    // Display top holdings
+    console.log('\\n🏆 Top Holdings:');
+    portfolioSDK.accounts.slice(0, 5).forEach((account, index) => {
+      const token = account.tokenInfo;
+      console.log(\`  \${index + 1}. \${token?.name || 'Unknown Token'}\`);
+      console.log(\`     Symbol: \${token?.symbol || 'N/A'}\`);
+      console.log(\`     Balance: \${account.balance.formatted}\`);
+      console.log(\`     Type: \${account.isNFT ? 'NFT' : 'Fungible Token'}\`);
+    });
+
+    // Portfolio insights
+    if (portfolioSDK.insights) {
+      console.log('\\n🔍 Portfolio Insights:');
+      console.log(\`  Risk Level: \${portfolioSDK.insights.riskLevel}\`);
+      console.log(\`  Concentration: \${(portfolioSDK.insights.concentration * 100).toFixed(1)}%\`);
+      console.log(\`  Liquidity Score: \${(portfolioSDK.insights.liquidityScore * 100).toFixed(1)}%\`);
     }
+
+    // Method 2: Using standalone function
+    console.log('\\nMethod 2: Using standalone function');
+    const portfolioStandalone = await getRichTokenAccountsByOwner(sdk, walletAddress, {
+      includeMetadata: true,
+      includeNFTs: false, // Focus on fungible tokens only
+      maxConcurrentRequests: 3
+    });
+
+    console.log('📊 Fungible Tokens Analysis:');
+    console.log(\`  Fungible Tokens: \${portfolioStandalone.summary.totalTokens}\`);
+    console.log(\`  Performance: \${portfolioStandalone.meta.duration}ms\`);
 
   } catch (error) {
-    if (error instanceof TransactionNotFoundError) {
-      console.log('Transaction not found - may not be finalized yet')
-      return { success: false, reason: 'not_found' }
-    } else if (error instanceof RpcNetworkError) {
-      console.log('Network error - retrying automatically')
-      throw error // Let SDK handle retry
-    } else {
-      console.error('Unexpected error:', error)
-      return { success: false, reason: 'unknown', error }
-    }
+    console.error('Error analyzing portfolio:', error instanceof Error ? error.message : error);
+    console.log('💡 This is expected when running with example data');
   }
+
+  console.log('\\n✨ Portfolio analysis complete!');
 }
 
-// Usage with a real transaction that has token metadata
-const result = await analyzeTransaction('5Nm3CvXWYjDaeVPTXifXHFzpovVZo6pLQdMfZoBjBjHM8rHehcfT97MYTQv528LwrNDWDtwZeW5FoUK9z3vE4ABM')`
+export { richTokenAnalysisExample };`
 
-  const tokenCreationCode = `// Token Creation with Validation
-import { GorbchainSDK } from '@gorbchain-xyz/chaindecode'
+  const transactionAnalysisCode = `/**
+ * GorbchainSDK V1 - Rich Transaction Analysis Example
+ * Demonstrates enhanced transaction decoding with context
+ */
+import { GorbchainSDK, getRichTransaction } from '@gorbchain-xyz/chaindecode';
 
-async function createTokenSafely(params: {
-  name: string
-  symbol: string
-  decimals: number
-  supply: number
-  walletPublicKey: string
-}) {
-  // 1. Estimate costs
-  const costEstimate = await sdk.estimateTokenCreationCost({
-    name: params.name,
-    symbol: params.symbol,
-    supply: params.supply,
-    decimals: params.decimals
-  })
+async function richTransactionAnalysisExample() {
+  console.log('🔍 GorbchainSDK V1 - Rich Transaction Analysis Example\\n');
 
-  console.log('💰 Estimated cost:', costEstimate, 'SOL')
+  // Initialize SDK with Gorbchain custom program addresses
+  const sdk = new GorbchainSDK({
+    rpcEndpoint: 'https://rpc.gorbchain.xyz',
+    network: 'gorbchain',
+    programIds: {
+      splToken: 'Gorbj8Dp27NkXMQUkeHBSmpf6iQ3yT4b2uVe8kM4s6br',
+      splToken2022: 'G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6',
+      associatedToken: 'GoATGVNeSXerFerPqTJ8hcED1msPWHHLxao2vwBYqowm',
+      metadata: 'GMTAp1moCdGh4TEwFTcCJKeKL3UMEDB6vKpo2uxM9h4s'
+    }
+  });
 
-  // 2. Check wallet balance
-  const balanceCheck = await sdk.checkSufficientBalance(
-    new PublicKey(params.walletPublicKey),
-    costEstimate + 0.001 // Buffer for fees
-  )
-
-  if (!balanceCheck.sufficient) {
-    throw new Error(\`Insufficient balance. Need \${balanceCheck.required / 1e9} SOL, have \${balanceCheck.balance / 1e9} SOL\`)
-  }
-
-  // 3. Create token
-  console.log('🪙 Creating token...')
-  const result = await sdk.createToken22TwoTx(
-    payer, // Keypair object
+  // Example transaction signatures (replace with real signatures)
+  const exampleTransactions = [
     {
-      name: params.name,
-      symbol: params.symbol,
-      decimals: params.decimals,
-      supply: params.supply
-    }
-  )
-
-  console.log('✅ Token created successfully!')
-  console.log('Token address:', result.tokenAddress)
-  console.log('Associated token address:', result.associatedTokenAddress)
-  console.log('Transaction signature:', result.signature)
-
-  return result
-}
-
-// Usage
-const tokenResult = await createTokenSafely({
-  name: 'My Project Token',
-  symbol: 'MPT',
-  decimals: 6,
-  supply: 1000000,
-  walletPublicKey: 'your-wallet-address'
-})`
-
-  const nftCreationCode = `// NFT Creation with Metadata
-async function createNFTWithMetadata(params: {
-  name: string
-  description: string
-  image: string
-  attributes?: Array<{ trait_type: string; value: string }>
-  externalUrl?: string
-}) {
-  // 1. Prepare metadata
-  const metadata = {
-    name: params.name,
-    description: params.description,
-    image: params.image,
-    attributes: params.attributes || [],
-    external_url: params.externalUrl,
-    properties: {
-      category: 'image',
-      files: [{ uri: params.image, type: 'image/png' }]
-    }
-  }
-
-  // 2. Upload metadata (you'll need to implement this)
-  const metadataUri = await uploadMetadata(metadata)
-  console.log('📄 Metadata uploaded to:', metadataUri)
-
-  // 3. Create NFT
-  const result = await sdk.createNFT(
-    wallet, // Wallet adapter
+      name: 'Token Transfer',
+      signature: '5j7s4H8n9QFjA2mP8xV3qE4R9K7nM2sL6tY1uI9oP3wQ8eR5tY1uI9oP3wQ8eR5tY',
+      description: 'SPL Token transfer transaction'
+    },
     {
-      name: params.name,
-      uri: metadataUri,
-      description: params.description,
-      royaltyBasisPoints: 500 // 5% royalty
+      name: 'NFT Mint',
+      signature: '3k8s5I9p0RgjB3nQ9yW4rF5S0L8oN3tM7uZ2vJ0qQ4xR9fS6uZ2vJ0qQ4xR9fS6uZ',
+      description: 'NFT minting transaction'
     }
-  )
+  ];
 
-  console.log('🎨 NFT created successfully!')
-  console.log('Asset address:', result.assetAddress)
-  console.log('Transaction signature:', result.signature)
+  console.log('📜 Analyzing Transaction Examples...\\n');
 
-  return result
-}
+  for (const [index, txExample] of exampleTransactions.entries()) {
+    console.log(\`\${index + 1}. \${txExample.name} Analysis:\`);
+    console.log(\`   Description: \${txExample.description}\`);
+    console.log(\`   Signature: \${txExample.signature.substring(0, 20)}...\`);
 
-// Mock upload function (replace with your storage solution)
-async function uploadMetadata(metadata: any): Promise<string> {
-  // Upload to IPFS, Arweave, or your preferred storage
-  // This is just a placeholder
-  return 'https://your-storage.com/metadata.json'
-}
-
-// Usage
-const nftResult = await createNFTWithMetadata({
-  name: 'My Cool NFT',
-  description: 'This is an awesome NFT created with Gorbchain SDK',
-  image: 'https://your-storage.com/image.png',
-  attributes: [
-    { trait_type: 'Rarity', value: 'Legendary' },
-    { trait_type: 'Power', value: '100' }
-  ]
-})`
-
-  const batchOperationsCode = `// Batch Operations for Efficiency
-async function processBatchTransactions(signatures: string[]) {
-  console.log(\`🔄 Processing \${signatures.length} transactions...\`)
-
-  // Process in batches to avoid rate limits
-  const batchSize = 5
-  const results = []
-
-  for (let i = 0; i < signatures.length; i += batchSize) {
-    const batch = signatures.slice(i, i + batchSize)
-    
-    // Process batch concurrently
-    const batchPromises = batch.map(async (signature) => {
-      try {
-        const transaction = await sdk.getAndDecodeTransaction(signature, {
-          richDecoding: true,
-          includeTokenMetadata: true
-        })
-        return {
-          signature,
-          success: true,
-          fee: transaction.fee || 0,
-          instructionCount: transaction.instructions.length,
-          transactionType: transaction.summary.type,
-          tokenOperations: transaction.tokens?.operations.length || 0,
-          computeUnits: transaction.summary.computeUnits || 0
-        }
-      } catch (error) {
-        return {
-          signature,
-          success: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
-        }
-      }
-    })
-
-    const batchResults = await Promise.all(batchPromises)
-    results.push(...batchResults)
-    
-    console.log(\`Processed batch \${Math.floor(i / batchSize) + 1}/\${Math.ceil(signatures.length / batchSize)}\`)
-    
-    // Add delay between batches to respect rate limits
-    if (i + batchSize < signatures.length) {
-      await new Promise(resolve => setTimeout(resolve, 1000))
-    }
-  }
-
-  const successful = results.filter(r => r.success)
-  const failed = results.filter(r => !r.success)
-  
-  console.log(\`✅ Processed: \${successful.length} successful, \${failed.length} failed\`)
-  
-  // Enhanced batch summary
-  const totalFees = successful.reduce((sum, r) => sum + r.fee, 0)
-  const totalComputeUnits = successful.reduce((sum, r) => sum + r.computeUnits, 0)
-  const totalTokenOperations = successful.reduce((sum, r) => sum + r.tokenOperations, 0)
-  const transactionTypes = successful.reduce((types, r) => {
-    types[r.transactionType] = (types[r.transactionType] || 0) + 1
-    return types
-  }, {} as Record<string, number>)
-  
-  console.log(\`💰 Total fees: \${totalFees} lamports\`)
-  console.log(\`⚡ Total compute units: \${totalComputeUnits}\`)
-  console.log(\`🪙 Total token operations: \${totalTokenOperations}\`)
-  console.log('📊 Transaction types:', transactionTypes)
-  
-  return {
-    successful,
-    failed,
-    totalFees,
-    totalComputeUnits,
-    totalTokenOperations,
-    transactionTypes
-  }
-}
-
-// Usage with real transaction signatures
-const signatures = [
-  '5Nm3CvXWYjDaeVPTXifXHFzpovVZo6pLQdMfZoBjBjHM8rHehcfT97MYTQv528LwrNDWDtwZeW5FoUK9z3vE4ABM',
-  '3K7XxugEXv8CBQCaL1ZYB7cgYiCGE4THakb23hw3Ltv1XsYDCNctCEivhwCLvtyrfo3gsS9tS3CPqX6kYTe4WqZn',
-  '2QhjK8Xr9QAb7G8K4mfCp3DdnJ7VvTrYbqR8Fg2N5HjLmW9Q'
-]
-const batchResult = await processBatchTransactions(signatures)`
-
-  const tokenHoldingsCode = `// Token Holdings Analyzer - Get All Tokens for an Address
-import { GorbchainSDK } from '@gorbchain-xyz/chaindecode'
-import { PublicKey } from '@solana/web3.js'
-
-class TokenHoldingsAnalyzer {
-  private sdk: GorbchainSDK
-  private rpcClient: any
-
-  constructor(sdk: GorbchainSDK) {
-    this.sdk = sdk
-    this.rpcClient = sdk.getRpcClient()
-  }
-
-  async getAllTokenHoldings(walletAddress: string) {
-    console.log(\`🔍 Analyzing token holdings for: \${walletAddress}\`)
-    
     try {
-      // Get all token accounts owned by the address
-      const tokenAccounts = await this.rpcClient.getTokenAccountsByOwner(
-        walletAddress,
-        { programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' }, // SPL Token Program
-        'confirmed'
-      )
+      // Method 1: Using SDK instance method
+      const richTx = await sdk.getRichTransaction(txExample.signature, {
+        includeTokenMetadata: true,
+        includeBalanceChanges: true,
+        resolveAddressLabels: false,
+        commitment: 'finalized'
+      });
 
-      // Also get Token-2022 accounts
-      const token2022Accounts = await this.rpcClient.getTokenAccountsByOwner(
-        walletAddress,
-        { programId: 'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn' }, // Token-2022 Program
-        'confirmed'
-      )
+      console.log('\\n   📊 Transaction Summary:');
+      console.log(\`     Primary Action: \${richTx.summary.primaryAction}\`);
+      console.log(\`     Description: \${richTx.summary.description}\`);
+      console.log(\`     Category: \${richTx.summary.category}\`);
+      console.log(\`     Success: \${richTx.success ? '✅' : '❌'}\`);
+      console.log(\`     Fee: \${richTx.fee / 1e9} SOL\`);
 
-      const allTokenAccounts = [...tokenAccounts, ...token2022Accounts]
-      console.log(\`📊 Found \${allTokenAccounts.length} token accounts\`)
-
-      const holdings = []
-      const processedMints = new Set()
-
-      // Process each token account
-      for (const accountInfo of allTokenAccounts) {
-        try {
-          // Get detailed token account info
-          const tokenAccountData = await this.rpcClient.getTokenAccountInfo(
-            accountInfo.pubkey,
-            'confirmed'
-          )
-
-          if (!tokenAccountData || !tokenAccountData.tokenAmount) {
-            continue
+      // Token operations
+      if (richTx.tokenOperations && richTx.tokenOperations.length > 0) {
+        console.log('\\n   🪙 Token Operations:');
+        richTx.tokenOperations.forEach((op, i) => {
+          console.log(\`     \${i + 1}. \${op.type}: \${op.action}\`);
+          if (op.tokenInfo) {
+            console.log(\`        Token: \${op.tokenInfo.name} (\${op.tokenInfo.symbol})\`);
+            console.log(\`        Amount: \${op.amount || 'N/A'}\`);
           }
-
-          const { mint, tokenAmount } = tokenAccountData
-          
-          // Skip if we already processed this mint
-          if (processedMints.has(mint)) {
-            continue
-          }
-          processedMints.add(mint)
-
-          // Skip accounts with zero balance
-          if (parseFloat(tokenAmount.amount) === 0) {
-            continue
-          }
-
-          // Get comprehensive token info including metadata
-          const tokenInfo = await this.rpcClient.getTokenInfo(mint)
-          
-          const holding = {
-            mint: mint,
-            tokenAccount: accountInfo.pubkey,
-            balance: {
-              raw: tokenAmount.amount,
-              decimal: tokenAmount.uiAmount,
-              formatted: tokenAmount.uiAmountString
-            },
-            decimals: tokenAmount.decimals,
-            isNFT: tokenInfo?.isNFT || false,
-            metadata: tokenInfo?.metadata || null,
-            mintInfo: {
-              supply: tokenInfo?.supply,
-              mintAuthority: tokenInfo?.mintAuthority,
-              freezeAuthority: tokenInfo?.freezeAuthority,
-              isInitialized: tokenInfo?.isInitialized
-            }
-          }
-
-          holdings.push(holding)
-          
-          console.log(\`  🪙 \${holding.metadata?.name || mint}: \${holding.balance.formatted} \${holding.metadata?.symbol || 'tokens'}\`)
-          
-                 } catch (error: any) {
-           console.warn(\`⚠️  Error processing token account \${accountInfo.pubkey}:\`, error.message)
-         }
+        });
       }
 
-             // Sort holdings: NFTs first, then by balance value
-       holdings.sort((a: any, b: any) => {
-         if (a.isNFT && !b.isNFT) return -1
-         if (!a.isNFT && b.isNFT) return 1
-         return parseFloat(b.balance.decimal || '0') - parseFloat(a.balance.decimal || '0')
-       })
-
-      const summary = {
-        totalTokens: holdings.length,
-        totalNFTs: holdings.filter(h => h.isNFT).length,
-        totalFungibleTokens: holdings.filter(h => !h.isNFT).length,
-        uniqueMints: processedMints.size,
-        hasMetadata: holdings.filter(h => h.metadata).length
-      }
-
-             console.log(\`\\n📈 Portfolio Summary:\`)
-       console.log(\`  Total Holdings: \${summary.totalTokens}\`)
-       console.log(\`  NFTs: \${summary.totalNFTs}\`)
-       console.log(\`  Fungible Tokens: \${summary.totalFungibleTokens}\`)
-       console.log(\`  With Metadata: \${summary.hasMetadata}\`)
-
-      return {
-        walletAddress,
-        holdings,
-        summary,
-        timestamp: new Date().toISOString()
+      // Balance changes
+      if (richTx.balanceChanges && richTx.balanceChanges.length > 0) {
+        console.log('\\n   💰 Balance Changes:');
+        richTx.balanceChanges.slice(0, 3).forEach((change, i) => {
+          console.log(\`     \${i + 1}. \${change.account.substring(0, 8)}...\`);
+          console.log(\`        Change: \${change.change > 0 ? '+' : ''}\${change.change / 1e9} SOL\`);
+        });
       }
 
     } catch (error) {
-      console.error('❌ Error fetching token holdings:', error)
-      throw error
+      console.log('\\n   ❌ Analysis failed (expected with example data)');
+      console.log(\`      Error: \${error instanceof Error ? error.message : 'Unknown error'}\`);
     }
+
+    console.log('\\n' + '-'.repeat(50));
   }
 
-  async getTokensByCategory(walletAddress: string) {
-    const allHoldings = await this.getAllTokenHoldings(walletAddress)
-    
-    return {
-      nfts: allHoldings.holdings.filter(h => h.isNFT),
-      fungibleTokens: allHoldings.holdings.filter(h => !h.isNFT && h.metadata),
-      unknownTokens: allHoldings.holdings.filter(h => !h.isNFT && !h.metadata),
-      summary: allHoldings.summary
-    }
-  }
-
-  async getTopHoldings(walletAddress: string, limit: number = 10) {
-    const allHoldings = await this.getAllTokenHoldings(walletAddress)
-    
-    return {
-      topByBalance: allHoldings.holdings
-        .filter(h => !h.isNFT)
-        .slice(0, limit),
-      allNFTs: allHoldings.holdings.filter(h => h.isNFT),
-      summary: allHoldings.summary
-    }
-  }
+  console.log('\\n✨ Transaction analysis examples complete!');
 }
 
-// Usage Examples
-const analyzer = new TokenHoldingsAnalyzer(sdk)
+export { richTransactionAnalysisExample };`
 
-// Get all token holdings
-const allHoldings = await analyzer.getAllTokenHoldings('wallet-address-here')
+  const walletIntegrationCode = `/**
+ * GorbchainSDK V1 - Universal Wallet Integration Example
+ * Demonstrates connecting to all Solana wallets universally
+ */
+import { GorbchainSDK } from '@gorbchain-xyz/chaindecode';
 
-// Get categorized holdings
-const categorized = await analyzer.getTokensByCategory('wallet-address-here')
-console.log('NFTs:', categorized.nfts.length)
-console.log('Fungible Tokens:', categorized.fungibleTokens.length)
+async function walletIntegrationExample() {
+  console.log('🔗 GorbchainSDK V1 - Wallet Integration Example\\n');
 
-// Get top holdings
-const topHoldings = await analyzer.getTopHoldings('wallet-address-here', 5)`
+  // Initialize SDK with Gorbchain custom program addresses
+  const sdk = new GorbchainSDK({
+    rpcEndpoint: 'https://rpc.gorbchain.xyz',
+    network: 'gorbchain',
+    programIds: {
+      splToken: 'Gorbj8Dp27NkXMQUkeHBSmpf6iQ3yT4b2uVe8kM4s6br',
+      splToken2022: 'G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6',
+      associatedToken: 'GoATGVNeSXerFerPqTJ8hcED1msPWHHLxao2vwBYqowm',
+      metadata: 'GMTAp1moCdGh4TEwFTcCJKeKL3UMEDB6vKpo2uxM9h4s'
+    }
+  });
 
-  const simpleTokenHoldingsCode = `// Simple Token Holdings Example
-async function getWalletTokens(walletAddress: string) {
-  const rpcClient = sdk.getRpcClient()
+  console.log('🔍 Creating wallet manager...');
   
   try {
-    // Get all SPL token accounts
-    const tokenAccounts = await rpcClient.getTokenAccountsByOwner(
-      walletAddress,
-      { programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' }
-    )
+    // Create universal wallet manager
+    const walletManager = sdk.createWalletManager();
+    
+    console.log('✅ Wallet manager created successfully');
 
-    console.log(\`Found \${tokenAccounts.length} token accounts\`)
+    // Discover available wallets
+    console.log('\\n🔍 Discovering available wallets...');
+    const discovery = await walletManager.discoverWallets({
+      includeExtensions: true,
+      includeMobileWallets: true,
+      includeHardwareWallets: false
+    });
 
-    const tokens = []
+    console.log('📱 Wallet Discovery Results:');
+    console.log(\`  Total wallets found: \${discovery.totalFound}\`);
+    console.log(\`  Browser extensions: \${discovery.browserExtensions.length}\`);
+    console.log(\`  Mobile wallets: \${discovery.mobileWallets.length}\`);
+    console.log(\`  Recommended: \${discovery.recommended?.name || 'None'}\`);
 
-    for (const account of tokenAccounts) {
-      // Get token account details
-      const tokenData = await rpcClient.getTokenAccountInfo(account.pubkey)
+    // Display available wallets
+    if (discovery.browserExtensions.length > 0) {
+      console.log('\\n🌐 Available Browser Wallets:');
+      discovery.browserExtensions.forEach((wallet, index) => {
+        console.log(\`  \${index + 1}. \${wallet.name}\`);
+        console.log(\`     Ready: \${wallet.readyState}\`);
+        console.log(\`     Icon: \${wallet.icon ? '✅' : '❌'}\`);
+        console.log(\`     URL: \${wallet.url || 'N/A'}\`);
+      });
+    }
+
+    // Auto-connect example
+    console.log('\\n🔄 Attempting auto-connect...');
+    const autoConnectedWallet = await walletManager.autoConnect({
+      timeout: 10000,
+      preferredWallets: ['trashpack', 'phantom', 'solflare', 'backpack']
+    });
+
+    if (autoConnectedWallet) {
+      console.log('✅ Auto-connect successful!');
+      console.log(\`   Wallet: \${autoConnectedWallet.name}\`);
+      console.log(\`   Address: \${autoConnectedWallet.publicKey?.toString().substring(0, 8)}...\`);
       
-      if (tokenData && parseFloat(tokenData.tokenAmount.amount) > 0) {
-        // Get token metadata
-        const tokenInfo = await rpcClient.getTokenInfo(tokenData.mint)
+      // Get portfolio for connected wallet
+      if (autoConnectedWallet.publicKey) {
+        console.log('\\n📊 Analyzing connected wallet portfolio...');
+        const portfolio = await autoConnectedWallet.getPortfolioSummary();
         
-        tokens.push({
-          mint: tokenData.mint,
-          account: account.pubkey,
-          balance: tokenData.tokenAmount.uiAmountString,
-          decimals: tokenData.tokenAmount.decimals,
-          name: tokenInfo?.metadata?.name || 'Unknown',
-          symbol: tokenInfo?.metadata?.symbol || 'UNKNOWN',
-          isNFT: tokenInfo?.isNFT || false
-        })
-      }
-    }
-
-    return tokens
-  } catch (error) {
-    console.error('Error fetching tokens:', error)
-    return []
-  }
-}
-
-// Usage
-const walletTokens = await getWalletTokens('your-wallet-address')
-walletTokens.forEach(token => {
-  console.log(\`\${token.name} (\${token.symbol}): \${token.balance}\`)
-})`
-
-  const portfolioAnalyzerCode = `// Portfolio Analyzer - Real-world Application
-class PortfolioAnalyzer {
-  private sdk: GorbchainSDK
-
-  constructor(sdk: GorbchainSDK) {
-    this.sdk = sdk
-  }
-
-  async analyzeWalletActivity(walletAddress: string, days: number = 30) {
-    console.log(\`📈 Analyzing portfolio for \${walletAddress}\`)
-    
-    try {
-      // Get recent transactions (you'd implement this with RPC calls)
-      const signatures = await this.getRecentSignatures(walletAddress, days)
-      
-      const portfolio = {
-        totalTransactions: 0,
-        totalFees: 0,
-        totalComputeUnits: 0,
-        programUsage: new Map<string, number>(),
-        tokenTransfers: 0,
-        totalTokenOperations: 0,
-        totalTokenValue: 0,
-        nftActivity: 0,
-        defiActivity: 0
-      }
-
-      // Analyze each transaction with enhanced metadata
-      for (const signature of signatures) {
-        try {
-          const transaction = await this.sdk.getAndDecodeTransaction(signature, {
-            richDecoding: true,
-            includeTokenMetadata: true
-          })
-          
-          portfolio.totalTransactions++
-          portfolio.totalFees += transaction.fee || 0
-
-          // Use enhanced analysis if available
-          if (transaction.analysis) {
-            portfolio.totalComputeUnits += transaction.analysis.computeUnitsUsed || 0
-            
-            // Count program usage from enhanced analysis
-            transaction.analysis.programNames.forEach(programName => {
-              const count = portfolio.programUsage.get(programName) || 0
-              portfolio.programUsage.set(programName, count + 1)
-            })
-
-            // Use transaction type classification
-            switch (transaction.transactionType) {
-              case 'Token Transaction':
-                portfolio.tokenTransfers++
-                if (transaction.tokenInfo) {
-                  portfolio.totalTokenOperations += transaction.tokenInfo.operations.length
-                  portfolio.totalTokenValue += transaction.tokenInfo.totalValue || 0
-                }
-                break
-              case 'NFT Transaction':
-                portfolio.nftActivity++
-                break
-              case 'DeFi Transaction':
-                portfolio.defiActivity++
-                break
-            }
-          } else {
-            // Fallback to instruction-level analysis
-            transaction.instructions.forEach(instruction => {
-              const count = portfolio.programUsage.get(instruction.programName) || 0
-              portfolio.programUsage.set(instruction.programName, count + 1)
-
-              // Categorize activity
-              switch (instruction.programName) {
-                case 'SPL Token':
-                case 'Token-2022':
-                  portfolio.tokenTransfers++
-                  break
-                case 'Metaplex Core':
-                  portfolio.nftActivity++
-                  break
-                case 'Orca':
-                case 'Raydium':
-                  portfolio.defiActivity++
-                  break
-              }
-            })
-          }
-
-        } catch (error) {
-          console.warn(\`Failed to analyze transaction \${signature}:, error\`)
-        }
-      }
-
-      return this.formatPortfolioReport(portfolio)
-      
-    } catch (error) {
-      console.error('Portfolio analysis failed:', error)
-      throw error
-    }
-  }
-
-  private async getRecentSignatures(address: string, days: number): Promise<string[]> {
-    // Implementation would use RPC to get transaction signatures
-    // This is a placeholder
-    const rpcClient = this.sdk.getRpcClient()
-    
-    // In real implementation, you'd paginate through signatures
-    const response = await rpcClient.request('getSignaturesForAddress', [
-      address,
-      { limit: 1000 }
-    ])
-    
-    return response.value.map((sig: any) => sig.signature)
-  }
-
-  private formatPortfolioReport(portfolio: any) {
-    console.log('📊 Portfolio Report:')
-    console.log(\`Total Transactions: \${portfolio.totalTransactions}\`)
-    console.log(\`Total Fees Paid: \${portfolio.totalFees} lamports\`)
-    console.log(\`Total Compute Units: \${portfolio.totalComputeUnits}\`)
-    console.log(\`Token Transfers: \${portfolio.tokenTransfers}\`)
-    console.log(\`Token Operations: \${portfolio.totalTokenOperations}\`)
-    console.log(\`Total Token Value: \${portfolio.totalTokenValue}\`)
-    console.log(\`NFT Activity: \${portfolio.nftActivity}\`)
-    console.log(\`DeFi Activity: \${portfolio.defiActivity}\`)
-    
-    console.log('\\nProgram Usage:')
-    Array.from(portfolio.programUsage.entries())
-      .sort(([,a], [,b]) => b - a)
-      .forEach(([program, count]) => {
-        console.log(\`  \${program}: \${count} transactions\`)
-      })
-
-    return portfolio
-  }
-}
-
-// Usage
-const analyzer = new PortfolioAnalyzer(sdk)
-const portfolio = await analyzer.analyzeWalletActivity('wallet-address', 30)`
-
-  const errorHandlingCode = `// Comprehensive Error Handling Strategy
-import { 
-  RpcNetworkError,
-  RpcTimeoutError,
-  TransactionNotFoundError,
-  DecoderNotFoundError,
-  InvalidAddressError
-} from '@gorbchain-xyz/chaindecode'
-
-class SDKOperations {
-  private sdk: GorbchainSDK
-  private maxRetries = 3
-
-  constructor(sdk: GorbchainSDK) {
-    this.sdk = sdk
-  }
-
-  async safeDecodeTransaction(signature: string) {
-    let attempts = 0
-    
-    while (attempts < this.maxRetries) {
-      try {
-        return await this.sdk.getAndDecodeTransaction(signature)
-      } catch (error) {
-        attempts++
-        
-        if (error instanceof TransactionNotFoundError) {
-          console.log(\`Transaction \${signature} not found\`)
-          return null
-        } else if (error instanceof DecoderNotFoundError) {
-          console.log('Decoder not found - returning raw transaction data')
-          // Return with limited decoding
-          return await this.sdk.getAndDecodeTransaction(signature, { 
-            richDecoding: false 
-          })
-        } else if (error instanceof RpcNetworkError || error instanceof RpcTimeoutError) {
-          console.log(\`Network error (attempt \${attempts}/\${this.maxRetries})\`)
-          if (attempts === this.maxRetries) {
-            throw new Error(\`Failed after \${this.maxRetries} attempts: \${error.message}\`)
-          }
-          // Exponential backoff
-          await this.delay(Math.pow(2, attempts) * 1000)
-        } else if (error instanceof InvalidAddressError) {
-          console.error('Invalid address provided:', signature)
-          throw error
-        } else {
-          console.error('Unexpected error:', error)
-          throw error
-        }
-      }
-    }
-  }
-
-  async safeTokenCreation(params: any) {
-    try {
-      // Pre-flight checks
-      await this.performPreFlightChecks(params)
-      
-      // Attempt creation
-      return await this.sdk.createToken22TwoTx(params)
-      
-    } catch (error) {
-      return this.handleTokenCreationError(error, params)
-    }
-  }
-
-  private async performPreFlightChecks(params: any) {
-    // Check network health
-    const health = await this.sdk.getNetworkHealth()
-    if (health.status !== 'healthy') {
-      throw new Error(\`Network unhealthy: \${health.status}\`)
-    }
-
-    // Validate parameters
-    if (!params.name || params.name.length > 32) {
-      throw new InvalidAddressError('Token name must be 1-32 characters')
-    }
-
-    if (!params.symbol || params.symbol.length > 10) {
-      throw new InvalidAddressError('Token symbol must be 1-10 characters')
-    }
-  }
-
-  private handleTokenCreationError(error: any, params: any) {
-    if (error instanceof RpcNetworkError) {
-      return {
-        success: false,
-        error: 'Network connectivity issues. Please try again later.',
-        retryable: true
-      }
-    } else if (error.message.includes('insufficient funds')) {
-      return {
-        success: false,
-        error: 'Insufficient SOL balance for token creation.',
-        retryable: false,
-        estimatedCost: 0.002 // Could get from estimation
+        console.log('💼 Portfolio Summary:');
+        console.log(\`   SOL Balance: \${portfolio.solBalance} SOL\`);
+        console.log(\`   Token Count: \${portfolio.tokenCount}\`);
+        console.log(\`   NFT Count: \${portfolio.nftCount}\`);
+        console.log(\`   Total Value: \${portfolio.totalValue || 'Unknown'}\`);
       }
     } else {
-      return {
-        success: false,
-        error: \`Token creation failed: \${error.message}\`,
-        retryable: false
-      }
+      console.log('❌ Auto-connect failed (expected in Node.js environment)');
     }
+
+    // Manual connection example
+    console.log('\\n📱 Manual connection example:');
+    console.log('// In a browser environment, you would do:');
+    console.log('// const wallet = await walletManager.connectWallet("phantom", {');
+    console.log('//   onlyIfTrusted: false,');
+    console.log('//   timeout: 30000');
+    console.log('// });');
+
+  } catch (error) {
+    console.error('Wallet integration error:', error instanceof Error ? error.message : error);
+    console.log('💡 This is expected when running outside a browser environment');
   }
 
-  private delay(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms))
-  }
+  console.log('\\n✨ Wallet integration example complete!');
 }
 
-// Usage
-const operations = new SDKOperations(sdk)
-const result = await operations.safeDecodeTransaction('signature')
-const tokenResult = await operations.safeTokenCreation({
-  name: 'Test Token',
-  symbol: 'TEST',
-  decimals: 6,
-  supply: 1000000
-})`
+export { walletIntegrationExample };`
+
+  const advancedPortfolioCode = `/**
+ * GorbchainSDK V1 - Advanced Portfolio Management Example
+ * Demonstrates portfolio analysis, comparison, and insights
+ */
+import { GorbchainSDK } from '@gorbchain-xyz/chaindecode';
+
+async function advancedPortfolioExample() {
+  console.log('📈 GorbchainSDK V1 - Advanced Portfolio Example\\n');
+
+  // Initialize SDK with Gorbchain custom program addresses
+  const sdk = new GorbchainSDK({
+    rpcEndpoint: 'https://rpc.gorbchain.xyz',
+    network: 'gorbchain',
+    programIds: {
+      splToken: 'Gorbj8Dp27NkXMQUkeHBSmpf6iQ3yT4b2uVe8kM4s6br',
+      splToken2022: 'G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6',
+      associatedToken: 'GoATGVNeSXerFerPqTJ8hcED1msPWHHLxao2vwBYqowm',
+      metadata: 'GMTAp1moCdGh4TEwFTcCJKeKL3UMEDB6vKpo2uxM9h4s'
+    }
+  });
+
+  // Example wallet addresses (replace with real addresses)
+  const wallet1 = 'GThUX1Atko4tqhN2NaiTazWSeFWMuiUiswQrunPiLaFU';
+  const wallet2 = 'DRiP2Pn2K6fuMLKQmt5rZWxa91vSDhqhZF3KZg9gEM5M';
+
+  console.log(\`📊 Advanced portfolio analysis for multiple wallets\\n\`);
+
+  try {
+    // 1. Individual Portfolio Analysis
+    console.log('1️⃣ Individual Portfolio Analysis');
+    console.log('Analyzing wallet 1...');
+    
+    const portfolio1 = await sdk.analyzePortfolio(wallet1);
+    console.log('📈 Wallet 1 Analysis:');
+    console.log(\`   Total Holdings: \${portfolio1.summary?.totalTokens || 0}\`);
+    console.log(\`   Risk Level: \${portfolio1.riskAnalysis?.level || 'Unknown'}\`);
+    console.log(\`   Diversification: \${portfolio1.diversification?.score || 'N/A'}\`);
+
+    // 2. Portfolio Comparison
+    console.log('\\n2️⃣ Portfolio Comparison');
+    console.log('Comparing two portfolios...');
+    
+    const comparison = await sdk.comparePortfolios(wallet1, wallet2);
+    console.log('🔍 Portfolio Comparison Results:');
+    console.log(\`   Similarity Score: \${(comparison.similarityScore * 100).toFixed(1)}%\`);
+    console.log(\`   Common Holdings: \${comparison.commonHoldings?.length || 0}\`);
+    console.log(\`   Wallet 1 Unique: \${comparison.wallet1Unique?.length || 0}\`);
+    console.log(\`   Wallet 2 Unique: \${comparison.wallet2Unique?.length || 0}\`);
+
+    // Display common holdings
+    if (comparison.commonHoldings && comparison.commonHoldings.length > 0) {
+      console.log('\\n🤝 Common Holdings:');
+      comparison.commonHoldings.slice(0, 3).forEach((holding, index) => {
+        console.log(\`   \${index + 1}. \${holding.tokenInfo?.name || 'Unknown Token'}\`);
+        console.log(\`      Symbol: \${holding.tokenInfo?.symbol || 'N/A'}\`);
+        console.log(\`      Both wallets hold this token\`);
+      });
+    }
+
+    // 3. Risk Analysis
+    console.log('\\n3️⃣ Risk Analysis');
+    const riskMetrics = comparison.riskComparison;
+    if (riskMetrics) {
+      console.log('⚠️ Risk Comparison:');
+      console.log(\`   Wallet 1 Risk: \${riskMetrics.wallet1Risk || 'Unknown'}\`);
+      console.log(\`   Wallet 2 Risk: \${riskMetrics.wallet2Risk || 'Unknown'}\`);
+      console.log(\`   Risk Difference: \${riskMetrics.riskDifference || 'N/A'}\`);
+    }
+
+    // 4. Performance Insights
+    console.log('\\n4️⃣ Performance Insights');
+    if (comparison.insights) {
+      console.log('💡 Insights:');
+      comparison.insights.forEach((insight, index) => {
+        console.log(\`   \${index + 1}. \${insight.type}: \${insight.message}\`);
+        console.log(\`      Confidence: \${(insight.confidence * 100).toFixed(0)}%\`);
+      });
+    }
+
+    // 5. Recommendations
+    console.log('\\n5️⃣ Portfolio Recommendations');
+    if (comparison.recommendations) {
+      console.log('🎯 Recommendations:');
+      comparison.recommendations.forEach((rec, index) => {
+        console.log(\`   \${index + 1}. \${rec.category}: \${rec.action}\`);
+        console.log(\`      Priority: \${rec.priority}\`);
+        console.log(\`      Impact: \${rec.expectedImpact}\`);
+      });
+    }
+
+    // 6. Token Categories Analysis
+    console.log('\\n6️⃣ Token Categories Analysis');
+    const categories1 = await sdk.getTokensByCategory(wallet1);
+    console.log('📂 Wallet 1 Token Categories:');
+    console.log(\`   DeFi Tokens: \${categories1.defi?.length || 0}\`);
+    console.log(\`   NFTs: \${categories1.nfts?.length || 0}\`);
+    console.log(\`   Stablecoins: \${categories1.stablecoins?.length || 0}\`);
+    console.log(\`   Gaming Tokens: \${categories1.gaming?.length || 0}\`);
+
+  } catch (error) {
+    console.error('Portfolio analysis error:', error instanceof Error ? error.message : error);
+    console.log('💡 This is expected when running with example data');
+  }
+
+  console.log('\\n✨ Advanced portfolio analysis complete!');
+  console.log('\\n🚀 Ready to build comprehensive portfolio management features!');
+}
+
+export { advancedPortfolioExample };`
 
   const examples = [
     {
       id: 'basic',
-      title: 'Basic SDK Setup',
-      description: 'Initialize the SDK and check network health',
+      title: 'Basic SDK Setup & Usage',
+      description: 'Initialize GorbchainSDK V1 and explore core capabilities',
       icon: <CubeIcon className="w-5 h-5" />,
       color: 'blue',
-      code: initializationCode
+      code: basicUsageCode,
+      features: ['SDK initialization', 'Network health monitoring', 'Capability detection', 'Direct RPC access']
     },
     {
-      id: 'transaction',
-      title: 'Transaction Analysis',
-      description: 'Decode and analyze blockchain transactions',
-      icon: <WifiIcon className="w-5 h-5" />,
-      color: 'green',
-      code: transactionAnalysisCode
-    },
-    {
-      id: 'token',
-      title: 'Safe Token Creation',
-      description: 'Create tokens with validation and cost estimation',
-      icon: <ShieldCheckIcon className="w-5 h-5" />,
-      color: 'purple',
-      code: tokenCreationCode
-    },
-    {
-      id: 'nft',
-      title: 'NFT Creation with Metadata',
-      description: 'Create NFTs with rich metadata and attributes',
-      icon: <ClockIcon className="w-5 h-5" />,
-      color: 'orange',
-      code: nftCreationCode
-    },
-    {
-      id: 'batch',
-      title: 'Batch Operations',
-      description: 'Process multiple transactions efficiently',
-      icon: <CubeIcon className="w-5 h-5" />,
-      color: 'indigo',
-      code: batchOperationsCode
-    },
-    {
-      id: 'token-holdings',
-      title: 'Token Holdings Analyzer',
-      description: 'Get all token holdings for any wallet address',
-      icon: <WifiIcon className="w-5 h-5" />,
+      id: 'tokens',
+      title: 'Rich Token Portfolio Analysis',
+      description: 'Analyze token portfolios with complete metadata and insights',
+      icon: <ChartBarIcon className="w-5 h-5" />,
       color: 'emerald',
-      code: tokenHoldingsCode
+      code: richTokenAnalysisCode,
+      features: ['Portfolio metadata', 'Token categorization', 'Diversity scoring', 'Performance optimization']
     },
     {
-      id: 'simple-holdings',
-      title: 'Simple Token Holdings',
-      description: 'Quick way to get wallet token balances',
-      icon: <CubeIcon className="w-5 h-5" />,
-      color: 'cyan',
-      code: simpleTokenHoldingsCode
+      id: 'transactions',
+      title: 'Enhanced Transaction Analysis',
+      description: 'Decode transactions with human-readable context and token metadata',
+      icon: <MagnifyingGlassIcon className="w-5 h-5" />,
+      color: 'purple',
+      code: transactionAnalysisCode,
+      features: ['Rich transaction decoding', 'Token operation analysis', 'Balance change tracking', 'Context resolution']
+    },
+    {
+      id: 'wallets',
+      title: 'Universal Wallet Integration',
+      description: 'Connect to all Solana wallets with auto-discovery and portfolio analysis',
+      icon: <WalletIcon className="w-5 h-5" />,
+      color: 'orange',
+      code: walletIntegrationCode,
+      features: ['Universal wallet support', 'Auto-discovery', 'Portfolio integration', 'Event-driven management']
     },
     {
       id: 'portfolio',
-      title: 'Portfolio Analyzer',
-      description: 'Real-world application for wallet analysis',
-      icon: <WifiIcon className="w-5 h-5" />,
+      title: 'Advanced Portfolio Management',
+      description: 'Compare portfolios, analyze risk, and generate actionable insights',
+      icon: <BeakerIcon className="w-5 h-5" />,
       color: 'pink',
-      code: portfolioAnalyzerCode
-    },
-    {
-      id: 'errors',
-      title: 'Error Handling Patterns',
-      description: 'Comprehensive error handling strategies',
-      icon: <ShieldCheckIcon className="w-5 h-5" />,
-      color: 'red',
-      code: errorHandlingCode
+      code: advancedPortfolioCode,
+      features: ['Portfolio comparison', 'Risk analysis', 'Diversification insights', 'Actionable recommendations']
     }
   ]
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-docs-heading mb-4">Code Examples</h1>
+        <h1 className="text-3xl font-bold text-docs-heading mb-4">
+          GorbchainSDK V1 Examples 🚀
+        </h1>
         <p className="text-lg text-gray-600 mb-6">
-          Practical examples and patterns for building applications with the Gorbchain SDK. 
-          All examples assume the SDK is imported and available.
+          Comprehensive examples showcasing the rich capabilities of GorbchainSDK V1 for rapid Solana application development.
+          These examples demonstrate real-world usage patterns for building super apps within seconds.
         </p>
         
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <h3 className="font-semibold text-blue-900 mb-2">💡 Before You Start</h3>
-          <div className="text-sm text-blue-800 space-y-1">
-            <div>• Install the SDK: <code className="bg-blue-100 px-1 rounded">npm install @gorbchain-xyz/chaindecode</code></div>
-            <div>• Replace placeholder values with your actual data</div>
-            <div>• All examples include proper error handling</div>
-            <div>• Examples are production-ready patterns</div>
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6 mb-8">
+          <h3 className="font-semibold text-blue-900 mb-3">✨ What Makes V1 Special</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-800">
+            <div>
+              <div className="font-medium mb-2">🎯 Rich Functions</div>
+              <ul className="space-y-1 ml-4">
+                <li>• Enhanced token portfolio analysis</li>
+                <li>• Transaction decoding with context</li>
+                <li>• Universal wallet integration</li>
+              </ul>
+            </div>
+            <div>
+              <div className="font-medium mb-2">⚡ Performance Optimized</div>
+              <ul className="space-y-1 ml-4">
+                <li>• Concurrent request handling</li>
+                <li>• Intelligent metadata caching</li>
+                <li>• Configurable rate limiting</li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
@@ -951,11 +584,18 @@ const tokenResult = await operations.safeTokenCreation({
                 <div>
                   <h2 className="text-xl font-semibold text-docs-heading">{example.title}</h2>
                   <p className="text-gray-600">{example.description}</p>
+                  <div className="flex items-center space-x-2 mt-2">
+                    {example.features.slice(0, 2).map((feature, index) => (
+                      <span key={index} className={`px-2 py-1 bg-${example.color}-50 text-${example.color}-700 rounded text-xs`}>
+                        {feature}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
                 <div className={`px-3 py-1 bg-${example.color}-100 text-${example.color}-800 rounded-full text-sm font-medium`}>
-                  {example.id === 'portfolio' ? 'Advanced' : 'Ready to Use'}
+                  V1
                 </div>
                 {isOpen ? 
                   <ChevronDownIcon className="w-5 h-5 text-gray-400" /> : 
@@ -967,7 +607,7 @@ const tokenResult = await operations.safeTokenCreation({
             {isOpen && (
               <div className="mt-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-docs-heading">Implementation</h3>
+                  <h3 className="text-lg font-semibold text-docs-heading">Complete Implementation</h3>
                   <button
                     onClick={() => copyToClipboard(example.code, example.id)}
                     className="flex items-center space-x-2 px-3 py-1 text-sm text-blue-600 hover:text-blue-700 border border-blue-200 rounded-md hover:border-blue-300 transition-colors"
@@ -986,48 +626,52 @@ const tokenResult = await operations.safeTokenCreation({
                   copied={copied[example.id] || false}
                 />
                 
+                {/* Feature highlights */}
+                <div className={`mt-4 p-4 bg-${example.color}-50 border border-${example.color}-200 rounded-lg`}>
+                  <h4 className={`font-medium text-${example.color}-900 mb-2`}>✨ Key Features</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {example.features.map((feature, index) => (
+                      <div key={index} className={`text-sm text-${example.color}-800 flex items-center`}>
+                        <span className="w-2 h-2 bg-current rounded-full mr-2 opacity-60"></span>
+                        {feature}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Example-specific tips */}
                 {example.id === 'basic' && (
                   <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <h4 className="font-medium text-green-900 mb-2">✅ What This Does</h4>
+                    <h4 className="font-medium text-green-900 mb-2">🎯 Getting Started Tips</h4>
                     <ul className="text-sm text-green-800 space-y-1">
-                      <li>• Initializes the SDK with your RPC endpoint</li>
-                      <li>• Sets up automatic retry and timeout configuration</li>
-                      <li>• Verifies network connectivity before proceeding</li>
+                      <li>• Replace the example RPC endpoint with your preferred provider</li>
+                      <li>• Network health checks help ensure reliable connections</li>
+                      <li>• Use capability detection to adapt to different RPC providers</li>
                     </ul>
                   </div>
                 )}
-                
-                {example.id === 'token-holdings' && (
+
+                {example.id === 'tokens' && (
                   <div className="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
-                    <h4 className="font-medium text-emerald-900 mb-2">🪙 Token Holdings Features</h4>
+                    <h4 className="font-medium text-emerald-900 mb-2">📊 Portfolio Analysis Power</h4>
                     <ul className="text-sm text-emerald-800 space-y-1">
-                      <li>• Fetches both SPL Token and Token-2022 holdings</li>
-                      <li>• Automatically detects NFTs vs fungible tokens</li>
-                      <li>• Retrieves token metadata (name, symbol, URI)</li>
-                      <li>• Provides portfolio summary and categorization</li>
-                      <li>• Handles errors gracefully for problematic tokens</li>
+                      <li>• Automatically fetches metadata for all tokens and NFTs</li>
+                      <li>• Provides diversity scoring for portfolio risk assessment</li>
+                      <li>• Supports concurrent requests for optimal performance</li>
+                      <li>• Includes market data integration (when API keys provided)</li>
                     </ul>
                   </div>
                 )}
-                
-                {example.id === 'simple-holdings' && (
-                  <div className="mt-4 p-4 bg-cyan-50 border border-cyan-200 rounded-lg">
-                    <h4 className="font-medium text-cyan-900 mb-2">⚡ Quick Implementation</h4>
-                    <p className="text-sm text-cyan-800">
-                      A simplified version for basic token balance checking. Perfect for getting started 
-                      or when you only need basic token information without detailed categorization.
-                    </p>
-                  </div>
-                )}
-                
-                {example.id === 'portfolio' && (
-                  <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                    <h4 className="font-medium text-purple-900 mb-2">🚀 Advanced Pattern</h4>
-                    <p className="text-sm text-purple-800">
-                      This example shows how to build a complete application feature using the SDK. 
-                      It demonstrates batch processing, error handling, and data aggregation patterns 
-                      suitable for production applications.
-                    </p>
+
+                {example.id === 'wallets' && (
+                  <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                    <h4 className="font-medium text-orange-900 mb-2">🔗 Wallet Integration Benefits</h4>
+                    <ul className="text-sm text-orange-800 space-y-1">
+                      <li>• Works with Phantom, Solflare, Backpack, and 15+ other wallets</li>
+                      <li>• Auto-discovery handles wallet detection automatically</li>
+                      <li>• Includes portfolio analysis for connected wallets</li>
+                      <li>• Event-driven architecture for real-time updates</li>
+                    </ul>
                   </div>
                 )}
               </div>
@@ -1036,45 +680,50 @@ const tokenResult = await operations.safeTokenCreation({
         )
       })}
 
-      {/* Best Practices */}
+      {/* Quick Start Section */}
       <div className="docs-card">
-        <h2 className="text-xl font-semibold text-docs-heading mb-4">💡 Best Practices</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <h2 className="text-xl font-semibold text-docs-heading mb-4">🚀 Quick Start Guide</h2>
+        <div className="space-y-6">
           <div>
-            <h3 className="font-semibold text-docs-heading mb-3">Performance</h3>
-            <ul className="text-sm text-gray-600 space-y-2">
-              <li>• Use batch operations for multiple transactions</li>
-              <li>• Implement proper rate limiting (5 RPS recommended)</li>
-              <li>• Cache network health checks</li>
-              <li>• Use connection pooling for high-volume apps</li>
-            </ul>
+            <h3 className="text-lg font-semibold text-docs-heading mb-3">1. Installation</h3>
+            <div className="code-block">
+              <pre><code>{`npm install @gorbchain-xyz/chaindecode`}</code></pre>
+            </div>
           </div>
+
           <div>
-            <h3 className="font-semibold text-docs-heading mb-3">Error Handling</h3>
-            <ul className="text-sm text-gray-600 space-y-2">
-              <li>• Always catch specific error types</li>
-              <li>• Implement exponential backoff for retries</li>
-              <li>• Validate inputs before API calls</li>
-              <li>• Log errors with sufficient context</li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-semibold text-docs-heading mb-3">Security</h3>
-            <ul className="text-sm text-gray-600 space-y-2">
-              <li>• Never expose private keys in frontend code</li>
-              <li>• Validate all user inputs</li>
-              <li>• Use environment variables for configuration</li>
-              <li>• Implement proper CORS policies</li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-semibold text-docs-heading mb-3">Monitoring</h3>
-            <ul className="text-sm text-gray-600 space-y-2">
-              <li>• Monitor RPC endpoint health</li>
-              <li>• Track transaction success rates</li>
-              <li>• Set up alerting for failures</li>
-              <li>• Log performance metrics</li>
-            </ul>
+            <h3 className="text-lg font-semibold text-docs-heading mb-3">2. Basic Setup</h3>
+            <div className="code-block">
+              <pre><code>{`import { GorbchainSDK } from '@gorbchain-xyz/chaindecode'
+
+const sdk = new GorbchainSDK({
+  rpcEndpoint: 'https://rpc.gorbchain.xyz',
+  network: 'gorbchain',
+  // Gorbchain custom program addresses
+  programs: {
+    splToken: 'Gorbj8Dp27NkXMQUkeHBSmpf6iQ3yT4b2uVe8kM4s6br',
+    splToken2022: 'G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6',
+    associatedToken: 'GoATGVNeSXerFerPqTJ8hcED1msPWHHLxao2vwBYqowm',
+    metadata: 'GMTAp1moCdGh4TEwFTcCJKeKL3UMEDB6vKpo2uxM9h4s'
+  }
+})
+
+// Rich token portfolio analysis
+const portfolio = await sdk.getRichTokenAccounts(address, {
+  includeMetadata: true,
+  includeNFTs: true
+})
+
+// Enhanced transaction analysis
+const transaction = await sdk.getRichTransaction(signature, {
+  includeTokenMetadata: true,
+  includeBalanceChanges: true
+})
+
+// Universal wallet integration
+const walletManager = sdk.createWalletManager()
+const wallet = await walletManager.autoConnect()`}</code></pre>
+            </div>
           </div>
         </div>
       </div>
@@ -1082,27 +731,35 @@ const tokenResult = await operations.safeTokenCreation({
       {/* Next Steps */}
       <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-8">
         <h2 className="text-2xl font-bold text-docs-heading mb-4 text-center">
-          🎯 Ready to Build?
+          ✨ Build Super Apps with GorbchainSDK V1
         </h2>
         <p className="text-gray-600 text-center mb-6">
-          These examples provide the foundation for building robust blockchain applications. 
-          Combine patterns and adapt them to your specific use case.
+          These examples provide the foundation for building the next generation of Solana applications.
+          Rich functions, performance optimization, and universal wallet support - everything you need is here.
         </p>
-        <div className="flex justify-center space-x-4">
+        <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
           <a 
             href="/playground" 
-            className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             <span>Try Interactive Playground</span>
           </a>
           <a 
             href="/api-reference" 
-            className="inline-flex items-center px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
           >
             <span>View Full API Reference</span>
+          </a>
+          <a 
+            href="https://github.com/gorbchain-xyz/chaindecode" 
+            className="inline-flex items-center justify-center px-6 py-3 border border-purple-300 text-purple-700 rounded-lg hover:bg-purple-50 transition-colors"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span>View on GitHub</span>
           </a>
         </div>
       </div>
     </div>
   )
-} 
+}

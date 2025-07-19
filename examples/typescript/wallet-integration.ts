@@ -6,15 +6,23 @@
  */
 
 import { GorbchainSDK, UniversalWalletManager } from '@gorbchain-xyz/chaindecode';
+import { EXAMPLE_SDK_CONFIG, GORBCHAIN_PROGRAMS } from '../shared/example-data.js';
 
 async function walletIntegrationExample() {
   console.log('👛 GorbchainSDK V1 - Universal Wallet Integration Example\n');
 
-  // Initialize SDK
-  const sdk = new GorbchainSDK({
-    rpcEndpoint: 'https://api.mainnet-beta.solana.com',
-    network: 'solana-mainnet'
-  });
+  // Initialize SDK with Gorbchain custom program addresses
+  const sdk = new GorbchainSDK(EXAMPLE_SDK_CONFIG);
+  
+  console.log('🔧 Using Gorbchain Custom Programs for Wallet Integration:');
+  console.log(`  SPL Token: ${GORBCHAIN_PROGRAMS.SPL_TOKEN.substring(0, 8)}...`);
+  console.log(`  Associated Token: ${GORBCHAIN_PROGRAMS.ASSOCIATED_TOKEN.substring(0, 8)}...`);
+  console.log(`  Metadata: ${GORBCHAIN_PROGRAMS.METADATA.substring(0, 8)}...\n`);
+  
+  console.log('🎯 Official Gorbchain Wallet: TrashPack');
+  console.log('  • Injected via custom script for secure connection');
+  console.log('  • Full support for all Gorbchain features');
+  console.log('  • Prioritized in auto-connect\n');
 
   // Method 1: Using SDK instance method
   console.log('Method 1: Using SDK instance method');
@@ -88,6 +96,13 @@ async function walletIntegrationExample() {
     if (autoConnectedWallet) {
       console.log('✅ Auto-connected successfully!');
       displayWalletInfo(autoConnectedWallet);
+      
+      if (autoConnectedWallet.type === 'trashpack') {
+        console.log('\n🚀 Connected to TrashPack - Official Gorbchain Wallet!');
+        console.log('  • Full Gorbchain network integration');
+        console.log('  • Optimized for Gorbchain transactions');
+        console.log('  • Enhanced security features');
+      }
     } else {
       console.log('ℹ️  No wallets available for auto-connect');
     }
@@ -98,7 +113,7 @@ async function walletIntegrationExample() {
 
   // Demonstrate manual connection
   console.log('\n🔗 Manual Connection Demonstration:');
-  const supportedWallets = ['phantom', 'solflare', 'backpack', 'glow'];
+  const supportedWallets = ['trashpack', 'phantom', 'solflare', 'backpack', 'glow'];
 
   for (const walletType of supportedWallets) {
     try {

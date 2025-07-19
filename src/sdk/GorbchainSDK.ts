@@ -7,8 +7,8 @@
  * @example
  * ```typescript
  * const sdk = new GorbchainSDK({
- *   rpcEndpoint: 'https://api.mainnet-beta.solana.com',
- *   network: 'solana-mainnet'
+ *   rpcEndpoint: 'https://rpc.gorbchain.xyz',
+ *   network: 'gorbchain'
  * });
  * 
  * // Rich token portfolio analysis

@@ -36,11 +36,11 @@ export async function createTransaction({
       lastValidBlockHeight: BigInt(lastValidBlockHeight)
     }, m),
     m => {
-      let out = m;
+      let out = m as any;
       for (const ix of instructions) {
         out = appendTransactionMessageInstruction(ix, out);
       }
-      return out;
+      return out as typeof m;
     }
   );
   const compiled = compileTransaction(msg);

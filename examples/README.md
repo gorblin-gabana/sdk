@@ -2,15 +2,34 @@
 
 This directory contains comprehensive examples demonstrating the key capabilities of GorbchainSDK V1 for rapid Solana application development.
 
+## 📁 Directory Structure
+
+```
+examples/
+├── typescript/              # Backend TypeScript examples
+│   ├── basic-usage.ts           # SDK initialization and basic operations
+│   ├── token-analysis.ts        # Rich token portfolio analysis
+│   ├── transaction-analysis.ts  # Enhanced transaction decoding
+│   ├── wallet-integration.ts    # Universal wallet integration
+│   ├── portfolio-management.ts  # Advanced portfolio management
+│   └── README.md               # TypeScript examples documentation
+├── shared/                  # Shared utilities and data
+│   └── example-data.ts         # Common addresses, configs, utilities
+├── react-docs/              # React documentation app
+│   └── src/pages/              # Interactive playground and examples
+├── index.ts                # Main examples runner
+└── README.md               # This file
+```
+
 ## 🎯 Examples Overview
 
 | Example | Description | Key Features |
 |---------|-------------|--------------|
-| [01-basic-usage.ts](./01-basic-usage.ts) | SDK setup and basic operations | Initialization, network health, capabilities |
-| [02-rich-token-analysis.ts](./02-rich-token-analysis.ts) | Token portfolio analysis | Metadata resolution, portfolio insights |
-| [03-transaction-analysis.ts](./03-transaction-analysis.ts) | Enhanced transaction decoding | Instruction analysis, token transfers |
-| [04-wallet-integration.ts](./04-wallet-integration.ts) | Universal wallet connection | Multi-wallet support, auto-connect |
-| [05-advanced-portfolio.ts](./05-advanced-portfolio.ts) | Portfolio management | Risk analysis, comparisons, insights |
+| [typescript/basic-usage.ts](./typescript/basic-usage.ts) | SDK setup and basic operations | Initialization, network health, capabilities |
+| [typescript/token-analysis.ts](./typescript/token-analysis.ts) | Token portfolio analysis | Metadata resolution, portfolio insights |
+| [typescript/transaction-analysis.ts](./typescript/transaction-analysis.ts) | Enhanced transaction decoding | Instruction analysis, token transfers |
+| [typescript/wallet-integration.ts](./typescript/wallet-integration.ts) | Universal wallet connection | Multi-wallet support, auto-connect |
+| [typescript/portfolio-management.ts](./typescript/portfolio-management.ts) | Portfolio management | Risk analysis, comparisons, insights |
 
 ## 🚀 Quick Start
 
@@ -34,8 +53,8 @@ Learn how to initialize and configure GorbchainSDK V1:
 
 ```typescript
 const sdk = new GorbchainSDK({
-  rpcEndpoint: 'https://api.mainnet-beta.solana.com',
-  network: 'solana-mainnet'
+  rpcEndpoint: 'https://rpc.gorbchain.xyz',
+  network: 'gorbchain'
 });
 ```
 
@@ -181,7 +200,7 @@ Use appropriate RPC endpoints for your needs:
 ```typescript
 // Mainnet
 const sdk = new GorbchainSDK({
-  rpcEndpoint: 'https://api.mainnet-beta.solana.com'
+  rpcEndpoint: 'https://rpc.gorbchain.xyz'
 });
 
 // Custom RPC (faster)
@@ -237,8 +256,8 @@ try {
 3. **Environment Setup:**
    Create a `.env` file for configuration:
    ```env
-   RPC_ENDPOINT=https://api.mainnet-beta.solana.com
-   NETWORK=solana-mainnet
+   RPC_ENDPOINT=https://rpc.gorbchain.xyz
+   NETWORK=gorbchain
    ```
 
 ## 📊 Performance Notes

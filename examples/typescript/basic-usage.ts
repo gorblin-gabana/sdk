@@ -6,20 +6,23 @@
  */
 
 import { GorbchainSDK } from '@gorbchain-xyz/chaindecode';
+import { EXAMPLE_SDK_CONFIG, GORBCHAIN_PROGRAMS } from '../shared/example-data.js';
 
 async function basicUsageExample() {
   console.log('🚀 GorbchainSDK V1 - Basic Usage Example\n');
 
-  // Initialize the SDK
-  const sdk = new GorbchainSDK({
-    rpcEndpoint: 'https://api.mainnet-beta.solana.com',
-    network: 'solana-mainnet',
-    timeout: 30000
-  });
+  // Initialize the SDK with Gorbchain custom program addresses
+  const sdk = new GorbchainSDK(EXAMPLE_SDK_CONFIG);
 
   console.log('✅ SDK initialized successfully');
   console.log('Network:', sdk.config.network);
   console.log('RPC Endpoint:', sdk.config.rpcEndpoint);
+  
+  console.log('\n🔧 Gorbchain Custom Program Addresses:');
+  console.log(`SPL Token: ${GORBCHAIN_PROGRAMS.SPL_TOKEN}`);
+  console.log(`SPL Token 2022: ${GORBCHAIN_PROGRAMS.SPL_TOKEN_2022}`);
+  console.log(`Associated Token: ${GORBCHAIN_PROGRAMS.ASSOCIATED_TOKEN}`);
+  console.log(`Metadata: ${GORBCHAIN_PROGRAMS.METADATA}`);
 
   // Example wallet address (Solana Foundation)
   const walletAddress = 'GThUX1Atko4tqhN2NaiTazWSeFWMuiUiswQrunPiLaFU';

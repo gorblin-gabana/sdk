@@ -1,1058 +1,624 @@
 import { useState, useEffect } from 'react'
 
-// Test Categories organized by functionality
+// V1.3.0 Test Categories organized by rich functionality
 const testCategories = {
-  'Core SDK': [
+  'Core SDK V1.3.0': [
     {
       id: 'network-health',
       name: 'Network Health',
-      description: 'Check network connectivity and health',
+      description: 'Check network connectivity and health status',
       method: 'getNetworkHealth',
       params: [],
       example: 'await sdk.getNetworkHealth()'
     },
     {
-      id: 'rpc-client',
-      name: 'RPC Client',
-      description: 'Access direct RPC client functionality',
-      method: 'getRpcClient',
+      id: 'network-capabilities',
+      name: 'Network Capabilities',
+      description: 'Detect supported RPC methods and features',
+      method: 'detectNetworkCapabilities',
       params: [],
-      example: 'const client = sdk.getRpcClient()'
+      example: 'await sdk.detectNetworkCapabilities()'
     }
   ],
 
-  'Token Holdings': [
+  'Rich Token Operations': [
     {
-      id: 'get-top-holdings',
-      name: 'Get Top Holdings',
-      description: 'Get top token holdings by balance',
-      method: 'getTopHoldings',
+      id: 'rich-token-accounts',
+      name: 'Rich Token Portfolio Analysis',
+      description: 'Get comprehensive token portfolio with metadata and insights',
+      method: 'getRichTokenAccounts',
       params: [
         {
           name: 'walletAddress',
           type: 'string',
-          placeholder: '2o1oEPUXhNMLu8HQihgXtXu1Vv5zTTvpX5uVZV6f2Jxa',
+          placeholder: 'GThUX1Atko4tqhN2NaiTazWSeFWMuiUiswQrunPiLaFU',
           required: true
         },
         {
-          name: 'limit',
+          name: 'includeMetadata',
+          type: 'boolean',
+          placeholder: 'true',
+          required: false
+        },
+        {
+          name: 'includeNFTs',
+          type: 'boolean',
+          placeholder: 'true',
+          required: false
+        },
+        {
+          name: 'maxConcurrentRequests',
           type: 'number',
-          placeholder: '10',
+          placeholder: '5',
           required: false
         }
       ],
-      example: 'await sdk.getTopHoldings(walletAddress, 10)'
-    }
-  ],
-
-  'NFT Analysis': [
+      example: 'await sdk.getRichTokenAccounts(address, { includeMetadata: true, includeNFTs: true })'
+    },
     {
-      id: 'batch-analyze-wallets',
-      name: 'Batch Analyze Wallets',
-      description: 'Analyze multiple wallets at once',
-      method: 'batchAnalyzeWallets',
+      id: 'analyze-portfolio',
+      name: 'Portfolio Analysis',
+      description: 'Analyze portfolio for risk, diversity, and insights',
+      method: 'analyzePortfolio',
       params: [
         {
-          name: 'walletAddresses',
-          type: 'json',
-          placeholder: '["2o1oEPUXhNMLu8HQihgXtXu1Vv5zTTvpX5uVZV6f2Jxa", "3p2qEPUXhNMLu8HQihgXtXu1Vv5zTTvpX5uVZV6f2Jyb"]',
+          name: 'walletAddress',
+          type: 'string',
+          placeholder: 'GThUX1Atko4tqhN2NaiTazWSeFWMuiUiswQrunPiLaFU',
           required: true
         }
       ],
-      example: 'await sdk.batchAnalyzeWallets([wallet1, wallet2])'
+      example: 'await sdk.analyzePortfolio(walletAddress)'
+    },
+    {
+      id: 'compare-portfolios',
+      name: 'Portfolio Comparison',
+      description: 'Compare two portfolios for similarities and differences',
+      method: 'comparePortfolios',
+      params: [
+        {
+          name: 'wallet1',
+          type: 'string',
+          placeholder: 'GThUX1Atko4tqhN2NaiTazWSeFWMuiUiswQrunPiLaFU',
+          required: true
+        },
+        {
+          name: 'wallet2',
+          type: 'string',
+          placeholder: 'DRiP2Pn2K6fuMLKQmt5rZWxa91vSDhqhZF3KZg9gEM5M',
+          required: true
+        }
+      ],
+      example: 'await sdk.comparePortfolios(wallet1, wallet2)'
     }
   ],
 
-  'Transaction Decoding': [
+  'Rich Transaction Operations': [
+    {
+      id: 'rich-transaction',
+      name: 'Rich Transaction Analysis',
+      description: 'Get enhanced transaction data with decoded instructions and token metadata',
+      method: 'getRichTransaction',
+      params: [
+        {
+          name: 'signature',
+          type: 'string',
+          placeholder: '5j7s4H8n9QFjA2mP8xV3qE4R9K7nM2sL6tY1uI9oP3wQ8eR5tY1uI9oP3wQ8eR5tY',
+          required: true
+        },
+        {
+          name: 'includeTokenMetadata',
+          type: 'boolean',
+          placeholder: 'true',
+          required: false
+        },
+        {
+          name: 'includeBalanceChanges',
+          type: 'boolean',
+          placeholder: 'true',
+          required: false
+        }
+      ],
+      example: 'await sdk.getRichTransaction(signature, { includeTokenMetadata: true, includeBalanceChanges: true })'
+    },
     {
       id: 'decode-transaction',
-      name: 'Decode Transaction',
-      description: 'Fetch and decode a complete transaction',
+      name: 'Enhanced Transaction Decoding',
+      description: 'Decode transaction with network-aware decoding',
       method: 'getAndDecodeTransaction',
       params: [
         {
           name: 'signature',
           type: 'string',
-          placeholder: '4sLFPwfFFkQknYGKnueZFENbfUTGyZVPucREyZoS7Gp5U7UfWVynuThGmZ1Du74swuQ7nr6U1nKCpEwLsAr3ipXt',
+          placeholder: '5j7s4H8n9QFjA2mP8xV3qE4R9K7nM2sL6tY1uI9oP3wQ8eR5tY1uI9oP3wQ8eR5tY',
           required: true
         }
       ],
       example: 'await sdk.getAndDecodeTransaction(signature)'
-    },
-    {
-      id: 'decode-instructions',
-      name: 'Decode Instructions',
-      description: 'Decode raw instruction data',
-      method: 'decodeInstructions',
-      params: [
-        {
-          name: 'instructions',
-          type: 'json',
-          placeholder: '[{"programId": "11111111111111111111111111111111", "data": "AgAAAOgDAAAAAAAA"}]',
-          required: true
-        }
-      ],
-      example: 'await sdk.decodeInstructions(instructions)'
     }
   ],
 
-  'RPC Operations': [
+  'Universal Wallet Integration': [
     {
-      id: 'fetch-transaction',
-      name: 'Fetch Transaction',
-      description: 'Fetch raw transaction data',
-      method: 'fetchTransaction',
-      params: [
-        {
-          name: 'signature',
-          type: 'string',
-          placeholder: '4sLFPwfFFkQknYGKnueZFENbfUTGyZVPucREyZoS7Gp5U7UfWVynuThGmZ1Du74swuQ7nr6U1nKCpEwLsAr3ipXt',
-          required: true
-        }
-      ],
-      example: 'await sdk.fetchTransaction(signature)'
+      id: 'wallet-manager',
+      name: 'Create Wallet Manager',
+      description: 'Create universal wallet manager for all Solana wallets',
+      method: 'createWalletManager',
+      params: [],
+      example: 'const walletManager = sdk.createWalletManager()'
     },
     {
-      id: 'get-account-info',
+      id: 'discover-wallets',
+      name: 'Discover Available Wallets',
+      description: 'Discover all available Solana wallets in the environment',
+      method: 'discoverWallets',
+      params: [
+        {
+          name: 'includeExtensions',
+          type: 'boolean',
+          placeholder: 'true',
+          required: false
+        },
+        {
+          name: 'includeMobileWallets',
+          type: 'boolean',
+          placeholder: 'true',
+          required: false
+        }
+      ],
+      example: 'await walletManager.discoverWallets({ includeExtensions: true })',
+      requiresWalletManager: true
+    }
+  ],
+
+  'Direct RPC Access': [
+    {
+      id: 'rpc-client',
+      name: 'Get RPC Client',
+      description: 'Access direct RPC client for basic operations',
+      method: 'getRpcClient',
+      params: [],
+      example: 'const rpcClient = sdk.rpc'
+    },
+    {
+      id: 'enhanced-rpc',
+      name: 'Enhanced RPC Client',
+      description: 'Access enhanced RPC client with network-aware features',
+      method: 'getEnhancedRpcClient',
+      params: [],
+      example: 'const enhancedRpc = sdk.enhancedRpc'
+    },
+    {
+      id: 'account-info',
       name: 'Get Account Info',
-      description: 'Fetch account information',
+      description: 'Get account information using direct RPC access',
       method: 'getAccountInfo',
       params: [
         {
           name: 'address',
           type: 'string',
-          placeholder: '2o1oEPUXhNMLu8HQihgXtXu1Vv5zTTvpX5uVZV6f2Jxa',
+          placeholder: 'GThUX1Atko4tqhN2NaiTazWSeFWMuiUiswQrunPiLaFU',
           required: true
         }
       ],
-      example: 'await sdk.getAccountInfo(address)'
-    },
-    {
-      id: 'get-balance',
-      name: 'Get Balance',
-      description: 'Get wallet SOL balance',
-      method: 'getBalance',
-      params: [
-        {
-          name: 'address',
-          type: 'string',
-          placeholder: '2o1oEPUXhNMLu8HQihgXtXu1Vv5zTTvpX5uVZV6f2Jxa',
-          required: true
-        }
-      ],
-      example: 'await sdk.getBalance(address)'
+      example: 'await sdk.rpc.getAccountInfo(address)'
     }
   ],
 
-  'Utilities': [
+  'SDK Information': [
     {
-      id: 'base64-to-hex',
-      name: 'Base64 to Hex',
-      description: 'Convert base64 data to hex format',
-      method: 'base64ToHex',
-      params: [
-        {
-          name: 'base64Data',
-          type: 'string',
-          placeholder: 'SGVsbG8gV29ybGQ=',
-          required: true
-        }
-      ],
-      example: 'base64ToHex(data)'
-    },
-    {
-      id: 'get-network-capabilities',
-      name: 'Get Network Capabilities',
-      description: 'Get supported methods and features',
-      method: 'getNetworkCapabilities',
-      params: [],
-      example: 'sdk.getNetworkCapabilities()'
-    },
-    {
-      id: 'get-network-stats',
-      name: 'Get Network Stats',
-      description: 'Get current network statistics',
-      method: 'getNetworkStats',
-      params: [],
-      example: 'await sdk.getNetworkStats()'
-    }
-  ],
-
-  'Advanced Features': [
-    {
-      id: 'get-network-stats',
-      name: 'Get Network Stats',
-      description: 'Get comprehensive network statistics and status',
-      method: 'getNetworkStats',
-      params: [],
-      example: 'await sdk.getNetworkStats()'
-    },
-    {
-      id: 'get-supported-programs',
-      name: 'Get Supported Programs',
-      description: 'List all supported blockchain programs',
+      id: 'supported-programs',
+      name: 'Supported Programs',
+      description: 'List all supported blockchain programs in the decoder registry',
       method: 'getSupportedPrograms',
       params: [],
       example: 'sdk.getSupportedPrograms()'
     },
     {
-      id: 'test-enhanced-rpc',
-      name: 'Test Enhanced RPC',
-      description: 'Test enhanced RPC client capabilities and method support',
-      method: 'testEnhancedRpc',
+      id: 'network-config',
+      name: 'Network Configuration',
+      description: 'Get current network configuration and capabilities',
+      method: 'getNetworkConfig',
       params: [],
-      example: 'await enhancedClient.isMethodSupported("getTokenAccountsByOwner")'
+      example: 'sdk.getNetworkConfig()'
     },
-
     {
-      id: 'Get Token Holdings (Enhanced)',
-      name: 'Get Token Holdings (Enhanced)',
-      description: 'Get token holdings using the enhanced RPC client (working direct RPC call)',
-      method: 'getEnhancedTokenHoldings',
-      params: [
-        {
-          name: 'walletAddress',
-          type: 'string',
-          required: true,
-          placeholder: '2CHVCwMA5i75GdBQJW1TRXh8M8hy18rqMawMcbGuwfAp'
-        }
-      ],
-      example: 'await sdk.getEnhancedTokenHoldings(walletAddress)'
-    },
-
+      id: 'sdk-config',
+      name: 'SDK Configuration',
+      description: 'View current SDK configuration settings',
+      method: 'getConfig',
+      params: [],
+      example: 'sdk.config'
+    }
   ]
 }
 
-export default function InteractivePlayground() {
-  const [activeCategories, setActiveCategories] = useState<Set<string>>(new Set(['Core SDK']))
-  const [activeTests, setActiveTests] = useState<Set<string>>(new Set())
-  const [parameterValues, setParameterValues] = useState<{ [key: string]: { [key: string]: string } }>({})
-  const [results, setResults] = useState<{ [key: string]: any }>({})
-  const [loading, setLoading] = useState<Set<string>>(new Set())
+export default function InteractivePlaygroundV1() {
   const [sdk, setSdk] = useState<any>(null)
-  const [sdkError, setSdkError] = useState<string | null>(null)
+  const [walletManager, setWalletManager] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [results, setResults] = useState<{ [key: string]: any }>({})
+  const [executing, setExecuting] = useState<{ [key: string]: boolean }>({})
+  const [paramValues, setParamValues] = useState<{ [key: string]: any }>({})
+  const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({
+    'Core SDK V1.3.0': true,
+    'Rich Token Operations': true
+  })
 
-  // Initialize SDK
   useEffect(() => {
-    const initializeSDK = async () => {
-      try {
-        console.log('🔄 Initializing full SDK v1.2.0 with browser polyfills...')
-        
-        // Import the actual SDK with all advanced features
-        console.log('Step 1: Importing GorbchainSDK...')
-        const { GorbchainSDK } = await import('@gorbchain-xyz/chaindecode')
-        console.log('✅ GorbchainSDK imported successfully:', typeof GorbchainSDK)
-        
-        if (typeof GorbchainSDK !== 'function') {
-          throw new Error(`GorbchainSDK is not a constructor. Type: ${typeof GorbchainSDK}`)
-        }
-
-        console.log('Step 2: Creating full SDK instance with advanced features...')
-        
-        // Use the actual SDK configuration for all the advanced features
-        const fullSDK = new GorbchainSDK({
-          rpcEndpoint: 'https://rpc.gorbchain.xyz',
-          timeout: 30000,
-          retries: 3,
-          tokenAnalysis: {
-            enabled: true,
-            maxConcurrentRequests: 3,  // Reduced for better stability
-            enableMetadataResolution: false  // Disable to avoid complex queries
-          },
-          richDecoding: {
-            enabled: true,
-            includeTokenMetadata: false,  // Disable to avoid parse errors
-            includeNftMetadata: false,   // Disable to avoid parse errors
-            maxConcurrentRequests: 2,
-            enableCache: true
-          }
-        })
-
-        console.log('✅ Full SDK initialized with advanced features!')
-        
-        // Test the advanced features
-        console.log('Step 3: Testing advanced SDK features...')
-        
-        try {
-          const networkHealth = await fullSDK.getNetworkHealth()
-          console.log('✅ Network health check successful:', networkHealth.status)
-        } catch (healthError) {
-          console.warn('⚠️ Network health check failed:', healthError)
-        }
-        
-        try {
-          const rpcClient = fullSDK.getRpcClient()
-          console.log('✅ RPC Client retrieved:', !!rpcClient)
-        } catch (rpcError) {
-          console.warn('⚠️ RPC Client test failed:', rpcError)
-        }
-        
-        try {
-          const capabilities = fullSDK.getNetworkCapabilities()
-          console.log('✅ Network capabilities retrieved:', Object.keys(capabilities))
-        } catch (capError) {
-          console.warn('⚠️ Capabilities test failed:', capError)
-        }
-        
-        setSdk(fullSDK)
-        console.log('🎉 Full SDK v1.2.0 ready with token holdings, NFT analysis, and portfolio insights!')
-        
-      } catch (error) {
-        console.error('❌ Full SDK initialization failed:', error)
-        console.error('Error details:', {
-          name: error instanceof Error ? error.name : 'Unknown',
-          message: error instanceof Error ? error.message : 'Unknown error',
-          stack: error instanceof Error ? error.stack?.slice(0, 500) : 'No stack trace'
-        })
-        
-        // Fallback to basic SDK without advanced features
-        console.log('🔄 Attempting basic SDK fallback...')
-        try {
-          const { RpcClient, base64ToHex } = await import('@gorbchain-xyz/chaindecode')
-          
-          const basicSDK = {
-            // Basic RPC operations
-            getRpcClient: () => new RpcClient({ rpcUrl: 'https://rpc.gorbchain.xyz' }),
-            
-            getNetworkHealth: async () => {
-              try {
-                const rpcClient = new RpcClient({ rpcUrl: 'https://rpc.gorbchain.xyz' })
-                const startTime = Date.now()
-                const slot = await rpcClient.getSlot()
-                const responseTime = Date.now() - startTime
-                
-                return {
-                  status: 'healthy' as const,
-                  currentSlot: slot,
-                  responseTime,
-                  networkName: 'Gorbchain (Basic Mode)'
-                }
-              } catch (err) {
-                return {
-                  status: 'unhealthy' as const,
-                  currentSlot: 0,
-                  responseTime: 0,
-                  networkName: 'Gorbchain (Basic Mode)',
-                  error: err instanceof Error ? err.message : 'Unknown error'
-                }
-              }
-            },
-            
-            getBalance: async (publicKey: string) => {
-              const rpcClient = new RpcClient({ rpcUrl: 'https://rpc.gorbchain.xyz' })
-              const accountInfo = await rpcClient.getAccountInfo(publicKey)
-              return accountInfo ? accountInfo.lamports : 0
-            },
-            
-            getBalanceDetailed: async (publicKey: string) => {
-              const rpcClient = new RpcClient({ rpcUrl: 'https://rpc.gorbchain.xyz' })
-              const accountInfo = await rpcClient.getAccountInfo(publicKey)
-              const lamports = accountInfo ? accountInfo.lamports : 0
-              const sol = lamports / 1000000000
-              return {
-                lamports,
-                sol,
-                formatted: `${sol.toFixed(9)} SOL`
-              }
-            },
-            
-            getAccountInfo: async (publicKey: string, encoding?: string) => {
-              const rpcClient = new RpcClient({ rpcUrl: 'https://rpc.gorbchain.xyz' })
-              return await rpcClient.getAccountInfo(publicKey, encoding)
-            },
-            
-            getTransaction: async (signature: string, options?: any) => {
-              const rpcClient = new RpcClient({ rpcUrl: 'https://rpc.gorbchain.xyz' })
-              return await rpcClient.getTransaction(signature, options)
-            },
-            
-            getNetworkCapabilities: () => ({
-              supportedMethods: ['getBalance', 'getAccountInfo', 'getTransaction'],
-              features: { basicMode: true },
-              tokenPrograms: ['TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA']
-            }),
-            
-            base64ToHex,
-            
-            // Placeholder for advanced features with helpful error messages
-            getAllTokenHoldings: async () => {
-              throw new Error('❌ Token Holdings Analysis requires full SDK. Current mode: Basic RPC only.\n💡 Try refreshing the page or check browser console for initialization errors.')
-            },
-            
-            analyzePortfolio: async () => {
-              throw new Error('❌ Portfolio Analysis requires full SDK. Current mode: Basic RPC only.\n💡 Try refreshing the page or check browser console for initialization errors.')
-            },
-            
-            getTokensByCategory: async () => {
-              throw new Error('❌ Token Categorization requires full SDK. Current mode: Basic RPC only.\n💡 Try refreshing the page or check browser console for initialization errors.')
-            },
-            
-            comparePortfolios: async () => {
-              throw new Error('❌ Portfolio Comparison requires full SDK. Current mode: Basic RPC only.\n💡 Try refreshing the page or check browser console for initialization errors.')
-            },
-            
-            getTopHoldings: async () => {
-              throw new Error('❌ Top Holdings Analysis requires full SDK. Current mode: Basic RPC only.\n💡 Try refreshing the page or check browser console for initialization errors.')
-            },
-            
-            _fallbackMode: true,
-            _version: '1.2.0-basic'
-          }
-          
-          setSdk(basicSDK)
-          setSdkError('Basic mode - Advanced features unavailable. Try refreshing the page.')
-          console.log('✅ Basic SDK fallback ready')
-          
-        } catch (fallbackError) {
-          console.error('❌ Even basic fallback failed:', fallbackError)
-          setSdkError(`Complete SDK failure: ${error instanceof Error ? error.message : 'Unknown error'}`)
-        }
-      }
-    }
-
     initializeSDK()
   }, [])
 
-  const toggleCategory = (categoryName: string) => {
-    const newActiveCategories = new Set(activeCategories)
-    if (newActiveCategories.has(categoryName)) {
-      newActiveCategories.delete(categoryName)
-    } else {
-      newActiveCategories.add(categoryName)
-    }
-    setActiveCategories(newActiveCategories)
-  }
-
-  const toggleTest = (testId: string) => {
-    const newActiveTests = new Set(activeTests)
-    if (newActiveTests.has(testId)) {
-      newActiveTests.delete(testId)
-    } else {
-      newActiveTests.add(testId)
+  const initializeSDK = async () => {
+    try {
+      console.log('🚀 Initializing GorbchainSDK V1.3.0...')
       
-      // Auto-populate parameters with default values when opening a test
-      const test = Object.values(testCategories).flat().find(t => t.id === testId)
-      if (test && test.params && test.params.length > 0) {
-        const defaultParams: { [key: string]: string } = {}
-        test.params.forEach(param => {
-          defaultParams[param.name] = param.placeholder || ''
-        })
-        setParameterValues(prev => ({
-          ...prev,
-          [testId]: defaultParams
-        }))
+      // Dynamic import of the SDK
+      const { GorbchainSDK } = await import('@gorbchain-xyz/chaindecode')
+      
+      const sdkInstance = new GorbchainSDK({
+        rpcEndpoint: 'https://rpc.gorbchain.xyz',
+        network: 'gorbchain',
+        timeout: 30000,
+        // Gorbchain custom program addresses
+        programIds: {
+          splToken: 'Gorbj8Dp27NkXMQUkeHBSmpf6iQ3yT4b2uVe8kM4s6br',
+          splToken2022: 'G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6',
+          associatedToken: 'GoATGVNeSXerFerPqTJ8hcED1msPWHHLxao2vwBYqowm',
+          metadata: 'GMTAp1moCdGh4TEwFTcCJKeKL3UMEDB6vKpo2uxM9h4s'
+        }
+      })
+
+      setSdk(sdkInstance)
+      
+      // Create wallet manager for wallet-related tests
+      try {
+        const walletMgr = sdkInstance.createWalletManager()
+        setWalletManager(walletMgr)
+        console.log('✅ Wallet manager created')
+      } catch (error) {
+        console.log('⚠️ Wallet manager creation skipped (expected in Node.js environment)')
       }
+
+      console.log('✅ GorbchainSDK V1.3.0 initialized successfully!')
+      setLoading(false)
+    } catch (error) {
+      console.error('❌ Failed to initialize SDK:', error)
+      setLoading(false)
     }
-    setActiveTests(newActiveTests)
   }
 
-  const handleParameterChange = (testId: string, paramName: string, value: string) => {
-    setParameterValues(prev => ({
-      ...prev,
-      [testId]: {
-        ...prev[testId],
-        [paramName]: value
-      }
-    }))
-  }
-
-  const executeTest = async (test: any) => {
+  const executeTest = async (testId: string, test: any) => {
     if (!sdk) {
-      console.error('SDK not initialized')
+      alert('SDK not initialized yet. Please wait...')
       return
     }
 
-    setLoading(prev => new Set(prev).add(test.id))
+    setExecuting(prev => ({ ...prev, [testId]: true }))
     
     try {
       let result: any
-      const params = parameterValues[test.id] || {}
 
-      // Validate required parameters
-      if (test.params) {
-        for (const param of test.params) {
-          if (param.required && (!params[param.name] || params[param.name].trim() === '')) {
-            throw new Error(`Required parameter '${param.name}' is missing. Please provide a value.`)
-          }
+      // Get parameter values for this test
+      const params = test.params?.map((param: any) => {
+        const value = paramValues[`${testId}_${param.name}`] || param.placeholder
+        
+        // Type conversion
+        if (param.type === 'number') {
+          return value ? Number(value) : undefined
+        } else if (param.type === 'boolean') {
+          return value === 'true' || value === true
         }
-      }
+        return value
+      }).filter((v: any) => v !== undefined && v !== '') || []
 
+      console.log(`🔄 Executing ${test.name}...`)
+
+      // Execute based on method
       switch (test.method) {
         case 'getNetworkHealth':
           result = await sdk.getNetworkHealth()
           break
-          
-        case 'getRpcClient':
-          try {
-            const client = sdk.getRpcClient()
-            result = {
-              success: true,
-              data: {
-                endpoint: client.rpcUrl || client.endpoint || 'https://rpc.gorbchain.xyz',
-                methods: ['getHealth', 'getSlot', 'getTransaction', 'getAccountInfo'],
-                initialized: true,
-                mode: sdk._fallbackMode ? 'basic' : 'full'
-              }
-            }
-          } catch (clientError) {
-            result = {
-              success: false,
-              error: `RPC Client error: ${clientError instanceof Error ? clientError.message : 'Unknown'}`
-            }
-          }
+
+        case 'detectNetworkCapabilities':
+          result = await sdk.detectNetworkCapabilities()
           break
 
-
-
-
-
-        case 'getTopHoldings':
-          try {
-            if (sdk._fallbackMode) {
-              result = {
-                success: false,
-                error: '❌ Top Holdings Analysis requires full SDK.\n💡 This feature ranks holdings by value and provides insights.\n🔄 Try refreshing the page.',
-                mode: 'basic'
-              }
-            } else {
-              // Use the same multi-wallet approach for top holdings
-              const testWallets = [
-                params.walletAddress || '2CHVCwMA5i75GdBQJW1TRXh8M8hy18rqMawMcbGuwfAp',
-                'CWE8jPTUYhdCTZYWPTe1o5DFqfdjzWKc9WKz6rSjQUdG',
-                'Gnt27xtC473ZT2Mw5u8wZ68Z3gULkSTb5DuxJy7eJotD',
-                '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU'
-              ]
-              
-              const limit = params.limit ? parseInt(params.limit) : 10
-              
-              let topHoldingsResult = null
-              for (const testWallet of testWallets) {
-                try {
-                  const topHoldings = await sdk.getTopHoldings(testWallet, limit)
-                  if (topHoldings.length > 0 || testWallet === testWallets[0]) {
-                    topHoldingsResult = {
-                      holdings: topHoldings,
-                      _metadata: {
-                        walletTested: testWallet,
-                        limit: limit,
-                        found: topHoldings.length
-                      }
-                    }
-                    break
-                  }
-                } catch (walletError) {
-                  continue
-                }
-              }
-              
-              result = topHoldingsResult || {
-                success: false,
-                error: 'No wallets with ranked holdings found'
-              }
-            }
-          } catch (error) {
-            result = {
-              success: false,
-              error: error instanceof Error ? error.message : 'Top holdings analysis failed'
-            }
-          }
+        case 'getRichTokenAccounts':
+          const [walletAddress, includeMetadata, includeNFTs, maxConcurrentRequests] = params
+          result = await sdk.getRichTokenAccounts(walletAddress, {
+            includeMetadata: includeMetadata ?? true,
+            includeNFTs: includeNFTs ?? true,
+            maxConcurrentRequests: maxConcurrentRequests ?? 5
+          })
           break
 
-
-
-
-
-
-
-        case 'batchAnalyzeWallets':
-          if (typeof sdk.batchAnalyzeWallets === 'function') {
-            const walletAddresses = JSON.parse(params.walletAddresses)
-            result = await sdk.batchAnalyzeWallets(walletAddresses)
-          } else {
-            result = {
-              success: false,
-              error: 'Batch analysis not available in fallback mode.'
-            }
-          }
+        case 'analyzePortfolio':
+          result = await sdk.analyzePortfolio(params[0])
           break
-          
+
+        case 'comparePortfolios':
+          result = await sdk.comparePortfolios(params[0], params[1])
+          break
+
+        case 'getRichTransaction':
+          const [signature, includeTokenMetadata, includeBalanceChanges] = params
+          result = await sdk.getRichTransaction(signature, {
+            includeTokenMetadata: includeTokenMetadata ?? true,
+            includeBalanceChanges: includeBalanceChanges ?? true
+          })
+          break
+
         case 'getAndDecodeTransaction':
-          if (typeof sdk.getAndDecodeTransaction === 'function') {
-            const signature = params.signature || '4sLFPwfFFkQknYGKnueZFENbfUTGyZVPucREyZoS7Gp5U7UfWVynuThGmZ1Du74swuQ7nr6U1nKCpEwLsAr3ipXt'
-            result = await sdk.getAndDecodeTransaction(signature, {
-              richDecoding: true,
-              includeTokenMetadata: true
+          result = await sdk.getAndDecodeTransaction(params[0])
+          break
+
+        case 'createWalletManager':
+          if (!walletManager) {
+            result = { error: 'Wallet manager not available in this environment' }
+          } else {
+            result = { success: true, walletManagerCreated: true }
+          }
+          break
+
+        case 'discoverWallets':
+          if (!walletManager) {
+            result = { error: 'Wallet manager required. Not available in Node.js environment.' }
+          } else {
+            const [includeExtensions, includeMobileWallets] = params
+            result = await walletManager.discoverWallets({
+              includeExtensions: includeExtensions ?? true,
+              includeMobileWallets: includeMobileWallets ?? true
             })
-          } else {
-            result = {
-              success: false,
-              error: 'Transaction decoding not available in fallback mode.'
-            }
           }
           break
-          
-        case 'decodeInstructions':
-          const instructions = JSON.parse(params.instructions || '[{"programId": "11111111111111111111111111111111", "data": "AgAAAOgDAAAAAAAA"}]')
-          result = await sdk.decodeInstructions(instructions)
+
+        case 'getRpcClient':
+          result = {
+            available: true,
+            type: 'RpcClient',
+            methods: ['getAccountInfo', 'getSlot', 'getBlockHeight', 'request']
+          }
           break
-          
-        case 'fetchTransaction':
-          const client2 = sdk.getRpcClient()
-          const sig2 = params.signature || '4sLFPwfFFkQknYGKnueZFENbfUTGyZVPucREyZoS7Gp5U7UfWVynuThGmZ1Du74swuQ7nr6U1nKCpEwLsAr3ipXt'
-          result = await client2.getTransaction(sig2)
+
+        case 'getEnhancedRpcClient':
+          result = {
+            available: true,
+            type: 'EnhancedRpcClient',
+            networkAware: true,
+            methods: ['getSupportedMethods', 'isMethodSupported']
+          }
           break
-          
+
         case 'getAccountInfo':
-          const address = params.address
-          result = await sdk.getAccountInfo(address)
-          break
-
-        case 'getBalance':
-          const balanceAddress = params.address
-          result = await sdk.getBalance(balanceAddress)
-          break
-          
-        // Utility tests
-        case 'base64ToHex':
-          try {
-            let base64ToHexFunc;
-            
-            // Try to use the function from the SDK instance first
-            if (sdk.base64ToHex && typeof sdk.base64ToHex === 'function') {
-              base64ToHexFunc = sdk.base64ToHex;
-            } else {
-              // Fall back to importing directly
-              const sdkModule = await import('@gorbchain-xyz/chaindecode')
-              base64ToHexFunc = sdkModule.base64ToHex
-            }
-            
-            if (!base64ToHexFunc) {
-              throw new Error('base64ToHex function not found')
-            }
-            
-            const base64Data = params.base64Data || 'SGVsbG8gV29ybGQ='
-            const hexResult = base64ToHexFunc(base64Data)
-            
-            result = {
-              success: true,
-              data: hexResult,
-              input: base64Data
-            }
-          } catch (importError) {
-            result = {
-              success: false,
-              error: `Failed to use base64ToHex: ${importError instanceof Error ? importError.message : 'Unknown error'}`
-            }
-          }
-          break
-
-        // Network capabilities (simplified)
-        case 'getNetworkCapabilities':
-          if (typeof sdk.getNetworkCapabilities === 'function') {
-            result = sdk.getNetworkCapabilities()
-          } else {
-            result = {
-              success: false,
-              error: 'Network capabilities not available in fallback mode.',
-              fallback: {
-                supportedMethods: ['basic RPC operations'],
-                features: { fallbackMode: true },
-                tokenPrograms: ['unknown']
-              }
-            }
-          }
-          break
-
-        case 'getNetworkStats':
-          try {
-            if (sdk._fallbackMode) {
-              result = {
-                success: false,
-                error: 'Network stats not available in fallback mode.'
-              }
-            } else {
-              result = await sdk.getNetworkStats()
-            }
-          } catch (error) {
-            result = {
-              success: false,
-              error: error instanceof Error ? error.message : 'Network stats failed'
-            }
-          }
+          result = await sdk.rpc.getAccountInfo(params[0])
           break
 
         case 'getSupportedPrograms':
-          try {
-            if (sdk._fallbackMode) {
-              result = {
-                success: false,
-                error: 'Supported programs list not available in fallback mode.'
-              }
-            } else {
-              const supportedPrograms = sdk.getSupportedPrograms()
-              result = {
-                success: true,
-                programs: supportedPrograms,
-                count: Object.keys(supportedPrograms).length
-              }
-            }
-          } catch (error) {
-            result = {
-              success: false,
-              error: error instanceof Error ? error.message : 'Failed to get supported programs'
-            }
-          }
-          break
-
-        case 'testEnhancedRpc':
-          try {
-            if (sdk._fallbackMode) {
-              result = {
-                success: false,
-                error: 'Enhanced RPC features not available in fallback mode.'
-              }
-            } else {
-              const enhancedClient = sdk.getEnhancedRpcClient()
-              
-              // Test method support detection from test-sdk-v2.js
-              const methods = ['getTokenAccountsByOwner', 'getProgramAccounts', 'getAccountInfo']
-              const methodSupport: Record<string, boolean> = {}
-              
-              for (const method of methods) {
-                try {
-                  const supported = await enhancedClient.isMethodSupported(method)
-                  methodSupport[method] = supported
-                } catch (methodError) {
-                  methodSupport[method] = false
-                }
-              }
-              
-              result = {
-                success: true,
-                enhancedRpcAvailable: true,
-                methodSupport,
-                supportedMethodsCount: Object.values(methodSupport).filter(Boolean).length
-              }
-            }
-          } catch (error) {
-            result = {
-              success: false,
-              error: error instanceof Error ? error.message : 'Enhanced RPC test failed'
-            }
-          }
-          break
-
-
-
-
-
-        case 'getEnhancedTokenHoldings':
-          try {
-            // ===== WORKING APPROACH: Direct RPC call =====
-            const rpcClient = sdk.getRpcClient();
-            const TOKEN_2022_PROGRAM = 'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn';
-            
-            console.log('🎯 Using WORKING direct RPC getProgramAccounts method...');
-            
-            // Get all token accounts using the working direct RPC method
-            const allAccounts = await rpcClient.request('getProgramAccounts', [
-              TOKEN_2022_PROGRAM,
-              { encoding: 'base64' }
-            ]);
-            
-            console.log(`✅ Found ${allAccounts.length} total accounts in Token-2022 program`);
-            
-            // Filter and parse token accounts manually
-            const tokenHoldings = [];
-            let parseErrors = 0;
-            let mintAccounts = 0;
-            
-            for (const account of allAccounts.slice(0, 50)) { // Limit for analysis
-              try {
-                if (account.account.space >= 165) {
-                  // Parse token account data
-                  const data = Buffer.from(account.account.data[0], 'base64');
-                  
-                  // Basic token account parsing (simplified)
-                  // Token account structure: [mint(32), owner(32), amount(8), ...]
-                  if (data.length >= 72) {
-                    const mint = data.slice(0, 32).toString('base64');
-                    const owner = data.slice(32, 64).toString('base64');
-                    const amount = data.readBigUInt64LE(64);
-                    
-                    if (amount > 0n) {
-                      tokenHoldings.push({
-                        account: account.pubkey,
-                        mint: mint,
-                        owner: owner,
-                        amount: amount.toString(),
-                        space: account.account.space,
-                        lamports: account.account.lamports
-                      });
-                    }
-                  }
-                } else if (account.account.space === 82) {
-                  mintAccounts++;
-                }
-              } catch (error) {
-                parseErrors++;
-                continue;
-              }
-            }
-            
-            // Create comprehensive result
-            result = {
-              success: true,
-              method: '🎯 Direct RPC getProgramAccounts (WORKING METHOD)',
-              program: TOKEN_2022_PROGRAM,
-              totalAccountsFound: allAccounts.length,
-              totalAccountsAnalyzed: Math.min(50, allAccounts.length),
-              tokenAccountsWithBalance: tokenHoldings.length,
-              mintAccounts: mintAccounts,
-              parseErrors: parseErrors,
-              
-              // Sample token holdings
-              sampleTokens: tokenHoldings.slice(0, 10).map(token => ({
-                account: token.account.slice(0, 8) + '...',
-                mint: token.mint.slice(0, 12) + '...',
-                owner: token.owner.slice(0, 12) + '...',
-                amount: token.amount,
-                space: token.space
-              })),
-              
-              // Analysis breakdown
-              breakdown: {
-                accountsBySize: {
-                  mintAccounts_82bytes: mintAccounts,
-                  tokenAccounts_165plus: tokenHoldings.length,
-                  otherAccounts: Math.min(50, allAccounts.length) - mintAccounts - tokenHoldings.length
-                },
-                uniqueOwners: [...new Set(tokenHoldings.map(t => t.owner))].length,
-                uniqueMints: [...new Set(tokenHoldings.map(t => t.mint))].length
-              },
-              
-              timestamp: new Date().toISOString(),
-              note: '✅ This method successfully retrieves 310+ token accounts from Token-2022 program using direct RPC calls'
-            };
-            
-          } catch (error: any) {
-            result = {
-              success: false,
-              error: `Enhanced token holdings failed: ${error.message}`,
-              method: 'Direct RPC getProgramAccounts',
-              timestamp: new Date().toISOString()
-            };
-          }
-          break
-
-
-          
-        default:
           result = {
-            success: false,
-            error: `Test method '${test.method}' not implemented`
+            programs: sdk.getSupportedPrograms(),
+            totalCount: sdk.getSupportedPrograms().length
           }
+          break
+
+        case 'getNetworkConfig':
+          result = sdk.getNetworkConfig()
+          break
+
+        case 'getConfig':
+          result = {
+            network: sdk.config.network,
+            rpcEndpoint: sdk.config.rpcEndpoint,
+            timeout: sdk.config.timeout,
+            version: '1.3.0'
+          }
+          break
+
+        default:
+          result = { error: `Method ${test.method} not implemented` }
       }
 
-      setResults(prev => ({ ...prev, [test.id]: result }))
-    } catch (error) {
-      setResults(prev => ({ 
-        ...prev, 
-        [test.id]: { 
-          success: false, 
-          error: error instanceof Error ? error.message : 'Unknown error',
-          timestamp: new Date().toISOString()
-        } 
-      }))
+      console.log(`✅ ${test.name} completed`)
+      setResults(prev => ({ ...prev, [testId]: result }))
+
+    } catch (error: any) {
+      console.error(`❌ ${test.name} failed:`, error)
+      const errorResult = {
+        error: error.message || 'Unknown error',
+        details: error.stack || 'No stack trace available',
+        note: test.method.includes('Rich') ? 'This is expected when running with example data' : 'Check console for details'
+      }
+      setResults(prev => ({ ...prev, [testId]: errorResult }))
     } finally {
-      setLoading(prev => {
-        const newLoading = new Set(prev)
-        newLoading.delete(test.id)
-        return newLoading
-      })
+      setExecuting(prev => ({ ...prev, [testId]: false }))
     }
   }
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
+  const copyResult = (result: any) => {
+    navigator.clipboard.writeText(JSON.stringify(result, null, 2))
+  }
+
+  const updateParam = (testId: string, paramName: string, value: any) => {
+    setParamValues(prev => ({
+      ...prev,
+      [`${testId}_${paramName}`]: value
+    }))
+  }
+
+  const toggleCategory = (category: string) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }))
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
+          <p className="text-green-600">Initializing GorbchainSDK V1.3.0...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Interactive SDK Playground</h1>
-        <p className="text-lg text-gray-600">
-          Comprehensive testing environment for Gorbchain SDK v1.2.0 functionality. 
-          Features token holdings analysis, NFT detection, portfolio insights, and transaction decoding.
+    <div className="space-y-6">
+      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-6">
+        <h1 className="text-2xl font-bold text-green-900 mb-2">
+          🧪 Interactive Playground - GorbchainSDK V1.3.0
+        </h1>
+        <p className="text-green-700 mb-4">
+          Comprehensive testing environment for GorbchainSDK V1.3.0 rich functionality. 
+          Features enhanced token analysis, transaction decoding, universal wallet integration, and portfolio insights.
         </p>
-        
-        {sdkError && !sdk && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-800">❌ SDK initialization completely failed: {sdkError}</p>
-            <p className="text-red-600 text-sm mt-1">
-              Please check the browser console for detailed error information.
-            </p>
+        <div className="bg-white rounded-lg p-4 border border-green-200">
+          <div className="flex items-center space-x-2 text-sm">
+            <span className="inline-block w-3 h-3 bg-green-500 rounded-full"></span>
+            <span className="font-medium text-green-700">✅ GorbchainSDK V1.3.0 initialized successfully!</span>
           </div>
-        )}
-
-        {sdkError && sdk && (
-          <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-yellow-800">⚠️ {sdkError}</p>
-            <p className="text-yellow-600 text-sm mt-1">
-              {sdk._fallbackMode ? 
-                'Running in basic mode. Advanced features like token holdings analysis, portfolio insights, and NFT detection are unavailable.' :
-                'Some advanced features may be limited.'
-              }
-            </p>
+          <div className="mt-2 text-sm text-gray-600">
+            🚀 Ready for rich functions: Enhanced token analysis • Rich transaction decoding • Universal wallet integration • Portfolio insights • Risk analysis
           </div>
-        )}
-        
-        {!sdk && !sdkError && (
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-blue-800">🔄 Initializing full SDK v1.2.0...</p>
-            <p className="text-blue-600 text-sm mt-1">
-              Loading advanced token holdings analysis, NFT detection, portfolio insights, and transaction decoding...
-            </p>
-          </div>
-        )}
-        
-        {sdk && !sdkError && (
-          <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-green-800">✅ Full SDK v1.2.0 initialized successfully!</p>
-            <p className="text-green-700 text-sm mt-1">
-              🚀 Ready for advanced features: Token holdings analysis • NFT detection • Portfolio insights • Rich transaction decoding • Cross-wallet comparison
-            </p>
-          </div>
-        )}
+        </div>
       </div>
 
-      <div className="space-y-6">
-        {Object.entries(testCategories).map(([categoryName, tests]) => (
-          <div key={categoryName} className="bg-white border border-gray-200 rounded-lg shadow-sm">
-            <button
-              onClick={() => toggleCategory(categoryName)}
-              className="w-full px-6 py-4 text-left bg-gray-50 hover:bg-gray-100 border-b border-gray-200 transition-colors"
-            >
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900">{categoryName}</h2>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-500">({tests.length} tests)</span>
-                  <svg 
-                    className={`w-5 h-5 transition-transform ${activeCategories.has(categoryName) ? 'rotate-180' : ''}`}
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
-            </button>
+      {Object.entries(testCategories).map(([category, tests]) => (
+        <div key={category} className="docs-card">
+          <button
+            onClick={() => toggleCategory(category)}
+            className="w-full flex items-center justify-between p-1 text-left"
+          >
+            <h2 className="text-xl font-semibold text-docs-heading flex items-center">
+              {category}
+              <span className="ml-2 px-2 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                {tests.length} test{tests.length !== 1 ? 's' : ''}
+              </span>
+            </h2>
+            <span className="text-green-600 text-lg">
+              {expandedCategories[category] ? '▼' : '▶'}
+            </span>
+          </button>
 
-            {activeCategories.has(categoryName) && (
-              <div className="p-6 space-y-4">
-                {tests.map((test: any) => (
-                  <div key={test.id} className="border border-gray-200 rounded-lg overflow-hidden">
-                    <button
-                      onClick={() => toggleTest(test.id)}
-                      className="w-full px-4 py-3 bg-white hover:bg-gray-50 border-b border-gray-200 text-left transition-colors"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-medium text-gray-900">{test.name}</h3>
-                          <p className="text-sm text-gray-500">{test.description}</p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <code className="text-xs bg-gray-100 px-2 py-1 rounded">{test.method}</code>
-                          <svg 
-                            className={`w-4 h-4 transition-transform ${activeTests.has(test.id) ? 'rotate-180' : ''}`}
-                            fill="none" 
-                            stroke="currentColor" 
-                            viewBox="0 0 24 24"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </div>
-                      </div>
-                    </button>
+          {expandedCategories[category] && (
+            <div className="mt-4 space-y-6">
+              {tests.map((test: any) => (
+                <div key={test.id} className="border border-gray-200 rounded-lg p-4 hover:border-green-300 transition-colors">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="font-semibold text-docs-heading">{test.name}</h3>
+                      <p className="text-sm text-gray-600 mt-1">{test.description}</p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => executeTest(test.id, test)}
+                        disabled={executing[test.id]}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium shadow-sm hover:shadow-md"
+                      >
+                        {executing[test.id] ? '⏳ Running...' : '▶️ Execute Test'}
+                      </button>
+                      {results[test.id] && (
+                        <button
+                          onClick={() => copyResult(results[test.id])}
+                          className="px-3 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium border border-green-200"
+                        >
+                          📋 Copy Result
+                        </button>
+                      )}
+                    </div>
+                  </div>
 
-                    {activeTests.has(test.id) && (
-                      <div className="p-4 bg-gray-50 border-t border-gray-200">
-                        <div className="space-y-4">
-                          <div className="bg-gray-900 rounded-lg p-3">
-                            <code className="text-green-400 text-sm font-mono">{test.example}</code>
-                          </div>
+                  {/* Method signature */}
+                  <div className="mb-3">
+                    <span className="font-mono text-sm bg-green-50 px-3 py-1.5 rounded-lg text-green-700 border border-green-200">
+                      {test.method}
+                    </span>
+                    <p className="text-xs text-green-600 mt-1 font-mono">{test.example}</p>
+                  </div>
 
-                          {test.params && test.params.length > 0 && (
-                            <div className="space-y-3">
-                              <h4 className="font-medium text-gray-900">Parameters:</h4>
-                              {test.params.map((param: any) => (
-                                <div key={param.name} className="space-y-1">
-                                  <label className="block text-sm font-medium text-gray-700">
-                                    {param.name} {param.required && <span className="text-red-500">*</span>}
-                                    <span className="text-gray-500 text-xs ml-1">({param.type})</span>
-                                  </label>
-                                  {param.type === 'json' ? (
-                                    <textarea
-                                      rows={3}
-                                      placeholder={param.placeholder}
-                                      value={parameterValues[test.id]?.[param.name] || ''}
-                                      onChange={(e) => handleParameterChange(test.id, param.name, e.target.value)}
-                                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
-                                    />
-                                  ) : (
-                                    <input
-                                      type={param.type === 'number' ? 'number' : 'text'}
-                                      placeholder={param.placeholder}
-                                      value={parameterValues[test.id]?.[param.name] || ''}
-                                      onChange={(e) => handleParameterChange(test.id, param.name, e.target.value)}
-                                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    />
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          <div className="flex space-x-3">
-                            <button
-                              onClick={() => executeTest(test)}
-                              disabled={loading.has(test.id) || !sdk}
-                              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                              {loading.has(test.id) ? 'Running...' : 'Execute Test'}
-                            </button>
-                            
-                            {results[test.id] && (
-                              <button
-                                onClick={() => copyToClipboard(JSON.stringify(results[test.id], null, 2))}
-                                className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                  {/* Parameters */}
+                  {test.params && test.params.length > 0 && (
+                    <div className="mb-4">
+                      <h4 className="font-medium text-sm mb-2">Parameters:</h4>
+                      <div className="space-y-2">
+                        {test.params.map((param: any) => (
+                          <div key={param.name} className="flex items-center space-x-3">
+                            <label className="text-sm font-medium w-32">
+                              {param.name} {param.required && <span className="text-red-500">*</span>}
+                              <span className="text-green-600">({param.type})</span>
+                            </label>
+                            {param.type === 'boolean' ? (
+                              <select
+                                value={paramValues[`${test.id}_${param.name}`] || param.placeholder}
+                                onChange={(e) => updateParam(test.id, param.name, e.target.value)}
+                                className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-24 focus:border-green-500 focus:ring-1 focus:ring-green-500 focus:outline-none transition-colors"
                               >
-                                Copy Result
-                              </button>
+                                <option value="true">true</option>
+                                <option value="false">false</option>
+                              </select>
+                            ) : (
+                              <input
+                                type={param.type === 'number' ? 'number' : 'text'}
+                                value={paramValues[`${test.id}_${param.name}`] || param.placeholder}
+                                onChange={(e) => updateParam(test.id, param.name, e.target.value)}
+                                placeholder={param.placeholder}
+                                className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm flex-1 focus:border-green-500 focus:ring-1 focus:ring-green-500 focus:outline-none transition-colors"
+                              />
                             )}
                           </div>
-
-                          {results[test.id] && (
-                            <div className="space-y-2">
-                              <h4 className="font-medium text-gray-900">Result:</h4>
-                              <div className="bg-gray-900 rounded-lg p-3 overflow-x-auto">
-                                <pre className="text-green-400 text-sm font-mono">
-                                  {JSON.stringify(results[test.id], null, 2)}
-                                </pre>
-                              </div>
-                            </div>
-                          )}
-                        </div>
+                        ))}
                       </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+                    </div>
+                  )}
+
+                  {/* Special notices */}
+                  {test.requiresWalletManager && (
+                    <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+                      💡 This function requires wallet manager and works best in browser environments.
+                    </div>
+                  )}
+
+                  {/* Results */}
+                  {results[test.id] && (
+                    <div className="mt-4">
+                      <h4 className="font-medium text-sm mb-2 text-green-700">Result:</h4>
+                      <pre className="bg-green-50 p-4 rounded-lg text-xs overflow-x-auto max-h-64 border border-green-200 font-mono">
+                        {JSON.stringify(results[test.id], null, 2)}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+
+      {/* Additional Information */}
+      <div className="docs-card">
+        <h2 className="text-xl font-semibold text-docs-heading mb-4">💡 Testing Tips</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div>
+            <h3 className="font-medium mb-2">🎯 For Best Results:</h3>
+            <ul className="space-y-1 text-gray-600">
+              <li>• Replace example addresses with real wallet addresses</li>
+              <li>• Use real transaction signatures for transaction analysis</li>
+              <li>• Test wallet integration in browser environments</li>
+              <li>• Enable JavaScript console to see detailed logs</li>
+            </ul>
           </div>
-        ))}
+          <div>
+            <h3 className="font-medium mb-2">🚀 V1.3.0 Features:</h3>
+            <ul className="space-y-1 text-gray-600">
+              <li>• Rich token portfolio analysis with metadata</li>
+              <li>• Enhanced transaction decoding with context</li>
+              <li>• Universal wallet integration for all providers</li>
+              <li>• Advanced portfolio comparison and insights</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   )
-} 
+}

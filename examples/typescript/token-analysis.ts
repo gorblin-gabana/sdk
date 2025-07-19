@@ -6,20 +6,23 @@
  */
 
 import { GorbchainSDK, getRichTokenAccountsByOwner } from '@gorbchain-xyz/chaindecode';
+import { EXAMPLE_SDK_CONFIG, EXAMPLE_ADDRESSES, GORBCHAIN_PROGRAMS } from '../shared/example-data.js';
 
 async function richTokenAnalysisExample() {
   console.log('🎯 GorbchainSDK V1 - Rich Token Analysis Example\n');
 
-  // Initialize SDK
-  const sdk = new GorbchainSDK({
-    rpcEndpoint: 'https://api.mainnet-beta.solana.com',
-    network: 'solana-mainnet'
-  });
+  // Initialize SDK with Gorbchain custom program addresses
+  const sdk = new GorbchainSDK(EXAMPLE_SDK_CONFIG);
 
   // Example wallet with diverse portfolio (replace with real address for testing)
-  const walletAddress = 'GThUX1Atko4tqhN2NaiTazWSeFWMuiUiswQrunPiLaFU';
+  const walletAddress = EXAMPLE_ADDRESSES.foundation;
 
   console.log(`📱 Analyzing portfolio for: ${walletAddress.substring(0, 8)}...\n`);
+  console.log('🔧 Using Gorbchain Custom Token Programs:');
+  console.log(`  SPL Token: ${GORBCHAIN_PROGRAMS.SPL_TOKEN.substring(0, 8)}...`);
+  console.log(`  SPL Token 2022: ${GORBCHAIN_PROGRAMS.SPL_TOKEN_2022.substring(0, 8)}...`);
+  console.log(`  Associated Token: ${GORBCHAIN_PROGRAMS.ASSOCIATED_TOKEN.substring(0, 8)}...`);
+  console.log(`  Metadata: ${GORBCHAIN_PROGRAMS.METADATA.substring(0, 8)}...\n`);
 
   try {
     // Method 1: Using SDK instance method

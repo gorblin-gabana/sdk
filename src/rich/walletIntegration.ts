@@ -15,6 +15,7 @@ import type { GorbchainSDK } from '../sdk/GorbchainSDK.js';
  * Supported wallet types
  */
 export type WalletType = 
+  | 'trashpack'  // Official Gorbchain wallet
   | 'phantom' 
   | 'solflare' 
   | 'backpack' 
@@ -195,6 +196,7 @@ export class UniversalWalletManager {
 
     // Check for browser extension wallets
     const browserWallets: Array<{type: WalletType, name: string, key: string, icon?: string, downloadUrl?: string}> = [
+      { type: 'trashpack', name: 'TrashPack', key: 'trashpack', icon: 'https://trashpack.tech/icon.png', downloadUrl: 'https://trashpack.tech/' },
       { type: 'phantom', name: 'Phantom', key: 'phantom', icon: 'https://phantom.app/img/logo.png', downloadUrl: 'https://phantom.app/' },
       { type: 'solflare', name: 'Solflare', key: 'solflare', icon: 'https://solflare.com/assets/logo.svg', downloadUrl: 'https://solflare.com/' },
       { type: 'backpack', name: 'Backpack', key: 'backpack', downloadUrl: 'https://backpack.app/' },
@@ -362,7 +364,7 @@ export class UniversalWalletManager {
     onlyPrevious?: boolean;
   } = {}): Promise<RichWallet | null> {
     const {
-      preferredWallets = ['phantom', 'solflare', 'backpack'],
+      preferredWallets = ['trashpack', 'phantom', 'solflare', 'backpack'],
       includePortfolio = true,
       onlyPrevious = false
     } = options;
@@ -505,6 +507,8 @@ export class UniversalWalletManager {
     const globalWindow = window as any;
     
     switch (walletType) {
+      case 'trashpack':
+        return !!(globalWindow.trashpack?.isTrashPack);
       case 'phantom':
         return !!(globalWindow.phantom?.solana?.isPhantom);
       case 'solflare':
@@ -607,6 +611,9 @@ export class UniversalWalletManager {
       const globalWindow = window as any;
 
       switch (walletType) {
+        case 'trashpack':
+          provider = globalWindow.trashpack;
+          break;
         case 'phantom':
           provider = globalWindow.phantom?.solana;
           break;
@@ -669,6 +676,7 @@ export class UniversalWalletManager {
 
   private getWalletFeatures(walletType: WalletType): string[] {
     const features: Record<WalletType, string[]> = {
+      trashpack: ['signTransaction', 'signMessage', 'signAllTransactions', 'signAndSendTransaction', 'connect', 'disconnect'],
       phantom: ['signTransaction', 'signMessage', 'connect', 'disconnect'],
       solflare: ['signTransaction', 'signMessage', 'connect', 'disconnect'],
       backpack: ['signTransaction', 'signMessage', 'connect', 'disconnect'],
@@ -724,6 +732,7 @@ export class UniversalWalletManager {
 
   private getWalletName(walletType: WalletType): string {
     const names: Record<WalletType, string> = {
+      trashpack: 'TrashPack',
       phantom: 'Phantom',
       solflare: 'Solflare',
       backpack: 'Backpack',
@@ -740,6 +749,7 @@ export class UniversalWalletManager {
 
   private getWalletIcon(walletType: WalletType): string | undefined {
     const icons: Record<WalletType, string | undefined> = {
+      trashpack: '/trashpack.png', // As defined in injected.js
       phantom: 'https://phantom.app/img/logo.png',
       solflare: 'https://solflare.com/assets/logo.svg',
       backpack: 'https://backpack.app/icon.png',
@@ -756,6 +766,7 @@ export class UniversalWalletManager {
 
   private getWalletWebsite(walletType: WalletType): string | undefined {
     const websites: Record<WalletType, string | undefined> = {
+      trashpack: 'https://trashpack.tech',
       phantom: 'https://phantom.app/',
       solflare: 'https://solflare.com/',
       backpack: 'https://backpack.app/',

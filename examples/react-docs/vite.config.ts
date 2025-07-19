@@ -18,9 +18,11 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: true,
     rollupOptions: {
-      external: [],
+      external: ['vite-plugin-node-polyfills/shims/buffer'],
       output: {
-        globals: {}
+        globals: {
+          'vite-plugin-node-polyfills/shims/buffer': 'Buffer'
+        }
       }
     }
   },

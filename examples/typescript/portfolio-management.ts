@@ -6,21 +6,25 @@
  */
 
 import { GorbchainSDK } from '@gorbchain-xyz/chaindecode';
+import { EXAMPLE_SDK_CONFIG, EXAMPLE_ADDRESSES, GORBCHAIN_PROGRAMS } from '../shared/example-data.js';
 
 async function advancedPortfolioExample() {
   console.log('📈 GorbchainSDK V1 - Advanced Portfolio Analysis Example\n');
 
-  // Initialize SDK
-  const sdk = new GorbchainSDK({
-    rpcEndpoint: 'https://api.mainnet-beta.solana.com',
-    network: 'solana-mainnet'
-  });
+  // Initialize SDK with Gorbchain custom program addresses
+  const sdk = new GorbchainSDK(EXAMPLE_SDK_CONFIG);
+  
+  console.log('🔧 Using Gorbchain Custom Programs for Portfolio Analysis:');
+  console.log(`  SPL Token: ${GORBCHAIN_PROGRAMS.SPL_TOKEN.substring(0, 8)}...`);
+  console.log(`  SPL Token 2022: ${GORBCHAIN_PROGRAMS.SPL_TOKEN_2022.substring(0, 8)}...`);
+  console.log(`  Associated Token: ${GORBCHAIN_PROGRAMS.ASSOCIATED_TOKEN.substring(0, 8)}...`);
+  console.log(`  Metadata: ${GORBCHAIN_PROGRAMS.METADATA.substring(0, 8)}...\n`);
 
   // Example wallet addresses (replace with real addresses for testing)
   const wallets = {
-    defiTrader: 'GThUX1Atko4tqhN2NaiTazWSeFWMuiUiswQrunPiLaFU',
-    nftCollector: 'J3dxNj7nDRRqRRXuEMynDG57DkZK4jYRuv3Garmb1i99',
-    hodler: '5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1'
+    defiTrader: EXAMPLE_ADDRESSES.defiTrader,
+    nftCollector: EXAMPLE_ADDRESSES.nftCollector,
+    hodler: EXAMPLE_ADDRESSES.hodler
   };
 
   console.log('👥 Analyzing Multiple Portfolio Types...\n');

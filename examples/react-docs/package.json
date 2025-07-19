@@ -1,7 +1,7 @@
 {
   "name": "@gorbchain-xyz/chaindecode-docs",
   "version": "1.0.0",
-  "description": "Interactive documentation and examples for Gorbchain ChainDecode SDK",
+  "description": "Interactive documentation and examples for GorbchainSDK V1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,7 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
-    "@gorbchain-xyz/chaindecode": "^1.2.0",
+    "@gorbchain-xyz/chaindecode": "file:../../",
     "@headlessui/react": "^1.7.17",
     "@heroicons/react": "^2.0.18",
     "@tailwindcss/line-clamp": "^0.4.4",

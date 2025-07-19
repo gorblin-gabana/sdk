@@ -8,7 +8,7 @@ export default function Home() {
       {/* Hero section */}
       <div className="text-center">
         <h1 className="text-4xl font-bold text-docs-heading mb-4">
-          GorbchainSDK V1 🚀
+          GorbchainSDK V1.3.0 🚀
         </h1>
         <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
           Rich Solana operations for rapid application development. Specialized in wallet integration,
@@ -39,11 +39,11 @@ export default function Home() {
             <CodeBracketIcon className="w-6 h-6 text-blue-600" />
           </div>
           <h3 className="text-lg font-semibold text-docs-heading mb-2">
-            Transaction Decoding
+            Rich Transaction Analysis
           </h3>
           <p className="text-gray-600 mb-4">
-            Decode complex blockchain transactions with support for SPL tokens, NFTs, 
-            and custom program instructions.
+            Enhanced transaction decoding with token metadata, balance changes, 
+            and human-readable context for rapid dApp development.
           </p>
           <Link
             to="/transaction-decoding"
@@ -58,11 +58,11 @@ export default function Home() {
             <WifiIcon className="w-6 h-6 text-green-600" />
           </div>
           <h3 className="text-lg font-semibold text-docs-heading mb-2">
-            RPC Operations
+            Portfolio Analysis
           </h3>
           <p className="text-gray-600 mb-4">
-            Comprehensive RPC client with connection pooling, retry logic, 
-            and circuit breaker patterns for production reliability.
+            Rich token portfolio analysis with metadata resolution, 
+            NFT categorization, and portfolio insights for comprehensive asset tracking.
           </p>
           <Link
             to="/rpc-operations"
@@ -77,11 +77,11 @@ export default function Home() {
             <ShieldCheckIcon className="w-6 h-6 text-purple-600" />
           </div>
           <h3 className="text-lg font-semibold text-docs-heading mb-2">
-            Error Handling
+            Universal Wallet Integration
           </h3>
           <p className="text-gray-600 mb-4">
-            Robust error handling with comprehensive error taxonomy, 
-            automatic retry logic, and detailed error context.
+            Connect to all Solana wallets universally with auto-discovery, 
+            portfolio analysis, and event-driven wallet management.
           </p>
           <Link
             to="/error-handling"
@@ -111,12 +111,24 @@ export default function Home() {
 // Initialize the SDK
 const sdk = new GorbchainSDK({
   rpcEndpoint: 'https://rpc.gorbchain.xyz',
-  network: 'custom'
+  network: 'gorbchain'
 })
 
-// Decode a transaction
-const transaction = await sdk.getAndDecodeTransaction(signature)
-console.log('Decoded instructions:', transaction.instructions)`}</code></pre>
+// Rich token portfolio analysis
+const portfolio = await sdk.getRichTokenAccounts(address, {
+  includeMetadata: true,
+  includeNFTs: true
+})
+
+// Enhanced transaction analysis
+const richTx = await sdk.getRichTransaction(signature, {
+  includeTokenMetadata: true,
+  includeBalanceChanges: true
+})
+
+// Universal wallet integration
+const walletManager = sdk.createWalletManager()
+const wallet = await walletManager.autoConnect()`}</code></pre>
             </div>
           </div>
         </div>

@@ -6,34 +6,29 @@
  */
 
 import { GorbchainSDK, getRichTransaction } from '@gorbchain-xyz/chaindecode';
+import { EXAMPLE_SDK_CONFIG, EXAMPLE_TRANSACTIONS, GORBCHAIN_PROGRAMS } from '../shared/example-data.js';
 
 async function richTransactionAnalysisExample() {
   console.log('🔍 GorbchainSDK V1 - Rich Transaction Analysis Example\n');
 
-  // Initialize SDK
-  const sdk = new GorbchainSDK({
-    rpcEndpoint: 'https://api.mainnet-beta.solana.com',
-    network: 'solana-mainnet'
-  });
+  // Initialize SDK with Gorbchain custom program addresses
+  const sdk = new GorbchainSDK(EXAMPLE_SDK_CONFIG);
+
+  console.log('🔧 Using Gorbchain Custom Programs for Transaction Analysis:');
+  console.log(`  SPL Token: ${GORBCHAIN_PROGRAMS.SPL_TOKEN.substring(0, 8)}...`);
+  console.log(`  Metadata: ${GORBCHAIN_PROGRAMS.METADATA.substring(0, 8)}...\n`);
 
   // Example transaction signatures (replace with real signatures for testing)
   const exampleTransactions = [
-    {
-      name: 'Token Transfer',
-      signature: '5j7s4H8n9QFjA2mP8xV3qE4R9K7nM2sL6tY1uI9oP3wQ8eR5tY1uI9oP3wQ8eR5tY',
-      description: 'SPL Token transfer transaction'
-    },
-    {
-      name: 'NFT Mint',
-      signature: '3k8s5I9p0RgjB3nQ9yW4rF5S0L8oN3tM7uZ2vJ0qQ4xR9fS6uZ2vJ0qQ4xR9fS6uZ',
-      description: 'NFT minting transaction'
-    }
+    EXAMPLE_TRANSACTIONS.tokenTransfer,
+    EXAMPLE_TRANSACTIONS.nftMint,
+    EXAMPLE_TRANSACTIONS.defiSwap
   ];
 
   console.log('📜 Analyzing Transaction Examples...\n');
 
   for (const [index, txExample] of exampleTransactions.entries()) {
-    console.log(`${index + 1}. ${txExample.name} Analysis:`);
+    console.log(`${index + 1}. ${txExample.type} Analysis:`);
     console.log(`   Description: ${txExample.description}`);
     console.log(`   Signature: ${txExample.signature.substring(0, 20)}...`);
 

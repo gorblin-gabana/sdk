@@ -25,45 +25,50 @@ export default function GettingStarted() {
 
   const basicUsageCode = `import { GorbchainSDK } from '@gorbchain-xyz/chaindecode'
 
-// Initialize SDK with your configuration
+// Initialize GorbchainSDK V1.3.0 for rich Gorbchain operations
 const sdk = new GorbchainSDK({
   rpcEndpoint: 'https://rpc.gorbchain.xyz',
-  network: 'custom',
-  timeout: 30000,
-  retries: 3,
-  programIds: {
-    token2022: 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
-    ata: 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
-    metaplex: 'MetaXBxVGQ65bF5QVWsRxYLVYxE8PFJrMLAojEbhUwz'
-  }
+  network: 'gorbchain',
+  timeout: 30000
 })
 
-// Check network health
+// Check network health and capabilities
 const health = await sdk.getNetworkHealth()
-console.log('Network:', health.status) // 'healthy' | 'degraded' | 'down'`
+console.log('Network Status:', health.status) // 'healthy' | 'degraded' | 'unhealthy'
+console.log('Current Slot:', health.currentSlot)
+console.log('Response Time:', health.responseTime, 'ms')`
 
-  const quickExampleCode = `// Assume SDK is already initialized as above...
+  const quickExampleCode = `// GorbchainSDK V1.3.0 Rich Functions Examples
 
-// Example 1: Decode a transaction
-const transaction = await sdk.getAndDecodeTransaction(
-  'your-signature-here',
-  { richDecoding: true }
-)
+// Example 1: Rich Token Portfolio Analysis
+const portfolio = await sdk.getRichTokenAccounts(walletAddress, {
+  includeMetadata: true,
+  includeNFTs: true,
+  maxConcurrentRequests: 5
+})
+console.log('Portfolio Summary:', portfolio.summary)
+console.log('Diversity Score:', portfolio.summary.diversityScore)
 
-// Example 2: Create a token
-const tokenResult = await sdk.createToken22TwoTx(
-  payer, // Keypair object
-  {
-    name: 'My Token',
-    symbol: 'MTK',
-    decimals: 6,
-    supply: 1000000
-  }
-)
+// Example 2: Enhanced Transaction Analysis
+const richTransaction = await sdk.getRichTransaction(signature, {
+  includeTokenMetadata: true,
+  includeBalanceChanges: true
+})
+console.log('Transaction Category:', richTransaction.summary.category)
+console.log('Token Operations:', richTransaction.tokenOperations)
 
-// Example 3: Get RPC client for advanced operations
-const rpcClient = sdk.getRpcClient()
-const slot = await rpcClient.getSlot()`
+// Example 3: Universal Wallet Integration
+const walletManager = sdk.createWalletManager()
+const availableWallets = await walletManager.discoverWallets({
+  includeExtensions: true,
+  includeMobileWallets: true
+})
+console.log('Available Wallets:', availableWallets.browserExtensions.length)
+
+// Example 4: Portfolio Comparison
+const comparison = await sdk.comparePortfolios(wallet1, wallet2)
+console.log('Similarity Score:', comparison.similarityScore)
+console.log('Common Holdings:', comparison.commonHoldings.length)`
 
   const errorHandlingCode = `// Import specific error types
 import { 
@@ -89,10 +94,10 @@ try {
     <div className="space-y-8">
       {/* Introduction */}
       <div>
-        <h1 className="text-3xl font-bold text-docs-heading mb-4">Getting Started</h1>
+        <h1 className="text-3xl font-bold text-docs-heading mb-4">Getting Started with GorbchainSDK V1.3.0</h1>
         <p className="text-lg text-gray-600 mb-6">
-          Get up and running with the Gorbchain SDK in minutes. This guide covers installation, 
-          basic setup, and your first API calls.
+          Get up and running with GorbchainSDK V1.3.0 in minutes. This guide covers installation, 
+          basic setup, and your first rich function calls for enhanced Solana operations.
         </p>
       </div>
 
