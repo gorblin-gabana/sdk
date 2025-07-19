@@ -11,9 +11,7 @@ export { getDefaultConfig, validateConfig } from './sdk/config.js';
 // Core SDK Types
 export type { 
   GorbchainSDKConfig,
-  RichTransaction, 
   TransactionDecodingOptions, 
-  RichInstruction,
   SimpleInstruction,
   TokenTransferInfo,
   SolTransfer,
@@ -169,6 +167,49 @@ export {
 // Token Operations
 // ============================================
 export { AdvancedTokenHoldings } from './tokens/advancedHoldings.js';
+
+// ============================================
+// Rich Functions - Enhanced Operations with Metadata
+// ============================================
+
+/**
+ * Rich Token Operations
+ * 
+ * Enhanced token functions that provide comprehensive metadata, market data,
+ * and portfolio analysis for frontend developers building applications quickly.
+ */
+export {
+  getRichTokenAccountsByOwner,
+  type RichTokenAccount,
+  type RichTokenAccountsResponse
+} from './rich/tokenOperations.js';
+
+/**
+ * Rich Transaction Operations
+ * 
+ * Enhanced transaction functions that decode instructions, resolve token metadata,
+ * and provide human-readable transaction summaries with complete context.
+ */
+export {
+  getRichTransaction,
+  type RichTransaction,
+  type RichInstruction
+} from './rich/transactionOperations.js';
+
+/**
+ * Universal Wallet Integration
+ * 
+ * Comprehensive wallet integration supporting Solana web3 providers,
+ * deep links, custom scripts, and hardware wallets with portfolio analysis.
+ */
+export {
+  UniversalWalletManager,
+  type RichWallet,
+  type WalletDiscovery,
+  type WalletProvider,
+  type WalletType,
+  type WalletStatus
+} from './rich/walletIntegration.js';
 
 // ============================================
 // Transaction Utilities

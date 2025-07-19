@@ -452,6 +452,63 @@ export class GorbchainSDK {
   }
 
   /**
+   * Rich Functions - Enhanced operations with comprehensive metadata
+   */
+
+  /**
+   * Get rich token accounts with complete metadata and market data
+   * 
+   * @param ownerAddress - Wallet address to analyze
+   * @param options - Configuration options for metadata fetching
+   * @returns Promise resolving to rich token accounts with portfolio summary
+   */
+  async getRichTokenAccounts(
+    ownerAddress: string,
+    options?: {
+      includeMetadata?: boolean;
+      includeMarketData?: boolean;
+      includeNFTs?: boolean;
+      includeZeroBalance?: boolean;
+      maxConcurrentRequests?: number;
+      customPrograms?: string[];
+    }
+  ) {
+    const { getRichTokenAccountsByOwner } = await import('../rich/tokenOperations.js');
+    return getRichTokenAccountsByOwner(this, ownerAddress, options);
+  }
+
+  /**
+   * Get rich transaction with decoded instructions and token metadata
+   * 
+   * @param signature - Transaction signature to analyze
+   * @param options - Configuration options for analysis
+   * @returns Promise resolving to rich transaction with complete context
+   */
+  async getRichTransaction(
+    signature: string,
+    options?: {
+      includeTokenMetadata?: boolean;
+      includeBalanceChanges?: boolean;
+      resolveAddressLabels?: boolean;
+      maxRetries?: number;
+      commitment?: 'processed' | 'confirmed' | 'finalized';
+    }
+  ) {
+    const { getRichTransaction } = await import('../rich/transactionOperations.js');
+    return getRichTransaction(this, signature, options);
+  }
+
+  /**
+   * Create universal wallet manager for comprehensive wallet integration
+   * 
+   * @returns UniversalWalletManager instance for wallet operations
+   */
+  createWalletManager() {
+    const { UniversalWalletManager } = require('../rich/walletIntegration.js');
+    return new UniversalWalletManager(this);
+  }
+
+  /**
    * V1 compatibility methods
    */
 

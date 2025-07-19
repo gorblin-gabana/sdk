@@ -6,6 +6,7 @@ module.exports = {
     // Core optimized SDK tests (new)
     '**/test/optimized-sdk.test.ts',
     '**/test/real-user-journeys.test.ts',
+    '**/test/rich-functions.test.ts',
     
     // Real scenario tests (kept)
     '**/test/wallet-v2-real-scenarios.test.ts',
