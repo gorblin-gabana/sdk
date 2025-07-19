@@ -1,3 +1,5 @@
+import type { NetworkConfig } from '../config/networks.js';
+
 /**
  * Configuration interface for the GorbchainSDK
  */
@@ -5,8 +7,8 @@ export interface GorbchainSDKConfig {
   /** RPC endpoint URL for blockchain communication */
   rpcEndpoint: string;
 
-  /** Network type identifier */
-  network: 'mainnet' | 'testnet' | 'devnet' | 'custom';
+  /** Network configuration (name or custom config) */
+  network?: string | NetworkConfig;
 
   /** Optional timeout for RPC requests in milliseconds */
   timeout?: number;
@@ -26,6 +28,13 @@ export interface GorbchainSDKConfig {
     metaplex?: string;
     /** Custom program IDs */
     [key: string]: string | undefined;
+  };
+
+  /** Enhanced token analysis features */
+  tokenAnalysis?: {
+    enabled: boolean;
+    maxConcurrentRequests?: number;
+    enableMetadataResolution?: boolean;
   };
 
   /** Rich decoding options for enhanced transaction processing */

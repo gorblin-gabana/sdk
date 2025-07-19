@@ -8,7 +8,7 @@ import { setTransactionMessageLifetimeUsingBlockhash } from '@solana/transaction
 import { appendTransactionMessageInstruction } from '@solana/transaction-messages';
 import type { Transaction } from '@solana/transactions';
 import { compileTransaction, signTransaction } from '@solana/transactions';
-import { getLatestBlockhash } from '../rpc/transactions.js';
+import type { RpcClient } from '../rpc/client.js';
 import { pipe } from '@solana/functional';
 
 /**
@@ -21,12 +21,13 @@ export async function createTransaction({
   feePayer,
   signers
 }: {
-  connection: any; // Should be Connection from @solana/kit
+  connection: RpcClient;
   instructions: IInstruction[];
   feePayer: string | Address;
   signers: CryptoKeyPair[];
 }): Promise<Transaction> {
-  const { blockhash, lastValidBlockHeight } = await getLatestBlockhash(connection);
+  const result = await connection.request('getLatestBlockhash', []) as { blockhash: string; lastValidBlockHeight: number };
+  const { blockhash, lastValidBlockHeight } = result;
   const msg = pipe(
     createTransactionMessage({ version: 0 }),
     m => setTransactionMessageFeePayer(typeof feePayer === 'string' ? address(feePayer) : feePayer, m),

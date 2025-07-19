@@ -102,33 +102,4 @@ export async function getSignatureStatus(
   return result.value[0];
 }
 
-// Legacy functions for backward compatibility (deprecated)
-export async function sendRpcTransaction(
-  _connection: any,
-  _transaction: any,
-  _signers: any[],
-  _options?: any
-): Promise<string> {
-  throw new Error('sendRpcTransaction is deprecated. Use sendTransaction with RpcClient instead.');
-}
-
-export async function getTransactionStatus(
-  _connection: any,
-  _signature: string
-): Promise<any> {
-  throw new Error('getTransactionStatus is deprecated. Use getSignatureStatus with RpcClient instead.');
-}
-
-export async function getCurrentSlot(_connection: any): Promise<number> {
-  throw new Error('getCurrentSlot is deprecated. Use RpcClient.getSlot() instead.');
-}
-
-export async function getBlockHeight(_connection: any): Promise<number> {
-  throw new Error('getBlockHeight is deprecated. Use RpcClient.getBlockHeight() instead.');
-}
-
-export async function getLatestBlockhash(_connection: any): Promise<{ blockhash: string; lastValidBlockHeight: number }> {
-  throw new Error('getLatestBlockhash is deprecated. Use RpcClient.getLatestBlockhash() instead.');
-}
-
 export * from './fetchTransactionBySignature.js';

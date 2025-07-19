@@ -10,60 +10,23 @@ import { NetworkConfig, getNetworkConfig, detectNetworkFromEndpoint, createCusto
 import { DecoderRegistry } from '../decoders/registry.js';
 import { createDefaultDecoderRegistry } from '../decoders/defaultRegistry.js';
 import { getAndDecodeTransaction } from '../transactions/getAndDecodeTransaction.js';
-import { GorbchainSDKConfig } from './types.js';
+import type { GorbchainSDKConfig } from './types.js';
 
-export interface SDKConfig {
-  /** RPC endpoint URL for blockchain communication */
-  rpcEndpoint: string;
-  /** Network configuration (name or custom config) */
-  network?: string | NetworkConfig;
-  /** Optional timeout for RPC requests in milliseconds */
-  timeout?: number;
-  /** Number of retry attempts for failed requests */
-  retries?: number;
-  /** Program IDs for backward compatibility */
-  programIds?: {
-    /** SPL Token program ID */
-    splToken?: string;
-    /** Token-2022 program ID */
-    token2022?: string;
-    /** Associated Token Account program ID */
-    ata?: string;
-    /** Metaplex program ID */
-    metaplex?: string;
-    /** Custom program IDs */
-    [key: string]: string | undefined;
-  };
-  /** Enhanced token analysis features */
-  tokenAnalysis?: {
-    enabled: boolean;
-    maxConcurrentRequests?: number;
-    enableMetadataResolution?: boolean;
-  };
-  /** Rich decoding options for enhanced transaction processing */
-  richDecoding?: {
-    enabled?: boolean;
-    includeTokenMetadata?: boolean;
-    includeNftMetadata?: boolean;
-    maxConcurrentRequests?: number;
-    enableCache?: boolean;
-  };
-}
 
 /**
  * Main Gorbchain SDK Class with v2 enhancements
  */
 export class GorbchainSDK {
-  public config: SDKConfig; // Made public for v1 compatibility
+  public config: GorbchainSDKConfig; // Made public for v1 compatibility
   private rpcClient: RpcClient;
   private enhancedRpcClient: EnhancedRpcClient;
   private tokenAnalyzer: AdvancedTokenHoldings;
   private networkConfig: NetworkConfig | null;
   public decoders: DecoderRegistry;
 
-  constructor(config?: SDKConfig) {
+  constructor(config?: GorbchainSDKConfig) {
     // Default configuration for backward compatibility
-    const defaultConfig: SDKConfig = {
+    const defaultConfig: GorbchainSDKConfig = {
       rpcEndpoint: 'https://rpc.gorbchain.xyz',
       network: 'gorbchain',
       timeout: 30000,
@@ -218,15 +181,15 @@ export class GorbchainSDK {
     const startTime = Date.now();
     
     try {
-      const [slot, blockHeight] = await Promise.allSettled([
-        this.rpcClient.getSlot(),
-        this.rpcClient.request('getBlockHeight', []).catch(() => 0)
+      const [slotResult, blockHeightResult] = await Promise.all([
+        this.rpcClient.getSlot().then(value => ({ status: 'fulfilled' as const, value })).catch(reason => ({ status: 'rejected' as const, reason })),
+        this.rpcClient.request('getBlockHeight', []).then(value => ({ status: 'fulfilled' as const, value })).catch(() => ({ status: 'fulfilled' as const, value: 0 }))
       ]);
       
       const responseTime = Math.max(1, Date.now() - startTime); // Ensure at least 1ms
       
       // Check if the main slot call failed
-      const slotFailed = slot.status === 'rejected';
+      const slotFailed = slotResult.status === 'rejected';
       
       let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
       
@@ -241,10 +204,10 @@ export class GorbchainSDK {
       
       return {
         status,
-        currentSlot: slot.status === 'fulfilled' ? slot.value : 0,
+        currentSlot: slotResult.status === 'fulfilled' ? slotResult.value : 0,
         responseTime,
         networkName: this.networkConfig?.name || 'Unknown',
-        blockHeight: blockHeight.status === 'fulfilled' ? blockHeight.value as number : undefined,
+        blockHeight: blockHeightResult.status === 'fulfilled' ? blockHeightResult.value as number : undefined,
         rpcEndpoint: this.config.rpcEndpoint
       };
     } catch (error) {
@@ -337,12 +300,6 @@ export class GorbchainSDK {
     includeTokenMetadata?: boolean;
     maxRetries?: number;
   }) {
-    const enhancedOptions = {
-      ...options,
-      networkConfig: this.networkConfig,
-      enhancedRpcClient: this.enhancedRpcClient
-    };
-
     return getAndDecodeTransaction({
       signature,
       registry: this.decoders,
@@ -576,19 +533,4 @@ export class GorbchainSDK {
       this.enhancedRpcClient.setNetworkConfig(this.networkConfig);
     }
   }
-}
-
-/**
- * Map internal program names to display names
- */
-function mapProgramNameToDisplayName(programName: string): string {
-  const nameMap: Record<string, string> = {
-    'spl-token': 'SPL Token',
-    'token-2022': 'Token-2022',
-    'nft': 'NFT',
-    'system': 'system',
-    'ata': 'ata'
-  };
-  
-  return nameMap[programName] ?? programName;
 }

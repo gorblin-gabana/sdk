@@ -303,7 +303,46 @@ describe('Wallet V2 Real Scenarios Tests', () => {
     });
   });
 
-  describe('6. Error Handling', () => {
+  describe('6. GORBA Token Specific Tests', () => {
+    test('should validate GORBA token configuration', () => {
+      expect(sdk.config.rpcEndpoint).toBe('https://rpc.gorbchain.xyz');
+      expect(sdk.config.programIds?.token2022).toBe('FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn');
+      expect(sdk.config.programIds?.ata).toBe('4YpYoLVTQ8bxcne9GneN85RUXeN7pqGTwgPcY71ZL5gX');
+      expect(sdk.config.programIds?.metaplex).toBe('BvoSmPBF6mBRxBMY9FPguw1zUoUg3xrc5CaWf7y5ACkc');
+    });
+
+    test('should support GORBA token supply calculations', () => {
+      const rawSupply = '2000000000000000000'; // 2 billion total minted
+      const accountBalance = '1000000000000000000'; // 1 billion in account
+
+      // Validate the math: account should have half of total supply
+      const totalRaw = BigInt(rawSupply);
+      const accountRaw = BigInt(accountBalance);
+      expect(accountRaw * BigInt(2)).toBe(totalRaw);
+    });
+
+    test('should register custom GORBA token decoder', () => {
+      const gorbaTokenMint = '2o1oEPUXhNMLu8HQihgXtXu1Vv5zTTvpX5uVZV6f2Jxa';
+      
+      const gorbaDecoder = (instruction: any) => ({
+        type: 'gorba-token',
+        programId: gorbaTokenMint,
+        data: {
+          symbol: 'GOR',
+          name: 'GORBA',
+          instruction
+        },
+        accounts: instruction.accounts || []
+      });
+
+      sdk.registerDecoder('gorba-token', gorbaTokenMint, gorbaDecoder);
+
+      const supportedPrograms = sdk.getSupportedPrograms();
+      expect(supportedPrograms).toContain('gorba-token');
+    });
+  });
+
+  describe('7. Error Handling', () => {
     test('should handle invalid wallet address gracefully', async () => {
       const invalidAddress = 'InvalidAddress123';
       
@@ -334,13 +373,3 @@ describe('Wallet V2 Real Scenarios Tests', () => {
     }, 10000);
   });
 });
-
-// Helper function to validate if address looks like a proper base58 address
-function isValidSolanaAddress(address: string): boolean {
-  try {
-    // Basic validation - should be 32-44 characters, base58
-    return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address);
-  } catch {
-    return false;
-  }
-} 

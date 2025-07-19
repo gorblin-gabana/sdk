@@ -18,6 +18,13 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:unit": "jest --testNamePattern='(?!.*Journey)' --testPathIgnorePatterns='.*real.*'",
+    "test:integration": "jest --testPathPattern='.*integration.*'",
+    "test:journeys": "jest test/real-user-journeys.test.ts",
+    "test:optimized": "jest test/optimized-sdk.test.ts",
+    "test:real-data": "jest test/wallet-v2-real-scenarios.test.ts test/real-user-journeys.test.ts",
+    "test:no-network": "SKIP_NETWORK_TESTS=true jest",
+    "test:verbose": "VERBOSE_TESTS=true jest",
     "prepare": "npm run build",
     "prepublishOnly": "npm test && npm run build"
   },
