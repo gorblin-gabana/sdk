@@ -40,7 +40,7 @@ describe('GorbchainSDK Usage Examples', () => {
     test('should decode a typical SPL Token transfer transaction', () => {
       // Simulate a real SPL Token transfer instruction
       const transferInstruction = {
-        programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+        programId: 'Gorbj8Dp27NkXMQUkeHBSmpf6iQ3yT4b2uVe8kM4s6br',
         data: new Uint8Array([
           3, // Transfer instruction
           0x00, 0xe8, 0x76, 0x48, 0x17, 0x00, 0x00, 0x00 // 100,000,000,000 lamports (100 tokens with 9 decimals)
@@ -65,7 +65,7 @@ describe('GorbchainSDK Usage Examples', () => {
       const instructions = [
         // First: Approve instruction
         {
-          programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+          programId: 'Gorbj8Dp27NkXMQUkeHBSmpf6iQ3yT4b2uVe8kM4s6br',
           data: new Uint8Array([
             4, // Approve instruction
             0x00, 0xca, 0x9a, 0x3b, 0x00, 0x00, 0x00, 0x00 // 1,000,000,000 (1000 tokens)
@@ -78,7 +78,7 @@ describe('GorbchainSDK Usage Examples', () => {
         },
         // Second: Transfer instruction using approved delegation
         {
-          programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+          programId: 'Gorbj8Dp27NkXMQUkeHBSmpf6iQ3yT4b2uVe8kM4s6br',
           data: new Uint8Array([
             3, // Transfer instruction
             0x00, 0x65, 0xcd, 0x1d, 0x00, 0x00, 0x00, 0x00 // 500,000,000 (500 tokens)
@@ -164,7 +164,7 @@ describe('GorbchainSDK Usage Examples', () => {
   describe('Error Scenarios', () => {
     test('should handle malformed instructions gracefully', () => {
       const malformedInstruction = {
-        programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+        programId: 'Gorbj8Dp27NkXMQUkeHBSmpf6iQ3yT4b2uVe8kM4s6br',
         data: new Uint8Array([3]), // Transfer instruction but missing amount data
         accounts: []
       };

@@ -105,6 +105,11 @@ export { createDefaultDecoderRegistry } from './decoders/defaultRegistry.js';
 export { getAndDecodeTransaction } from './transactions/getAndDecodeTransaction.js';
 
 // Specialized decoders for major programs
+export { decodeInstructions } from './utils/decodeInstructions.js';
+export { 
+  SystemInstructionType,
+  decodeSystemInstruction 
+} from './decoders/system.js';
 export {
   decodeSPLTokenInstructionWithDetails,
   decodeInstructionData
@@ -115,6 +120,11 @@ export {
   decodeToken2022Instruction,
   decodeToken2022InstructionWithDetails
 } from './decoders/token2022.js';
+
+export {
+  ATAInstruction,
+  decodeATAInstruction
+} from './decoders/ata.js';
 
 export {
   MetaplexInstruction,
@@ -197,6 +207,11 @@ export {
   normalizeDataToUint8Array,
   formatLamportsToSol
 } from './utils/dataProcessing.js';
+
+export { base64ToHex } from './utils/base64ToHex.js';
+export { decodeNFT } from './utils/decodeNFT.js';
+export { decodeMintAccount } from './utils/decodeMintAccount.js';
+export { fetchProgramAccount } from './utils/fetchProgramAccount.js';
 
 // ============================================
 // Error Handling

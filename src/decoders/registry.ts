@@ -166,7 +166,18 @@ export class DecoderRegistry {
   }
 
   private createRawResult(instruction: RawInstruction): DecodedInstruction {
-    const data = instruction.data ?? new Uint8Array(0);
+    let data: Uint8Array | number[];
+    
+    // Handle malformed data
+    if (!instruction.data) {
+      data = new Uint8Array(0);
+    } else if (instruction.data instanceof Uint8Array || Array.isArray(instruction.data)) {
+      data = instruction.data;
+    } else {
+      // Handle invalid data types
+      data = new Uint8Array(0);
+    }
+    
     return {
       type: 'unknown',
       programId: instruction.programAddress?.toString() ?? instruction.programId,

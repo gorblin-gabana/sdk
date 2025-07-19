@@ -1,12 +1,6 @@
 // SPL Token Program Decoders - Built from Solana program specifications
 import type { DecodedInstruction } from './registry.js';
-import { getGorbchainConfig } from '../utils/gorbchainConfig.js';
 
-// Get SPL Token program ID from config
-function getSPLTokenProgramId(): string {
-  const config = getGorbchainConfig();
-  return config.programIds?.splToken ?? 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
-}
 
 interface SPLTokenInstructionData {
   programId: string;
@@ -57,7 +51,7 @@ export function decodeSPLTokenInstruction(instruction: SPLTokenInstructionData):
   }
 
   const instructionType = data[0];
-  const programId = getSPLTokenProgramId();
+  const programId = instruction.programId;
 
   switch (instructionType) {
     case SPLTokenInstruction.Transfer as number:

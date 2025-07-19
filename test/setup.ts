@@ -86,6 +86,12 @@ export function createTestSDK(overrides?: any) {
     network: TEST_DATA.network.networkName,
     timeout: (global as any).TEST_CONFIG.NETWORK_TIMEOUT,
     retries: (global as any).TEST_CONFIG.MAX_RETRIES,
+    programIds: {
+      splToken: 'Gorbj8Dp27NkXMQUkeHBSmpf6iQ3yT4b2uVe8kM4s6br',
+      token2022: 'G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6',
+      ata: 'GoATGVNeSXerFerPqTJ8hcED1msPWHHLxao2vwBYqowm',
+      metaplex: 'GMTAp1moCdGh4TEwFTcCJKeKL3UMEDB6vKpo2uxM9h4s'
+    },
     tokenAnalysis: {
       enabled: true,
       maxConcurrentRequests: 5,

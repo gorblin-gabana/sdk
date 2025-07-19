@@ -13,11 +13,11 @@ describe('Wallet V2 Real Scenarios Tests', () => {
     
     // Real program IDs deployed on Gorbchain
     programs: {
-      token2022: 'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn',     // Token-2022 program
+      token2022: 'G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6',     // Token-2022 program
       mplCore: 'BvoSmPBF6mBRxBMY9FPguw1zUoUg3xrc5CaWf7y5ACkc',       // MPL Core NFT program (from your script)
-      ata: '4YpYoLVTQ8bxcne9GneN85RUXeN7pqGTwgPcY71ZL5gX',           // Associated Token Account program
+      ata: 'GoATGVNeSXerFerPqTJ8hcED1msPWHHLxao2vwBYqowm',           // Associated Token Account program
       system: '11111111111111111111111111111111',                     // System program
-      splToken: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'         // SPL Token program
+      splToken: 'Gorbj8Dp27NkXMQUkeHBSmpf6iQ3yT4b2uVe8kM4s6br'         // SPL Token program
     },
 
     // Real token/NFT addresses from your scripts
@@ -34,6 +34,12 @@ describe('Wallet V2 Real Scenarios Tests', () => {
       network: 'gorbchain-mainnet',
       timeout: 30000,
       retries: 3,
+      programIds: {
+        splToken: 'Gorbj8Dp27NkXMQUkeHBSmpf6iQ3yT4b2uVe8kM4s6br',
+        token2022: 'G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6',
+        ata: 'GoATGVNeSXerFerPqTJ8hcED1msPWHHLxao2vwBYqowm',
+        metaplex: 'GMTAp1moCdGh4TEwFTcCJKeKL3UMEDB6vKpo2uxM9h4s'
+      },
       tokenAnalysis: {
         enabled: true,
         maxConcurrentRequests: 5,
@@ -306,9 +312,9 @@ describe('Wallet V2 Real Scenarios Tests', () => {
   describe('6. GORBA Token Specific Tests', () => {
     test('should validate GORBA token configuration', () => {
       expect(sdk.config.rpcEndpoint).toBe('https://rpc.gorbchain.xyz');
-      expect(sdk.config.programIds?.token2022).toBe('FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn');
-      expect(sdk.config.programIds?.ata).toBe('4YpYoLVTQ8bxcne9GneN85RUXeN7pqGTwgPcY71ZL5gX');
-      expect(sdk.config.programIds?.metaplex).toBe('BvoSmPBF6mBRxBMY9FPguw1zUoUg3xrc5CaWf7y5ACkc');
+      expect(sdk.config.programIds?.token2022).toBe('G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6');
+      expect(sdk.config.programIds?.ata).toBe('GoATGVNeSXerFerPqTJ8hcED1msPWHHLxao2vwBYqowm');
+      expect(sdk.config.programIds?.metaplex).toBe('GMTAp1moCdGh4TEwFTcCJKeKL3UMEDB6vKpo2uxM9h4s');
     });
 
     test('should support GORBA token supply calculations', () => {

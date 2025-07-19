@@ -382,26 +382,26 @@ describe('Optimized SDK Tests', () => {
 
     test('should decode SPL Token instructions with real program ID', () => {
       const splTokenInstruction = {
-        programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+        programId: 'Gorbj8Dp27NkXMQUkeHBSmpf6iQ3yT4b2uVe8kM4s6br',
         data: new Uint8Array([3, 64, 66, 15, 0, 0, 0, 0, 0]), // Transfer 1000000 tokens
         accounts: ['sourceAccount', 'destinationAccount', 'authority']
       };
 
       const decoded = sdk.decoderRegistry.decode(splTokenInstruction);
       expect(decoded).toBeDefined();
-      expect(decoded.programId).toBe('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+      expect(decoded.programId).toBe('Gorbj8Dp27NkXMQUkeHBSmpf6iQ3yT4b2uVe8kM4s6br');
     });
 
     test('should decode Token-2022 instructions with real program ID', () => {
       const token2022Instruction = {
-        programId: 'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn',
+        programId: 'G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6',
         data: new Uint8Array([3, 64, 66, 15, 0, 0, 0, 0, 0]), // Transfer 1000000 tokens
         accounts: ['sourceAccount', 'destinationAccount', 'authority']
       };
 
       const decoded = sdk.decoderRegistry.decode(token2022Instruction);
       expect(decoded).toBeDefined();
-      expect(decoded.programId).toBe('FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn');
+      expect(decoded.programId).toBe('G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6');
     });
 
     test('should allow custom decoder registration and usage', () => {
