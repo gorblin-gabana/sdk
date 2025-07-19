@@ -1,7 +1,7 @@
 {
   "name": "@gorbchain-xyz/chaindecode",
-  "version": "1.2.0",
-  "description": "Dynamic, fork-aware decoding SDK for Solana transactions. Parse and decode SPL Token, Token-2022, Metaplex metadata, and custom programs using @solana/kit with flexible program ID support.",
+  "version": "1.3.0",
+  "description": "GorbchainSDK V1 - Rich Solana operations for rapid application development. Specialized in wallet integration, enhanced transaction analysis, and portfolio management with metadata. Build super apps within seconds.",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "directories": {
@@ -26,17 +26,27 @@
     "test:real-data": "jest test/wallet-v2-real-scenarios.test.ts test/real-user-journeys.test.ts test/rich-functions.test.ts",
     "test:no-network": "SKIP_NETWORK_TESTS=true jest",
     "test:verbose": "VERBOSE_TESTS=true jest",
+    "example": "tsx examples/index.ts",
+    "example:basic": "tsx examples/01-basic-usage.ts",
+    "example:tokens": "tsx examples/02-rich-token-analysis.ts",
+    "example:transactions": "tsx examples/03-transaction-analysis.ts",
+    "example:wallets": "tsx examples/04-wallet-integration.ts",
+    "example:portfolio": "tsx examples/05-advanced-portfolio.ts",
     "prepare": "npm run build",
     "prepublishOnly": "npm test && npm run build"
   },
   "keywords": [
     "solana",
     "sdk",
-    "spl-token",
-    "token-2022",
-    "metaplex",
-    "decoder",
-    "typescript"
+    "wallet-integration",
+    "rich-transactions",
+    "portfolio-analysis",
+    "token-metadata",
+    "dapp-development",
+    "solana-web3",
+    "typescript",
+    "defi",
+    "nft"
   ],
   "author": "gorblin <opensource@gorbchain.xyz>",
   "license": "MIT",

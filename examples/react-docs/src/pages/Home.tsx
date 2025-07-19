@@ -8,11 +8,11 @@ export default function Home() {
       {/* Hero section */}
       <div className="text-center">
         <h1 className="text-4xl font-bold text-docs-heading mb-4">
-          Gorbchain ChainDecode SDK
+          GorbchainSDK V1 🚀
         </h1>
         <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-          The most comprehensive TypeScript SDK for decoding blockchain transactions, 
-          handling RPC operations, and building applications on the Gorbchain network.
+          Rich Solana operations for rapid application development. Specialized in wallet integration,
+          enhanced transaction analysis, and portfolio management. Build super apps within seconds.
         </p>
         <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6">
           <Link

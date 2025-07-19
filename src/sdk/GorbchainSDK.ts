@@ -1,6 +1,28 @@
 /**
- * Gorbchain SDK v2 - Main SDK Class
- * Enhanced with network configuration and custom token program support
+ * GorbchainSDK V1 - Main SDK Class
+ * 
+ * Specialized in rich Solana operations for rapid application development.
+ * Focuses on wallet integration, enhanced transaction analysis, and portfolio management.
+ * 
+ * @example
+ * ```typescript
+ * const sdk = new GorbchainSDK({
+ *   rpcEndpoint: 'https://api.mainnet-beta.solana.com',
+ *   network: 'solana-mainnet'
+ * });
+ * 
+ * // Rich token portfolio analysis
+ * const portfolio = await sdk.getRichTokenAccounts(address);
+ * 
+ * // Enhanced transaction analysis
+ * const transaction = await sdk.getRichTransaction(signature);
+ * 
+ * // Universal wallet integration
+ * const walletManager = sdk.createWalletManager();
+ * ```
+ * 
+ * @version 1.0.0
+ * @author Gorbchain Team
  */
 
 import { RpcClient } from '../rpc/client.js';
@@ -14,7 +36,12 @@ import type { GorbchainSDKConfig } from './types.js';
 
 
 /**
- * Main Gorbchain SDK Class with v2 enhancements
+ * GorbchainSDK V1 - Rich Solana Operations
+ * 
+ * Main SDK class providing enhanced Solana operations for rapid dApp development.
+ * Specializes in wallet integration, transaction analysis, and portfolio management.
+ * 
+ * @public
  */
 export class GorbchainSDK {
   public config: GorbchainSDKConfig; // Made public for v1 compatibility
