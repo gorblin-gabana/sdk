@@ -23,6 +23,7 @@ import {
   signData,
   verifySignature
 } from '../src/crypto/index.js'
+import { bytesToBase58 as encodeBase58 } from '../src/utils/base58.js'
 
 describe('Real-World Messaging Scenarios', () => {
   let alice: Keypair // Team lead
@@ -56,7 +57,7 @@ describe('Real-World Messaging Scenarios', () => {
       for (const draft of draftMessages) {
         const encrypted = await encryptPersonal(draft, alice.secretKey, {
           compress: true,
-          metadata: {
+          customMetadata: {
             type: 'message_draft',
             timestamp: Date.now(),
             app: 'SecureMessaging'
@@ -473,7 +474,7 @@ describe('Real-World Messaging Scenarios', () => {
       const manager = new ScalableEncryptionManager()
 
       // Start small - Alice and Bob (startup founders)
-      const { context } = await manager.createEncryptionContext(
+      const context = await manager.createEncryptionContext(
         'Startup Communications',
         'Internal team chat that will grow',
         bob.publicKey.toBase58(),
@@ -556,7 +557,7 @@ describe('Real-World Messaging Scenarios', () => {
       const manager = new ScalableEncryptionManager()
 
       // Marketing department chat
-      const { context } = await manager.createEncryptionContext(
+      const context = await manager.createEncryptionContext(
         'Marketing Department',
         'Marketing team communications',
         bob.publicKey.toBase58(), // Marketing Manager
@@ -661,10 +662,10 @@ describe('Real-World Messaging Scenarios', () => {
 
       const signature = signData(announcement, alice.secretKey)
       
-      // Create signed message package
+      // Create signed message package  
       const signedMessage = {
         content: announcement,
-        signature: signature,
+        signature: encodeBase58(signature),  // Encode signature as base58
         signer: alice.publicKey.toBase58(),
         title: 'Series A Funding Announcement',
         timestamp: Date.now(),
@@ -737,9 +738,9 @@ describe('Real-World Messaging Scenarios', () => {
       const fullySignedContract = {
         document: contract,
         signatures: [
-          { signer: alice.publicKey.toBase58(), signature: aliceSignature, role: 'CEO', timestamp: Date.now() },
-          { signer: bob.publicKey.toBase58(), signature: bobSignature, role: 'CTO', timestamp: Date.now() + 1000 },
-          { signer: eve.publicKey.toBase58(), signature: eveSignature, role: 'Contractor', timestamp: Date.now() + 2000 }
+          { signer: alice.publicKey.toBase58(), signature: encodeBase58(aliceSignature), role: 'CEO', timestamp: Date.now() },
+          { signer: bob.publicKey.toBase58(), signature: encodeBase58(bobSignature), role: 'CTO', timestamp: Date.now() + 1000 },
+          { signer: eve.publicKey.toBase58(), signature: encodeBase58(eveSignature), role: 'Contractor', timestamp: Date.now() + 2000 }
         ],
         status: 'fully_executed',
         contractId: 'CTR-2024-001'

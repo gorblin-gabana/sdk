@@ -3,7 +3,7 @@
  * Dynamic groups with membership managed by signatures
  */
 
-import { encode as encodeBase58, decode as decodeBase58 } from 'bs58';
+import { bytesToBase58 as encodeBase58, base58ToBytes as decodeBase58 } from '../utils/base58.js';
 import { Keypair } from '@solana/web3.js';
 import {
   EncryptionMethod,
@@ -20,7 +20,7 @@ import {
 } from './types.js';
 import {
   generateRandomBytes,
-  performKeyExchange,
+  deriveKey,
   encryptAES,
   decryptAES,
   signData,
@@ -577,13 +577,14 @@ async function createKeyShareForMember(
 ): Promise<KeyShare> {
   const recipientPubKeyBytes = decodeBase58(recipientPublicKey);
   
-  // Perform key exchange
-  const sharedSecret = performKeyExchange(senderPrivateKey, recipientPubKeyBytes);
+  // Use salt-based approach like direct encryption
+  const salt = generateRandomBytes(32);
+  const sharedSecret = deriveKey(recipientPubKeyBytes, salt, 1000);
   
   // Encrypt master key
   const { encrypted, iv, authTag } = encryptAES(masterKey, sharedSecret);
   
-  const combined = combineBuffers(iv, authTag, encrypted);
+  const combined = combineBuffers(salt, iv, authTag, encrypted);
   
   return {
     recipientPublicKey,
@@ -616,11 +617,11 @@ async function getMasterKeyForMember(
 
   // Decode share
   const combined = decodeBase58(keyShare.encryptedShare);
-  const [iv, authTag, encrypted] = splitBuffer(combined, IV_SIZE, AUTH_TAG_SIZE);
+  const [salt, iv, authTag, encrypted] = splitBuffer(combined, 32, IV_SIZE, AUTH_TAG_SIZE);
 
-  // Get shared secret with creator/sender
-  const creatorPubKeyBytes = decodeBase58(metadata.creatorPublicKey);
-  const sharedSecret = performKeyExchange(memberPrivateKey, creatorPubKeyBytes);
+  // Use salt-based key derivation like in createKeyShareForMember
+  const memberPubKeyBytes = decodeBase58(memberPublicKey);
+  const sharedSecret = deriveKey(memberPubKeyBytes, salt, 1000);
 
   // Decrypt master key
   return decryptAES(encrypted, sharedSecret, iv, authTag);

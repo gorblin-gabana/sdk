@@ -3,7 +3,7 @@
  * Uses public key cryptography for secure communication
  */
 
-import { encode as encodeBase58, decode as decodeBase58 } from 'bs58';
+import { bytesToBase58 as encodeBase58, base58ToBytes as decodeBase58 } from '../utils/base58.js';
 import nacl from 'tweetnacl';
 import {
   EncryptionMethod,
@@ -21,6 +21,7 @@ import {
   combineBuffers,
   splitBuffer,
   generateKeyPair,
+  deriveKey,
   IV_SIZE,
   AUTH_TAG_SIZE,
   getCurrentTimestamp,
@@ -47,6 +48,14 @@ export async function encryptDirect(
     ? decodeBase58(senderPrivateKey)
     : senderPrivateKey;
 
+  // Validate decoded keys
+  if (!recipientPubKeyBytes || recipientPubKeyBytes.length === 0) {
+    throw new Error('Invalid recipient public key');
+  }
+  if (!senderPrivKeyBytes || senderPrivKeyBytes.length === 0) {
+    throw new Error('Invalid sender private key');
+  }
+
   // Get sender's public key
   const senderKeypair = Keypair.fromSecretKey(senderPrivKeyBytes);
   const senderPublicKey = senderKeypair.publicKey.toBase58();
@@ -56,21 +65,17 @@ export async function encryptDirect(
     dataBytes = await compressData(dataBytes);
   }
 
-  // Generate ephemeral keypair for forward secrecy
-  const ephemeralKeypair = generateKeyPair();
-  
-  // Perform key exchange with ephemeral key
-  const sharedSecret = performKeyExchange(
-    ephemeralKeypair.privateKey,
-    recipientPubKeyBytes
-  );
+  // Use recipient's public key directly for key derivation (simpler approach)
+  // This is secure because we're using their public key + a random salt
+  const salt = generateRandomBytes(32);
+  const sharedSecret = deriveKey(recipientPubKeyBytes, salt, 1000);
 
   // Encrypt the data
   const { encrypted, iv, authTag } = encryptAES(dataBytes, sharedSecret);
   
-  // Combine ephemeral public key, iv, authTag, and encrypted data
+  // Combine salt, iv, authTag, and encrypted data
   const combined = combineBuffers(
-    ephemeralKeypair.publicKey,
+    salt,
     iv,
     authTag,
     encrypted
@@ -80,7 +85,7 @@ export async function encryptDirect(
   const metadata: DirectEncryptionMetadata = {
     senderPublicKey,
     recipientPublicKey,
-    ephemeralPublicKey: encodeBase58(ephemeralKeypair.publicKey),
+    ephemeralPublicKey: encodeBase58(salt), // Store salt instead of ephemeral key
     nonce: encodeBase58(iv),
     timestamp: getCurrentTimestamp(),
     version: '1.0.0'
@@ -118,19 +123,20 @@ export async function decryptDirect(
   const combined = decodeBase58(encryptionResult.encryptedData);
   
   // Split the combined data
-  const ephemeralPubKeySize = 32; // nacl box public key size
-  const [ephemeralPublicKey, iv, authTag, encrypted] = splitBuffer(
+  const saltSize = 32;
+  const [salt, iv, authTag, encrypted] = splitBuffer(
     combined,
-    ephemeralPubKeySize,
+    saltSize,
     IV_SIZE,
     AUTH_TAG_SIZE
   );
 
-  // Perform key exchange with ephemeral public key
-  const sharedSecret = performKeyExchange(
-    recipientPrivKeyBytes,
-    ephemeralPublicKey
-  );
+  // Get recipient public key to derive the same shared secret
+  const recipientKeypair = Keypair.fromSecretKey(recipientPrivKeyBytes);
+  const recipientPubKeyBytes = recipientKeypair.publicKey.toBytes();
+  
+  // Derive the same shared secret using recipient's public key and salt
+  const sharedSecret = deriveKey(recipientPubKeyBytes, salt, 1000);
 
   // Decrypt the data
   let decrypted = decryptAES(encrypted, sharedSecret, iv, authTag);

@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach, beforeAll, jest } from '@jest/globals';
+import { describe, test, expect, beforeEach, jest } from '@jest/globals';
 import { 
   GorbchainSDK, 
   RpcClient, 
@@ -73,13 +73,13 @@ describe('Optimized SDK Tests', () => {
       // Token Operations
       expect(exports.AdvancedTokenHoldings).toBeDefined();
       
-      // Rich Operations
-      expect(exports.getRichTokenAccountsByOwner).toBeDefined();
-      expect(exports.getRichTransaction).toBeDefined();
+      // Network Configuration
+      expect(exports.getNetworkConfig).toBeDefined();
+      expect(exports.detectNetworkFromEndpoint).toBeDefined();
       
-      // Utilities
-      expect(exports.base58ToBytes).toBeDefined();
-      expect(exports.bytesToBase58).toBeDefined();
+      // Minting Functions
+      expect(exports.createToken22TwoTx).toBeDefined();
+      expect(exports.createNFT).toBeDefined();
     });
 
     test('should initialize quickly', () => {
@@ -93,11 +93,12 @@ describe('Optimized SDK Tests', () => {
 
   describe('2. Export Organization Validation', () => {
     test('should have all core SDK exports', () => {
-      const exports = { GorbchainSDK, RpcClient, EnhancedRpcClient, AdvancedTokenHoldings, DecoderRegistry, createDefaultDecoderRegistry, base58ToBytes, bytesToBase58, getRichTokenAccountsByOwner, getRichTransaction, getDefaultConfig };
+      const exports = require('../src/index');
       
       const expectedCoreExports = [
         'GorbchainSDK',
-        'getDefaultConfig'
+        'getDefaultConfig', 
+        'validateConfig'
       ];
       
       expectedCoreExports.forEach(exportName => {
@@ -106,7 +107,7 @@ describe('Optimized SDK Tests', () => {
     });
 
     test('should have all type exports available', () => {
-      const exports = { GorbchainSDK, RpcClient, EnhancedRpcClient, AdvancedTokenHoldings, DecoderRegistry, createDefaultDecoderRegistry, base58ToBytes, bytesToBase58, getRichTokenAccountsByOwner, getRichTransaction, getDefaultConfig };
+      const exports = require('../src/index');
       
       // These should be available as TypeScript types (can't test directly but exported)
       const typeExports = [
@@ -119,15 +120,24 @@ describe('Optimized SDK Tests', () => {
       
       // We can't directly test type exports, but we can verify the module exports them
       const moduleExportKeys = Object.keys(exports);
-      expect(moduleExportKeys.length).toBeGreaterThan(5); // Should have core exports
+      expect(moduleExportKeys.length).toBeGreaterThan(50); // Should have many exports
     });
 
     test('should have properly organized decoder exports', () => {
-      const exports = { GorbchainSDK, RpcClient, EnhancedRpcClient, AdvancedTokenHoldings, DecoderRegistry, createDefaultDecoderRegistry, base58ToBytes, bytesToBase58, getRichTokenAccountsByOwner, getRichTransaction, getDefaultConfig };
+      const exports = require('../src/index');
       
       const decoderExports = [
         'DecoderRegistry',
-        'createDefaultDecoderRegistry'
+        'createDefaultDecoderRegistry',
+        'decodeInstructions',
+        'SystemInstructionType',
+        'decodeSystemInstruction',
+        'Token2022Instruction', 
+        'decodeToken2022Instruction',
+        'ATAInstruction',
+        'decodeATAInstruction',
+        'MetaplexInstruction',
+        'decodeNFTInstruction'
       ];
       
       decoderExports.forEach(exportName => {
@@ -136,11 +146,17 @@ describe('Optimized SDK Tests', () => {
     });
 
     test('should have utility exports organized', () => {
-      const exports = { GorbchainSDK, RpcClient, EnhancedRpcClient, AdvancedTokenHoldings, DecoderRegistry, createDefaultDecoderRegistry, base58ToBytes, bytesToBase58, getRichTokenAccountsByOwner, getRichTransaction, getDefaultConfig };
+      const exports = require('../src/index');
       
       const utilityExports = [
         'base58ToBytes',
-        'bytesToBase58'
+        'bytesToBase58', 
+        'base64ToHex',
+        'base64ToUint8Array',
+        'getGorbchainConfig',
+        'decodeNFT',
+        'decodeMintAccount',
+        'fetchProgramAccount'
       ];
       
       utilityExports.forEach(exportName => {
@@ -439,7 +455,7 @@ describe('Optimized SDK Tests', () => {
 
     test('should have comprehensive decoder registry initialization', () => {
       expect(sdk.decoders).toBeDefined();
-      expect(sdk.decoders).toBeInstanceOf(DecoderRegistry);
+      expect(sdk.decoders).toBeInstanceOf(require('../src/decoders/registry').DecoderRegistry);
 
       const registeredPrograms = sdk.decoders.getRegisteredPrograms();
       expect(registeredPrograms).toContain('system');

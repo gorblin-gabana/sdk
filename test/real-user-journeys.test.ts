@@ -1,4 +1,5 @@
-import { GorbchainSDK } from '../src/index';
+import { describe, test, expect, beforeEach, beforeAll, jest } from '@jest/globals';
+import { GorbchainSDK, RpcClient, EnhancedRpcClient, AdvancedTokenHoldings, DecoderRegistry, createDefaultDecoderRegistry } from '../src/index';
 import { createTestSDK, TEST_DATA, PerformanceTracker, shouldSkipNetworkTests, shouldSkipRealDataTests } from './setup';
 
 describe('Real User Journey Tests', () => {
@@ -506,7 +507,14 @@ describe('Real User Journey Tests', () => {
       console.log('🔍 Testing SDK feature detection...');
 
       // Test export availability
-      const exports = require('../src/index');
+      const exports = {
+        GorbchainSDK,
+        RpcClient, 
+        EnhancedRpcClient,
+        AdvancedTokenHoldings,
+        DecoderRegistry,
+        createDefaultDecoderRegistry
+      };
       const expectedFeatures = [
         'GorbchainSDK',
         'RpcClient', 

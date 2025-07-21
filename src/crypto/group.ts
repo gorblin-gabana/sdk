@@ -3,7 +3,7 @@
  * Static groups with fixed membership
  */
 
-import { encode as encodeBase58, decode as decodeBase58 } from 'bs58';
+import { bytesToBase58 as encodeBase58, base58ToBytes as decodeBase58 } from '../utils/base58.js';
 import { Keypair } from '@solana/web3.js';
 import {
   EncryptionMethod,

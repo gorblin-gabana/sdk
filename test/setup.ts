@@ -1,25 +1,22 @@
 // Global test setup for Gorbchain SDK v2 - Enhanced for Optimized SDK
 // Configure timeouts, mocks, and common test utilities
 
+import { jest, beforeAll, expect } from '@jest/globals';
+import { GorbchainSDK } from '../src/index.js';
+
 // Extend Jest timeout for network-dependent tests
 jest.setTimeout(30000);
 
-// Global test configuration
-declare global {
-  namespace NodeJS {
-    interface Global {
-      TEST_CONFIG: {
-        NETWORK_TIMEOUT: number;
-        DEFAULT_RPC_ENDPOINT: string;
-        MAX_RETRIES: number;
-        PERFORMANCE_THRESHOLDS: {
-          RPC_RESPONSE_TIME: number;
-          TOKEN_ANALYSIS_TIME: number;
-          PORTFOLIO_ANALYSIS_TIME: number;
-        };
-      };
-    }
-  }
+// Global test configuration types
+interface TestConfig {
+  NETWORK_TIMEOUT: number;
+  DEFAULT_RPC_ENDPOINT: string;
+  MAX_RETRIES: number;
+  PERFORMANCE_THRESHOLDS: {
+    RPC_RESPONSE_TIME: number;
+    TOKEN_ANALYSIS_TIME: number;
+    PORTFOLIO_ANALYSIS_TIME: number;
+  };
 }
 
 // Set up global test configuration
@@ -35,7 +32,7 @@ declare global {
 };
 
 // Test data configuration - populated with real data from environment or defaults
-export const TEST_DATA = {
+const TEST_DATA = {
   wallets: {
     diverse: process.env.TEST_WALLET_DIVERSE || '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
     nft: process.env.TEST_WALLET_NFT || '5YNmS1R9nNSCDzAYUGd2xgXzUk8A5mWJPybyGCPP6gFW',
@@ -70,17 +67,15 @@ export const TEST_DATA = {
 };
 
 // Helper functions for test utilities
-export function shouldSkipNetworkTests(): boolean {
+function shouldSkipNetworkTests(): boolean {
   return process.env.SKIP_NETWORK_TESTS === 'true';
 }
 
-export function shouldSkipRealDataTests(): boolean {
+function shouldSkipRealDataTests(): boolean {
   return process.env.SKIP_REAL_DATA_TESTS === 'true';
 }
 
-export function createTestSDK(overrides?: any) {
-  const { GorbchainSDK } = require('../src/index');
-  
+function createTestSDK(overrides?: any) {
   return new GorbchainSDK({
     rpcEndpoint: TEST_DATA.network.rpcEndpoint,
     network: TEST_DATA.network.networkName,
@@ -109,7 +104,7 @@ export function createTestSDK(overrides?: any) {
 }
 
 // Performance tracking utility
-export class PerformanceTracker {
+class PerformanceTracker {
   private startTime: number = 0;
   
   start() {
@@ -173,3 +168,12 @@ beforeAll(() => {
     console.warn('   See TESTING_STRATEGY.md for instructions on providing real test data');
   }
 });
+
+// Export as ES modules
+export {
+  TEST_DATA,
+  shouldSkipNetworkTests,
+  shouldSkipRealDataTests,
+  createTestSDK,
+  PerformanceTracker
+};

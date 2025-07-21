@@ -3,7 +3,7 @@
  * For encrypting data that only the key owner can decrypt
  */
 
-import { encode as encodeBase58, decode as decodeBase58 } from 'bs58';
+import { bytesToBase58 as encodeBase58, base58ToBytes as decodeBase58 } from '../utils/base58.js';
 import {
   EncryptionMethod,
   EncryptionResult,
@@ -39,9 +39,33 @@ export async function encryptPersonal(
 ): Promise<EncryptionResult> {
   // Convert inputs
   let dataBytes = typeof data === 'string' ? stringToBytes(data) : data;
-  const privateKeyBytes = typeof privateKey === 'string' 
-    ? decodeBase58(privateKey) 
-    : privateKey;
+  
+  // Validate and convert private key
+  let privateKeyBytes: Uint8Array;
+  if (typeof privateKey === 'string') {
+    try {
+      if (!privateKey || privateKey.length < 32) {
+        throw new Error('Invalid private key format');
+      }
+      privateKeyBytes = decodeBase58(privateKey);
+    } catch (error) {
+      throw new Error('Invalid private key: unable to decode base58');
+    }
+  } else {
+    privateKeyBytes = privateKey;
+  }
+  
+  // Validate private key length (should be 32 or 64 bytes for ed25519)
+  if (!privateKeyBytes || (privateKeyBytes.length !== 32 && privateKeyBytes.length !== 64)) {
+    throw new Error('Invalid private key: must be 32 or 64 bytes');
+  }
+  
+  // Check for invalid key patterns (all zeros, etc.)
+  const isAllZeros = privateKeyBytes.every(byte => byte === 0);
+  const isAllOnes = privateKeyBytes.every(byte => byte === 255);
+  if (isAllZeros || isAllOnes) {
+    throw new Error('Invalid private key: key cannot be all zeros or all ones');
+  }
 
   // Compress if requested
   if (options?.compress) {
@@ -70,7 +94,8 @@ export async function encryptPersonal(
     salt: encodeBase58(salt),
     nonce: encodeBase58(iv),
     timestamp: getCurrentTimestamp(),
-    version: '1.0.0'
+    version: '1.0.0',
+    ...options?.customMetadata  // Spread custom metadata
   };
 
   // Add compression flag to metadata if used
@@ -111,6 +136,22 @@ export async function decryptPersonal(
     IV_SIZE,
     AUTH_TAG_SIZE
   );
+
+  // Validate metadata integrity - nonce should match IV
+  if (metadata.nonce !== encodeBase58(iv)) {
+    throw new Error('Metadata tampering detected: nonce mismatch');
+  }
+  
+  // Validate metadata integrity - salt should match
+  if (metadata.salt !== encodeBase58(salt)) {
+    throw new Error('Metadata tampering detected: salt mismatch');
+  }
+  
+  // Validate version - should be a known version
+  const supportedVersions = ['1.0.0'];
+  if (!supportedVersions.includes(metadata.version)) {
+    throw new Error('Metadata tampering detected: unsupported or invalid version');
+  }
 
   // Derive the same encryption key
   const decryptionKey = deriveKey(privateKeyBytes, salt);

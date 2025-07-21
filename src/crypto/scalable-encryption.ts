@@ -3,7 +3,7 @@
  * Seamlessly transitions from single recipient to multi-recipient encryption
  */
 
-import { encode as encodeBase58, decode as decodeBase58 } from 'bs58';
+import { bytesToBase58 as encodeBase58, base58ToBytes as decodeBase58 } from '../utils/base58.js';
 import { Keypair } from '@solana/web3.js';
 import {
   EncryptionMethod,
@@ -82,7 +82,7 @@ export class ScalableEncryptionManager {
       autoTransitionThreshold: 3,
       defaultRecipientPermissions: {
         canDecrypt: true,
-        canEncrypt: false,
+        canEncrypt: true,  // Enable encryption for scalable contexts
         canShare: false,
         canRevoke: false
       },
@@ -243,7 +243,7 @@ export class ScalableEncryptionManager {
     const totalRecipients = context.recipients.length + validRecipients.length;
     
     if (context.method === EncryptionMethod.DIRECT && 
-        totalRecipients >= context.scalingConfig.autoTransitionThreshold) {
+        totalRecipients > context.scalingConfig.autoTransitionThreshold) {
       
       await this.transitionToSharedEncryption(contextId, authorizerPrivateKey, authorizerPublicKey);
     }
@@ -254,10 +254,13 @@ export class ScalableEncryptionManager {
       await this.transitionToSharedEncryption(contextId, authorizerPrivateKey, authorizerPublicKey);
     }
 
+    // Refresh context after potential transition
+    const updatedContext = this.contexts.get(contextId)!;
+
     // Now add to shared key
-    if (context.sharedKeyId) {
+    if (updatedContext.sharedKeyId) {
       const recipientPermissions = {
-        ...context.scalingConfig.defaultRecipientPermissions,
+        ...updatedContext.scalingConfig.defaultRecipientPermissions,
         ...permissions
       };
 
@@ -267,25 +270,25 @@ export class ScalableEncryptionManager {
       }));
 
       await this.sharedKeyManager.addRecipientsToSharedKey(
-        context.sharedKeyId,
+        updatedContext.sharedKeyId,
         recipientsWithPermissions,
         authorizerPrivateKey,
         authorizerPublicKey
       );
     }
 
-    // Update context
-    const updatedContext: EncryptionContext = {
-      ...context,
-      recipients: [...context.recipients, ...validRecipients],
+    // Update context with new recipients
+    const finalUpdatedContext: EncryptionContext = {
+      ...updatedContext,
+      recipients: [...updatedContext.recipients, ...validRecipients],
       metadata: {
-        ...context.metadata,
+        ...updatedContext.metadata,
         lastUpdated: getCurrentTimestamp()
       }
     };
 
-    this.contexts.set(contextId, updatedContext);
-    return updatedContext;
+    this.contexts.set(contextId, finalUpdatedContext);
+    return finalUpdatedContext;
   }
 
   /**
@@ -413,10 +416,36 @@ export class ScalableEncryptionManager {
     }
 
     // Create shared key with current recipients
+    // Give creator full permissions and recipients default permissions
     const initialRecipients = context.recipients.map(publicKey => ({
       publicKey,
       permissions: context.scalingConfig.defaultRecipientPermissions
     }));
+
+    // Add the creator with full permissions if not already included
+    // This ensures the creator can always manage their contexts
+    if (!initialRecipients.some(r => r.publicKey === authorizerPublicKey)) {
+      initialRecipients.push({
+        publicKey: authorizerPublicKey,
+        permissions: {
+          canDecrypt: true,
+          canEncrypt: true,
+          canShare: true,
+          canRevoke: true
+        }
+      });
+    } else {
+      // Ensure the creator has full permissions if they're already in recipients
+      const creatorRecipient = initialRecipients.find(r => r.publicKey === authorizerPublicKey);
+      if (creatorRecipient) {
+        creatorRecipient.permissions = {
+          canDecrypt: true,
+          canEncrypt: true,
+          canShare: true,
+          canRevoke: true
+        };
+      }
+    }
 
     const sharedKey = await this.sharedKeyManager.createSharedKey(
       {

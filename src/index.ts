@@ -227,6 +227,9 @@ export {
   CryptoManager,
   // Types
   EncryptionMethod,
+} from './crypto/index.js';
+
+export type {
   EncryptionResult,
   EncryptionMetadata,
   PersonalEncryptionMetadata,
@@ -239,6 +242,15 @@ export {
   GroupPermissions,
   EncryptionEpoch,
   KeyShare,
+  SharedEncryptionKey,
+  EncryptedKeyShare,
+  SharePermissions,
+  KeyTransitionRequest,
+  EncryptionContext,
+  ScalableEncryptionConfig,
+} from './crypto/index.js';
+
+export {
   // Personal encryption
   encryptPersonal,
   decryptPersonal,
@@ -264,14 +276,8 @@ export {
   decryptSignatureGroupData,
   // Shared key management
   SharedKeyManager,
-  SharedEncryptionKey,
-  EncryptedKeyShare,
-  SharePermissions,
-  KeyTransitionRequest,
   // Scalable encryption
   ScalableEncryptionManager,
-  EncryptionContext,
-  ScalableEncryptionConfig,
   createScalableEncryption,
   // Utilities
   signData,

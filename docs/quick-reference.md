@@ -1,4 +1,4 @@
-# Gorbchain SDK Quick Reference
+# GorbchainSDK V1.3+ Quick Reference
 
 ## Installation
 
@@ -15,6 +15,69 @@ const sdk = new GorbchainSDK({
   rpcEndpoint: 'https://rpc.gorbchain.xyz',
   network: 'mainnet'
 });
+```
+
+## 🔐 NEW: Cryptography Functions
+
+### Personal Encryption
+```typescript
+import { encryptPersonal, decryptPersonalString } from '@gorbchain-xyz/chaindecode';
+
+// Encrypt with your private key
+const encrypted = await encryptPersonal('Secret data', privateKey);
+const decrypted = await decryptPersonalString(encrypted, privateKey);
+```
+
+### Direct Encryption (1-on-1)
+```typescript
+import { encryptDirect, decryptDirectString } from '@gorbchain-xyz/chaindecode';
+
+// Alice encrypts for Bob
+const encrypted = await encryptDirect('Hello Bob', bobPublicKey, alicePrivateKey);
+const decrypted = await decryptDirectString(encrypted, bobPrivateKey);
+```
+
+### Group & Signature-Based Encryption
+```typescript
+import { createSignatureGroup, encryptForSignatureGroup, MemberRole } from '@gorbchain-xyz/chaindecode';
+
+// Create group
+const group = await createSignatureGroup('Team Chat', creatorPrivateKey, [
+  { publicKey: memberKey, role: MemberRole.MEMBER }
+]);
+
+// Encrypt for group
+const encrypted = await encryptForSignatureGroup('Team message', group, senderPrivateKey, senderPublicKey);
+```
+
+### Shared Key Management
+```typescript
+import { SharedKeyManager } from '@gorbchain-xyz/chaindecode';
+
+const manager = new SharedKeyManager();
+const sharedKey = await manager.createSharedKey(
+  { name: 'Team Docs', purpose: 'Document sharing' },
+  [{ publicKey: memberKey, permissions: { canDecrypt: true, canEncrypt: true }}],
+  creatorPrivateKey
+);
+```
+
+### Scalable Encryption
+```typescript
+import { ScalableEncryptionManager } from '@gorbchain-xyz/chaindecode';
+
+const manager = new ScalableEncryptionManager();
+const { context } = await manager.createEncryptionContext(
+  'Project Alpha', 'Auto-scaling chat', initialRecipient, creatorPrivateKey
+);
+```
+
+### Digital Signatures
+```typescript
+import { signData, verifySignature } from '@gorbchain-xyz/chaindecode';
+
+const signature = signData('Important document', privateKey);
+const isValid = verifySignature('Important document', signature, publicKey);
 ```
 
 ## Most Common Functions
@@ -196,6 +259,91 @@ const PROGRAM_IDS = {
   CUSTOM_MPL_CORE_PROGRAM: 'BvoSmPBF6mBRxBMY9FPguw1zUoUg3xrc5CaWf7y5ACkc'
 };
 ```
+
+## 🔐 Crypto Response Types
+
+### PersonalEncryptionResult
+```typescript
+{
+  method: 'PERSONAL',
+  encryptedData: string,
+  metadata: {
+    nonce: string,
+    version: string,
+    timestamp: number,
+    compressed?: boolean
+  }
+}
+```
+
+### DirectEncryptionResult  
+```typescript
+{
+  method: 'DIRECT',
+  encryptedData: string,
+  metadata: {
+    ephemeralPublicKey: string,
+    nonce: string,
+    senderPublicKey: string,
+    recipientPublicKey: string
+  }
+}
+```
+
+### GroupEncryptionResult
+```typescript
+{
+  method: 'GROUP',
+  encryptedData: string,
+  groupId: string,
+  senderPublicKey: string,
+  metadata: {
+    nonce: string,
+    timestamp: number,
+    epoch: number
+  }
+}
+```
+
+## Common Crypto Patterns
+
+### Secure Messaging App
+```typescript
+// 1-on-1 chat
+const message = await encryptDirect('Hello!', recipientKey, senderPrivateKey);
+
+// Group chat
+const group = await createSignatureGroup('Friends', creatorKey, members);
+const groupMessage = await encryptForSignatureGroup('Hey everyone!', group, senderKey, senderPublicKey);
+```
+
+### Document Management
+```typescript
+// Shared document access
+const docKey = await manager.createSharedKey(
+  { name: 'Project Docs' },
+  recipients,
+  adminKey
+);
+const encrypted = await manager.encryptWithSharedKey(document, docKey.keyId, userKey, userPublicKey);
+```
+
+### Auto-scaling Team Communication
+```typescript
+// Starts direct, scales to shared key automatically
+const { manager, context } = await createScalableEncryption('Team', 'purpose', initialRecipient, creatorKey);
+
+// Add members (auto-transitions at threshold)
+await manager.addRecipientsToContext(context.contextId, newMembers, adminKey, adminPublicKey);
+```
+
+## Security Best Practices
+
+1. **Never expose private keys** in client-side code
+2. **Use compression** for large data: `{ compress: true }`
+3. **Implement key rotation** when removing group members
+4. **Verify signatures** for group access control
+5. **Use forward secrecy** with ephemeral keys
 
 ## Environment Setup
 

@@ -11,14 +11,12 @@ import {
 export default function GettingStarted() {
   const [copied, setCopied] = useState<{ [key: string]: boolean }>({})
 
-  const copyToClipboard = (code: string, id?: string) => {
+  const copyToClipboard = (code: string, id: string) => {
     navigator.clipboard.writeText(code)
-    if (id) {
-      setCopied(prev => ({ ...prev, [id]: true }))
-      setTimeout(() => {
-        setCopied(prev => ({ ...prev, [id]: false }))
-      }, 2000)
-    }
+    setCopied(prev => ({ ...prev, [id]: true }))
+    setTimeout(() => {
+      setCopied(prev => ({ ...prev, [id]: false }))
+    }, 2000)
   }
 
   const installCode = `npm install @gorbchain-xyz/chaindecode`
@@ -167,12 +165,12 @@ try {
           Install the SDK using your preferred package manager:
         </p>
         <CodeBlock 
-          code={installCode} 
-          id="install" 
-          title="Terminal" 
+          code={installCode}
+          id="install"
+          title="Terminal"
           language="bash"
-          onCopy={copyToClipboard}
-          copied={copied["install"]}
+          onCopy={() => copyToClipboard(installCode, 'install')}
+          copied={copied['install'] || false}
         />
       </div>
 
@@ -190,12 +188,12 @@ try {
           Configure the SDK with your Gorbchain network settings:
         </p>
         <CodeBlock 
-          code={basicUsageCode} 
-          id="init" 
-          title="Initialize SDK" 
+          code={basicUsageCode}
+          id="init"
+          title="Initialize SDK"
           language="typescript"
-          onCopy={copyToClipboard}
-          copied={copied["init"]}
+          onCopy={() => copyToClipboard(basicUsageCode, 'init')}
+          copied={copied['init'] || false}
         />
         
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -238,12 +236,12 @@ try {
           Try these common operations (SDK assumed to be initialized):
         </p>
         <CodeBlock 
-          code={quickExampleCode} 
-          id="examples" 
-          title="Common Operations" 
+          code={quickExampleCode}
+          id="examples"
+          title="Common Operations"
           language="typescript"
-          onCopy={copyToClipboard}
-          copied={copied["examples"]}
+          onCopy={() => copyToClipboard(quickExampleCode, 'examples')}
+          copied={copied['examples'] || false}
         />
         
         <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -278,12 +276,12 @@ try {
           The SDK provides comprehensive error handling with specific error types:
         </p>
         <CodeBlock 
-          code={errorHandlingCode} 
-          id="errors" 
-          title="Error Handling" 
+          code={errorHandlingCode}
+          id="errors"
+          title="Error Handling"
           language="typescript"
-          onCopy={copyToClipboard}
-          copied={copied["errors"]}
+          onCopy={() => copyToClipboard(errorHandlingCode, 'errors')}
+          copied={copied['errors'] || false}
         />
         
         <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">

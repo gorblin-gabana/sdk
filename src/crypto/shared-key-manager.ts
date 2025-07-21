@@ -3,7 +3,7 @@
  * Manages shared encryption/decryption keys that can be distributed among group members
  */
 
-import { encode as encodeBase58, decode as decodeBase58 } from 'bs58';
+import { bytesToBase58 as encodeBase58, base58ToBytes as decodeBase58 } from '../utils/base58.js';
 import { Keypair } from '@solana/web3.js';
 import {
   EncryptionMethod,
@@ -15,7 +15,6 @@ import {
 } from './types.js';
 import {
   generateRandomBytes,
-  performKeyExchange,
   encryptAES,
   decryptAES,
   stringToBytes,
@@ -412,10 +411,11 @@ export class SharedKeyManager {
     const { encrypted, iv, authTag } = encryptAES(dataBytes, masterKey);
 
     // Create signature for integrity
+    const timestamp = getCurrentTimestamp();
     const encryptionMetadata = {
       keyId,
       sender: senderPublicKey,
-      timestamp: getCurrentTimestamp(),
+      timestamp: timestamp,
       recipients: sharedKey.holders
     };
 
@@ -437,7 +437,7 @@ export class SharedKeyManager {
       method: EncryptionMethod.GROUP,
       metadata: {
         nonce: encodeBase58(iv),
-        timestamp: getCurrentTimestamp(),
+        timestamp: timestamp,
         version: '2.0.0',
         keyId,
         sender: senderPublicKey,
@@ -639,14 +639,16 @@ export class SharedKeyManager {
   ): Promise<EncryptedKeyShare> {
     const recipientPubKeyBytes = decodeBase58(recipientPublicKey);
     
-    // Perform key exchange
-    const sharedSecret = performKeyExchange(senderPrivateKey, recipientPubKeyBytes);
+    // Use salt-based approach like in direct encryption
+    const salt = generateRandomBytes(32);
+    const { deriveKey } = await import('./utils.js');
+    const sharedSecret = deriveKey(recipientPubKeyBytes, salt, 1000);
     
-    // Encrypt master key with shared secret
+    // Encrypt master key with shared secret  
     const { encrypted, iv, authTag } = encryptAES(masterKey, sharedSecret);
     
-    // Combine iv, authTag, and encrypted key
-    const combined = combineBuffers(iv, authTag, encrypted);
+    // Combine salt, iv, authTag, and encrypted key
+    const combined = combineBuffers(salt, iv, authTag, encrypted);
     
     return {
       recipientPublicKey,
@@ -663,14 +665,15 @@ export class SharedKeyManager {
     recipientPrivateKey: Uint8Array,
     senderPublicKey: string
   ): Promise<Uint8Array> {
-    const senderPubKeyBytes = decodeBase58(senderPublicKey);
-    
-    // Perform key exchange
-    const sharedSecret = performKeyExchange(recipientPrivateKey, senderPubKeyBytes);
+    const recipientPubKeyBytes = decodeBase58(keyShare.recipientPublicKey);
     
     // Decode the encrypted share
     const combined = decodeBase58(keyShare.encryptedData);
-    const [iv, authTag, encrypted] = splitBuffer(combined, IV_SIZE, AUTH_TAG_SIZE);
+    const [salt, iv, authTag, encrypted] = splitBuffer(combined, 32, IV_SIZE, AUTH_TAG_SIZE);
+    
+    // Use same salt-based approach as encryption
+    const { deriveKey } = await import('./utils.js');
+    const sharedSecret = deriveKey(recipientPubKeyBytes, salt, 1000);
     
     // Decrypt the master key
     return decryptAES(encrypted, sharedSecret, iv, authTag);

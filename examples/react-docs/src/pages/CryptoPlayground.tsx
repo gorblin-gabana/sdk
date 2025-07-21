@@ -611,6 +611,7 @@ const isValid = verifySignature(
 // Key generation helper component
 function KeyGenerationHelper({ onKeysGenerated }: { onKeysGenerated: (keys: { publicKey: string, privateKey: string }[]) => void }) {
   const [generatedKeys, setGeneratedKeys] = useState<{ publicKey: string, privateKey: string }[]>([])
+  const [copied, setCopied] = useState<{ [key: string]: boolean }>({})
 
   const generateKeys = (count: number = 3) => {
     const keys = []
@@ -625,56 +626,77 @@ function KeyGenerationHelper({ onKeysGenerated }: { onKeysGenerated: (keys: { pu
     onKeysGenerated(keys)
   }
 
+  const handleCopy = (text: string, key: string) => {
+    navigator.clipboard.writeText(text)
+    setCopied(prev => ({ ...prev, [key]: true }))
+    setTimeout(() => {
+      setCopied(prev => ({ ...prev, [key]: false }))
+    }, 1200)
+  }
+
   return (
-    <div className="mb-6 docs-card bg-white rounded-lg border border-gray-200">
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">🔑 Test Keys Generator</h3>
-      <p className="text-sm text-gray-600 mb-3">
-        Generate test keypairs for crypto operations. These are for testing only - never use in production!
+    <div className="mb-6 docs-card bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+      <h3 className="text-lg font-bold text-docs-heading mb-2">🔑 Test Keys Generator</h3>
+      <p className="text-sm text-gray-600 mb-5">
+        Generate test keypairs for crypto operations. These are for testing only—never use in production!
       </p>
-      
-      <div className="flex gap-2 mb-3">
+      <div className="flex gap-2 mb-6">
         <button
           onClick={() => generateKeys(3)}
-          className="btn-primary px-3 py-2 text-sm rounded-lg"
+          className="btn-primary px-4 py-2 text-sm rounded-2xl font-medium shadow-sm"
         >
           Generate 3 Keys
         </button>
         <button
           onClick={() => generateKeys(5)}
-          className="btn-primary px-3 py-2 text-sm rounded-lg"
+          className="btn-primary px-4 py-2 text-sm rounded-2xl font-medium shadow-sm"
         >
           Generate 5 Keys
         </button>
         <button
           onClick={() => generateKeys(1)}
-          className="btn-primary px-3 py-2 text-sm rounded-lg"
+          className="btn-primary px-4 py-2 text-sm rounded-2xl font-medium shadow-sm"
         >
           Generate 1 Key
         </button>
       </div>
 
       {generatedKeys.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-gray-900">Generated Keys (click to copy):</p>
-          {generatedKeys.map((key, index) => (
-            <div key={index} className="text-xs bg-gray-50 p-2 rounded border border-gray-200">
-              <div className="font-medium text-gray-700">Key {index + 1}:</div>
-              <div 
-                className="font-mono cursor-pointer hover:bg-gray-100 p-1 rounded"
-                onClick={() => navigator.clipboard.writeText(key.publicKey)}
-                title="Click to copy"
-              >
-                <span className="text-emerald-600">Public:</span> {key.publicKey}
+        <div className="space-y-4">
+          <p className="text-sm font-semibold text-docs-heading mb-2">Generated Keys <span className="text-gray-400">(click to copy)</span>:</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {generatedKeys.map((key, index) => (
+              <div key={index} className="docs-card bg-white border border-gray-100 rounded-2xl p-4 flex flex-col gap-2 shadow-sm">
+                <div className="font-semibold text-gray-700 mb-1">Key {index + 1}</div>
+                <div className="flex items-center gap-2">
+                  <span className="text-emerald-600 font-mono text-xs">Public:</span>
+                  <span
+                    className={`font-mono text-xs break-all cursor-pointer px-2 py-1 rounded-2xl transition-colors border border-transparent focus:outline-none focus:ring-2 focus:ring-emerald-300 ${copied[`pub-${index}`] ? 'bg-emerald-100 text-emerald-700' : 'hover:bg-emerald-50'}`}
+                    style={{ borderRadius: '1rem' }}
+                    title="Click to copy"
+                    tabIndex={0}
+                    onClick={() => handleCopy(key.publicKey, `pub-${index}`)}
+                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleCopy(key.publicKey, `pub-${index}`) }}
+                  >
+                    {copied[`pub-${index}`] ? 'Copied!' : key.publicKey}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-red-600 font-mono text-xs">Private:</span>
+                  <span
+                    className={`font-mono text-xs break-all cursor-pointer px-2 py-1 rounded-2xl transition-colors border border-transparent focus:outline-none focus:ring-2 focus:ring-red-300 ${copied[`priv-${index}`] ? 'bg-red-100 text-red-700' : 'hover:bg-red-50'}`}
+                    style={{ borderRadius: '1rem' }}
+                    title="Click to copy"
+                    tabIndex={0}
+                    onClick={() => handleCopy(key.privateKey, `priv-${index}`)}
+                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleCopy(key.privateKey, `priv-${index}`) }}
+                  >
+                    {copied[`priv-${index}`] ? 'Copied!' : key.privateKey.substring(0, 20) + '...'}
+                  </span>
+                </div>
               </div>
-              <div 
-                className="font-mono cursor-pointer hover:bg-gray-100 p-1 rounded"
-                onClick={() => navigator.clipboard.writeText(key.privateKey)}
-                title="Click to copy"
-              >
-                <span className="text-red-600">Private:</span> {key.privateKey.substring(0, 20)}...
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -720,8 +742,8 @@ export function CryptoPlayground() {
       <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
         {/* Method Categories - GorbchainSDK Theme */}
         <div className="xl:col-span-2">
-          <div className="docs-card bg-white rounded-lg border border-gray-200 overflow-hidden sticky top-4">
-            <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white p-6">
+          <div className="docs-card bg-white rounded-2xl border border-gray-200 overflow-hidden sticky top-4 shadow-sm">
+            <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white p-6 rounded-2xl">
               <h2 className="text-xl font-bold mb-2">
                 🔐 Crypto Methods
               </h2>
@@ -729,7 +751,6 @@ export function CryptoPlayground() {
                 Choose a cryptographic operation to test
               </p>
             </div>
-            
             <div className="p-6 max-h-96 overflow-y-auto">
               {Object.entries(cryptoTestCategories).map(([category, methods]) => (
                 <div key={category} className="mb-6 last:mb-0">
@@ -741,10 +762,10 @@ export function CryptoPlayground() {
                       <button
                         key={method.id}
                         onClick={() => setSelectedMethod(method.id)}
-                        className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-200 ${
+                        className={`w-full text-left px-4 py-3 rounded-2xl transition-all duration-200 font-medium shadow-sm border ${
                           selectedMethod === method.id
-                            ? 'bg-emerald-500 text-white shadow-md'
-                            : 'text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-200'
+                            ? 'bg-emerald-500 text-white border-emerald-500'
+                            : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-200'
                         }`}
                       >
                         <div className="font-medium text-sm">{method.name}</div>

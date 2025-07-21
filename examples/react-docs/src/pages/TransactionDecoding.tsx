@@ -430,8 +430,8 @@ console.log('Transaction Analysis:', analysis)`
             language="typescript"
             title="Basic Transaction Decoding"
             id="basic-decoding"
-            onCopy={() => {}}
-            copied={false}
+            onCopy={() => copyToClipboard(basicDecodingCode, 'basic')}
+            copied={copied['basic'] || false}
           />
         </div>
       </div>
@@ -458,8 +458,8 @@ console.log('Transaction Analysis:', analysis)`
             language="typescript"
             title="Instruction Decoding"
             id="instruction-decoding"
-            onCopy={() => {}}
-            copied={false}
+            onCopy={() => copyToClipboard(instructionDecodingCode, 'instruction')}
+            copied={copied['instruction'] || false}
           />
         </div>
       </div>
@@ -531,8 +531,8 @@ console.log('Transaction Analysis:', analysis)`
             language="typescript"
             title="Decoder Registry"
             id="decoder-registry"
-            onCopy={() => {}}
-            copied={false}
+            onCopy={() => copyToClipboard(decoderRegistryCode, 'registry')}
+            copied={copied['registry'] || false}
           />
         </div>
       </div>
@@ -559,8 +559,8 @@ console.log('Transaction Analysis:', analysis)`
             language="typescript"
             title="Batch Decoding"
             id="batch-decoding"
-            onCopy={() => {}}
-            copied={false}
+            onCopy={() => copyToClipboard(batchDecodingCode, 'batch')}
+            copied={copied['batch'] || false}
           />
         </div>
       </div>
@@ -587,8 +587,8 @@ console.log('Transaction Analysis:', analysis)`
             language="typescript"
             title="Advanced Analysis"
             id="advanced-analysis"
-            onCopy={() => {}}
-            copied={false}
+            onCopy={() => copyToClipboard(advancedAnalysisCode, 'advanced')}
+            copied={copied['advanced'] || false}
           />
         </div>
         <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">

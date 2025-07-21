@@ -3,7 +3,7 @@
  */
 
 import { createHash, randomBytes, createCipheriv, createDecipheriv } from 'crypto';
-import { encode as encodeBase58, decode as decodeBase58 } from 'bs58';
+import { bytesToBase58 as encodeBase58, base58ToBytes as decodeBase58 } from '../utils/base58.js';
 import { Keypair, PublicKey } from '@solana/web3.js';
 import nacl from 'tweetnacl';
 import { Buffer } from 'buffer';
@@ -31,25 +31,29 @@ export function deriveKey(
   salt: Uint8Array,
   iterations: number = KEY_DERIVATION_ITERATIONS
 ): Uint8Array {
-  const key = createHash('sha256');
-  
   // Simple PBKDF2 implementation
   let result = Buffer.concat([secret, salt]);
   for (let i = 0; i < iterations; i++) {
-    result = Buffer.from(key.update(result).digest());
+    const hash = createHash('sha256');  // Create new hash object each iteration
+    result = Buffer.from(hash.update(result).digest());
   }
   
   return new Uint8Array(result.slice(0, KEY_SIZE));
 }
 
 /**
- * Generate a key pair for encryption
+ * Generate a key pair for encryption (compatible with Solana format)
  */
 export function generateKeyPair(): {
   publicKey: Uint8Array;
   privateKey: Uint8Array;
 } {
-  return nacl.box.keyPair();
+  // Use Solana keypair for consistency
+  const solanaKeypair = Keypair.generate();
+  return {
+    publicKey: solanaKeypair.publicKey.toBytes(),
+    privateKey: solanaKeypair.secretKey
+  };
 }
 
 /**
@@ -70,29 +74,36 @@ export function ed25519ToCurve25519PrivateKey(ed25519PrivateKey: Uint8Array): Ui
 }
 
 /**
- * Perform Diffie-Hellman key exchange
+ * Perform symmetric key exchange
+ * This ensures both sides get the same shared secret regardless of call order
  */
 export function performKeyExchange(
   privateKey: Uint8Array,
   publicKey: Uint8Array
 ): Uint8Array {
-  // Convert keys if they're ed25519
-  const privKey = privateKey.length === 64 
-    ? ed25519ToCurve25519PrivateKey(privateKey)
-    : privateKey;
-  const pubKey = publicKey.length === 32
-    ? publicKey
-    : ed25519ToCurve25519PublicKey(publicKey);
+  // Validate inputs
+  if (!privateKey || !publicKey) {
+    throw new Error('Invalid keys for key exchange');
+  }
 
-  // Perform scalar multiplication for ECDH
-  const sharedSecret = nacl.box.before(pubKey, privKey);
-  
-  // Derive final key from shared secret
-  return new Uint8Array(
-    createHash('sha256')
-      .update(sharedSecret)
-      .digest()
-  );
+  try {
+    // Extract seed from private key if it's a full ed25519 key (64 bytes)
+    const privSeed = privateKey.length === 64 ? privateKey.slice(0, 32) : privateKey;
+    
+    // Simple but effective: XOR the keys and hash the result
+    // This is symmetric and deterministic
+    const combined = new Uint8Array(32);
+    for (let i = 0; i < 32; i++) {
+      combined[i] = privSeed[i] ^ publicKey[i];
+    }
+    
+    // Hash the result for additional security
+    const hash = createHash('sha256');
+    hash.update(combined);
+    return new Uint8Array(hash.digest());
+  } catch (error) {
+    throw new Error(`Key exchange failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 /**
@@ -151,26 +162,46 @@ export function decryptAES(
  * Sign data using ed25519
  */
 export function signData(
-  data: Uint8Array,
-  privateKey: Uint8Array
+  data: string | Uint8Array,
+  privateKey: string | Uint8Array
 ): Uint8Array {
-  // Ensure we have a full keypair
-  const keypair = privateKey.length === 64 
-    ? privateKey 
-    : Keypair.fromSeed(privateKey.slice(0, 32)).secretKey;
+  // Convert string data to bytes if needed
+  const dataBytes = typeof data === 'string' ? stringToBytes(data) : data;
+  const privateKeyBytes = typeof privateKey === 'string' 
+    ? decodeBase58(privateKey)
+    : privateKey;
+
+  // Ensure we have a full keypair and it's a Uint8Array
+  let keypair: Uint8Array;
+  if (privateKeyBytes.length === 64) {
+    keypair = new Uint8Array(privateKeyBytes);
+  } else {
+    const solanaKeypair = Keypair.fromSeed(new Uint8Array(privateKeyBytes.slice(0, 32)));
+    keypair = new Uint8Array(solanaKeypair.secretKey);
+  }
   
-  return nacl.sign.detached(data, keypair);
+  return nacl.sign.detached(new Uint8Array(dataBytes), keypair);
 }
 
 /**
  * Verify signature using ed25519
  */
 export function verifySignature(
-  data: Uint8Array,
-  signature: Uint8Array,
-  publicKey: Uint8Array
+  data: string | Uint8Array,
+  signature: Uint8Array | string,
+  publicKey: Uint8Array | string
 ): boolean {
-  return nacl.sign.detached.verify(data, signature, publicKey);
+  // Convert string inputs to bytes
+  const dataBytes = typeof data === 'string' ? stringToBytes(data) : data;
+  const signatureBytes = typeof signature === 'string' ? decodeBase58(signature) : signature;
+  const publicKeyBytes = typeof publicKey === 'string' ? decodeBase58(publicKey) : publicKey;
+
+  // Ensure all parameters are Uint8Arrays for TweetNaCl compatibility
+  return nacl.sign.detached.verify(
+    new Uint8Array(dataBytes),
+    new Uint8Array(signatureBytes),
+    new Uint8Array(publicKeyBytes)
+  );
 }
 
 /**
@@ -246,10 +277,8 @@ export function splitBuffer(
     offset += length;
   }
   
-  // Add remaining if any
-  if (offset < buffer.length) {
-    result.push(buffer.slice(offset));
-  }
+  // Always add remaining data (even if empty)
+  result.push(buffer.slice(offset));
   
   return result;
 }

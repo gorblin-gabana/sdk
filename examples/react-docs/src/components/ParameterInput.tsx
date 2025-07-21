@@ -19,7 +19,7 @@ const ParameterInput: React.FC<ParameterInputProps> = ({ parameter, value, onCha
           <select
             value={value}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+             className="w-full px-3 py-2 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="true">true</option>
             <option value="false">false</option>
@@ -32,7 +32,7 @@ const ParameterInput: React.FC<ParameterInputProps> = ({ parameter, value, onCha
             type="number"
             value={value}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+             className="w-full px-3 py-2 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             placeholder={parameter.default || '0'}
           />
         )
@@ -43,7 +43,7 @@ const ParameterInput: React.FC<ParameterInputProps> = ({ parameter, value, onCha
             value={value}
             onChange={handleChange}
             rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+             className="w-full px-3 py-2 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
             placeholder={parameter.default || '{}'}
           />
         )
@@ -54,7 +54,7 @@ const ParameterInput: React.FC<ParameterInputProps> = ({ parameter, value, onCha
             value={value}
             onChange={handleChange}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+             className="w-full px-3 py-2 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
             placeholder={parameter.default || '[]'}
           />
         )
@@ -65,7 +65,7 @@ const ParameterInput: React.FC<ParameterInputProps> = ({ parameter, value, onCha
             <select
               value={value}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+             className="w-full px-3 py-2 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               {parameter.options.map((option) => (
                 <option key={option} value={option}>
@@ -81,7 +81,7 @@ const ParameterInput: React.FC<ParameterInputProps> = ({ parameter, value, onCha
             type="text"
             value={value}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+             className="w-full px-3 py-2 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             placeholder={parameter.default || ''}
           />
         )
@@ -101,7 +101,7 @@ const ParameterInput: React.FC<ParameterInputProps> = ({ parameter, value, onCha
       </div>
       {renderInput()}
       {parameter.description && (
-        <p className="text-xs text-gray-600">{parameter.description}</p>
+       <p className="text-xs text-gray-600">{parameter.description}</p>
       )}
     </div>
   )

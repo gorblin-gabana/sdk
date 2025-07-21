@@ -32,6 +32,7 @@ import { NetworkConfig, getNetworkConfig, detectNetworkFromEndpoint, createCusto
 import { DecoderRegistry } from '../decoders/registry.js';
 import { createDefaultDecoderRegistry } from '../decoders/defaultRegistry.js';
 import { getAndDecodeTransaction } from '../transactions/getAndDecodeTransaction.js';
+import { UniversalWalletManager } from '../rich/walletIntegration.js';
 import type { GorbchainSDKConfig } from './types.js';
 
 
@@ -485,7 +486,6 @@ export class GorbchainSDK {
    * @returns UniversalWalletManager instance for wallet operations
    */
   createWalletManager() {
-    const { UniversalWalletManager } = require('../rich/walletIntegration.js');
     return new UniversalWalletManager(this);
   }
 

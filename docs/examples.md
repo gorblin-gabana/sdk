@@ -1,18 +1,682 @@
-# Gorbchain SDK Examples
+# GorbchainSDK V1.3+ Examples
 
-This document provides comprehensive examples of how to use the Gorbchain SDK for various blockchain operations.
+This document provides comprehensive examples of how to use GorbchainSDK V1.3+ for blockchain operations and cryptography.
 
 ## Table of Contents
 
-1. [Setup and Initialization](#setup-and-initialization)
-2. [Transaction Decoding](#transaction-decoding)
-3. [Token Creation](#token-creation)
-4. [NFT Creation](#nft-creation)
-5. [Balance and Cost Management](#balance-and-cost-management)
-6. [Custom Decoders](#custom-decoders)
-7. [Error Handling](#error-handling)
-8. [Batch Operations](#batch-operations)
-9. [Real-World Applications](#real-world-applications)
+1. [🔐 NEW: Cryptography Examples](#-new-cryptography-examples)
+   - [Personal Encryption](#personal-encryption)
+   - [Direct Encryption (1-on-1)](#direct-encryption-1-on-1)
+   - [Group & Signature-Based Encryption](#group--signature-based-encryption)
+   - [Shared Key Management](#shared-key-management)
+   - [Scalable Encryption Contexts](#scalable-encryption-contexts)
+   - [Digital Signatures](#digital-signatures)
+2. [Setup and Initialization](#setup-and-initialization)
+3. [Transaction Decoding](#transaction-decoding)
+4. [Token Creation](#token-creation)
+5. [NFT Creation](#nft-creation)
+6. [Balance and Cost Management](#balance-and-cost-management)
+7. [Custom Decoders](#custom-decoders)
+8. [Error Handling](#error-handling)
+9. [Batch Operations](#batch-operations)
+10. [Real-World Applications](#real-world-applications)
+
+## 🔐 NEW: Cryptography Examples
+
+### Personal Encryption
+
+Encrypt data with your private key for personal storage:
+
+```typescript
+import { encryptPersonal, decryptPersonalString } from '@gorbchain-xyz/chaindecode';
+import { Keypair } from '@solana/web3.js';
+
+async function personalEncryptionExample() {
+  const user = Keypair.generate();
+  
+  // Encrypt sensitive data
+  const sensitiveData = 'My private notes and secrets';
+  const encrypted = await encryptPersonal(
+    sensitiveData,
+    user.secretKey,
+    { 
+      compress: true,
+      metadata: { category: 'notes', created: Date.now() }
+    }
+  );
+  
+  console.log('Encrypted data:', {
+    method: encrypted.method,
+    size: encrypted.encryptedData.length,
+    compressed: encrypted.metadata.compressed
+  });
+  
+  // Decrypt the data
+  const decrypted = await decryptPersonalString(encrypted, user.secretKey);
+  console.log('Decrypted:', decrypted);
+  
+  return { encrypted, decrypted };
+}
+```
+
+### Direct Encryption (1-on-1)
+
+Secure communication between two parties:
+
+```typescript
+import { encryptDirect, decryptDirectString } from '@gorbchain-xyz/chaindecode';
+import { Keypair } from '@solana/web3.js';
+
+async function directMessagingExample() {
+  const alice = Keypair.generate();
+  const bob = Keypair.generate();
+  
+  // Alice sends encrypted message to Bob
+  const message = 'Secret meeting at 3 PM. API key: sk_live_abc123';
+  const encrypted = await encryptDirect(
+    message,
+    bob.publicKey.toBase58(),
+    alice.secretKey,
+    { compress: true }
+  );
+  
+  console.log('Alice encrypted message for Bob');
+  console.log('Ephemeral key used:', encrypted.metadata.ephemeralPublicKey);
+  
+  // Bob decrypts Alice's message
+  const decrypted = await decryptDirectString(encrypted, bob.secretKey);
+  console.log('Bob decrypted:', decrypted);
+  
+  return { encrypted, decrypted };
+}
+
+// Real-world: Secure API key sharing
+async function secureApiKeySharing(apiKey: string, recipientPublicKey: string, senderPrivateKey: Uint8Array) {
+  const encrypted = await encryptDirect(
+    `API_KEY=${apiKey}`,
+    recipientPublicKey,
+    senderPrivateKey,
+    { metadata: { type: 'api_key', expires: Date.now() + 86400000 } }
+  );
+  
+  return encrypted;
+}
+```
+
+### Group & Signature-Based Encryption
+
+Dynamic groups with role-based access control:
+
+```typescript
+import {
+  createSignatureGroup,
+  encryptForSignatureGroup,
+  decryptSignatureGroupData,
+  addMemberToSignatureGroup,
+  removeMemberFromSignatureGroup,
+  MemberRole
+} from '@gorbchain-xyz/chaindecode';
+import { Keypair } from '@solana/web3.js';
+
+async function teamCommunicationExample() {
+  const alice = Keypair.generate(); // Team lead
+  const bob = Keypair.generate();   // Developer
+  const charlie = Keypair.generate(); // Designer
+  const diana = Keypair.generate();   // New member
+  
+  // Alice creates a team group
+  const group = await createSignatureGroup(
+    'Development Team',
+    alice.secretKey,
+    [
+      { publicKey: bob.publicKey.toBase58(), role: MemberRole.ADMIN },
+      { publicKey: charlie.publicKey.toBase58(), role: MemberRole.MEMBER }
+    ],
+    {
+      allowDynamicMembership: true,
+      maxMembers: 10,
+      requireSignatureVerification: true
+    }
+  );
+  
+  console.log(`Created group: ${group.groupName}`);
+  console.log(`Members: ${group.members.length}`);
+  
+  // Alice sends encrypted message to group
+  const teamMessage = 'New feature requirements attached. Please review by EOD.';
+  const encrypted = await encryptForSignatureGroup(
+    teamMessage,
+    group,
+    alice.secretKey,
+    alice.publicKey.toBase58()
+  );
+  
+  console.log('Alice sent encrypted team message');
+  
+  // Bob (Admin) decrypts the message
+  const bobDecrypted = await decryptSignatureGroupData(
+    encrypted,
+    bob.secretKey,
+    bob.publicKey.toBase58()
+  );
+  console.log('Bob decrypted:', Buffer.from(bobDecrypted).toString());
+  
+  // Charlie (Member) decrypts the message
+  const charlieDecrypted = await decryptSignatureGroupData(
+    encrypted,
+    charlie.secretKey,
+    charlie.publicKey.toBase58()
+  );
+  console.log('Charlie decrypted:', Buffer.from(charlieDecrypted).toString());
+  
+  // Add Diana to the group
+  const updatedGroup = await addMemberToSignatureGroup(
+    group,
+    { publicKey: diana.publicKey.toBase58(), role: MemberRole.VIEWER },
+    alice.secretKey,
+    alice.publicKey.toBase58()
+  );
+  
+  console.log(`Diana added to group. Total members: ${updatedGroup.members.length}`);
+  
+  // Send another message after Diana joined
+  const newMessage = 'Welcome Diana! Here are the project details.';
+  const newEncrypted = await encryptForSignatureGroup(
+    newMessage,
+    updatedGroup,
+    alice.secretKey,
+    alice.publicKey.toBase58()
+  );
+  
+  // Diana can now decrypt new messages
+  const dianaDecrypted = await decryptSignatureGroupData(
+    newEncrypted,
+    diana.secretKey,
+    diana.publicKey.toBase58()
+  );
+  console.log('Diana decrypted:', Buffer.from(dianaDecrypted).toString());
+  
+  return { group: updatedGroup, messages: [encrypted, newEncrypted] };
+}
+```
+
+### Shared Key Management
+
+Manage shared encryption keys with granular permissions:
+
+```typescript
+import { SharedKeyManager } from '@gorbchain-xyz/chaindecode';
+import { Keypair } from '@solana/web3.js';
+
+async function documentSharingExample() {
+  const admin = Keypair.generate();
+  const lawyer1 = Keypair.generate();
+  const lawyer2 = Keypair.generate();
+  const client = Keypair.generate();
+  
+  const manager = new SharedKeyManager();
+  
+  // Create shared key for legal documents
+  const sharedKey = await manager.createSharedKey(
+    {
+      name: 'Legal Documents Access',
+      purpose: 'Contract negotiation and review',
+      creator: admin.publicKey.toBase58(),
+      algorithm: 'AES-256-GCM',
+      derivationMethod: 'ECDH',
+      properties: { classification: 'confidential' }
+    },
+    [
+      {
+        publicKey: admin.publicKey.toBase58(),
+        permissions: { canDecrypt: true, canEncrypt: true, canShare: true, canRevoke: true }
+      },
+      {
+        publicKey: lawyer1.publicKey.toBase58(),
+        permissions: { canDecrypt: true, canEncrypt: true, canShare: true, canRevoke: false }
+      },
+      {
+        publicKey: lawyer2.publicKey.toBase58(),
+        permissions: { canDecrypt: true, canEncrypt: true, canShare: false, canRevoke: false }
+      },
+      {
+        publicKey: client.publicKey.toBase58(),
+        permissions: { canDecrypt: true, canEncrypt: false, canShare: false, canRevoke: false }
+      }
+    ],
+    admin.secretKey
+  );
+  
+  console.log(`Created shared key: ${sharedKey.keyId}`);
+  console.log(`Key holders: ${sharedKey.holders.length}`);
+  
+  // Admin encrypts a contract
+  const contractContent = 'CONFIDENTIAL CONTRACT\n\nThis agreement between parties...';
+  const encrypted = await manager.encryptWithSharedKey(
+    contractContent,
+    sharedKey.keyId,
+    admin.secretKey,
+    admin.publicKey.toBase58()
+  );
+  
+  console.log('Admin encrypted contract document');
+  
+  // Lawyer1 decrypts and reviews
+  const lawyer1Decrypted = await manager.decryptWithSharedKey(
+    encrypted,
+    lawyer1.secretKey,
+    lawyer1.publicKey.toBase58()
+  );
+  console.log('Lawyer1 accessed document:', Buffer.from(lawyer1Decrypted).toString().substring(0, 50) + '...');
+  
+  // Client (read-only) decrypts
+  const clientDecrypted = await manager.decryptWithSharedKey(
+    encrypted,
+    client.secretKey,
+    client.publicKey.toBase58()
+  );
+  console.log('Client accessed document:', Buffer.from(clientDecrypted).toString().substring(0, 50) + '...');
+  
+  // Add new external counsel
+  const externalCounsel = Keypair.generate();
+  const updatedKey = await manager.addRecipientsToSharedKey(
+    sharedKey.keyId,
+    [{
+      publicKey: externalCounsel.publicKey.toBase58(),
+      permissions: { canDecrypt: true, canEncrypt: false, canShare: false, canRevoke: false }
+    }],
+    admin.secretKey,
+    admin.publicKey.toBase58()
+  );
+  
+  console.log(`Added external counsel. Total holders: ${updatedKey.holders.length}`);
+  
+  return { sharedKey: updatedKey, encrypted };
+}
+```
+
+### Scalable Encryption Contexts
+
+Auto-scaling encryption for growing teams:
+
+```typescript
+import { ScalableEncryptionManager, createScalableEncryption } from '@gorbchain-xyz/chaindecode';
+import { Keypair } from '@solana/web3.js';
+
+async function startupGrowthExample() {
+  const founder = Keypair.generate();
+  const cofounder = Keypair.generate();
+  const employee1 = Keypair.generate();
+  const employee2 = Keypair.generate();
+  const employee3 = Keypair.generate();
+  
+  // Create scalable context for startup communications
+  const { manager, context } = await createScalableEncryption(
+    'Startup Communications',
+    'Internal team messaging that grows with the company',
+    cofounder.publicKey.toBase58(),
+    founder.secretKey,
+    {
+      autoTransitionThreshold: 3, // Switch to shared key at 3+ recipients
+      defaultPermissions: {
+        canEncrypt: true,
+        canDecrypt: true,
+        canAddRecipients: false
+      }
+    }
+  );
+  
+  console.log(`Created scalable context: ${context.contextId}`);
+  console.log(`Current method: ${context.currentMethod}`);
+  console.log(`Recipients: ${context.recipients.length}`);
+  
+  // Send message (uses direct encryption with 1 recipient)
+  const message1 = 'Congrats on the seed funding! Ready to hire our first employees?';
+  const encrypted1 = await manager.encryptInContext(
+    context.contextId,
+    message1,
+    founder.secretKey
+  );
+  
+  console.log(`Message 1 encrypted using: ${encrypted1.method}`);
+  
+  // Add first employee (still direct encryption)
+  let updatedContext = await manager.addRecipientsToContext(
+    context.contextId,
+    [employee1.publicKey.toBase58()],
+    founder.secretKey,
+    founder.publicKey.toBase58()
+  );
+  
+  console.log(`After adding employee1 - Method: ${updatedContext.currentMethod}, Recipients: ${updatedContext.recipients.length}`);
+  
+  // Add second employee (still direct encryption)
+  updatedContext = await manager.addRecipientsToContext(
+    context.contextId,
+    [employee2.publicKey.toBase58()],
+    founder.secretKey,
+    founder.publicKey.toBase58()
+  );
+  
+  console.log(`After adding employee2 - Method: ${updatedContext.currentMethod}, Recipients: ${updatedContext.recipients.length}`);
+  
+  // Add third employee (auto-transitions to shared key!)
+  updatedContext = await manager.addRecipientsToContext(
+    context.contextId,
+    [employee3.publicKey.toBase58()],
+    founder.secretKey,
+    founder.publicKey.toBase58()
+  );
+  
+  console.log(`After adding employee3 - Method: ${updatedContext.currentMethod}, Recipients: ${updatedContext.recipients.length}`);
+  console.log('🚀 Auto-transitioned to shared key encryption!');
+  
+  // Send company-wide message (now uses shared key)
+  const message2 = 'Team all-hands meeting tomorrow at 10 AM. Agenda: Q3 roadmap, new product features, team expansion plans.';
+  const encrypted2 = await manager.encryptInContext(
+    context.contextId,
+    message2,
+    founder.secretKey
+  );
+  
+  console.log(`Message 2 encrypted using: ${encrypted2.method}`);
+  
+  // All employees can decrypt
+  const employee1Decrypted = await manager.decryptInContext(
+    context.contextId,
+    encrypted2,
+    employee1.secretKey,
+    employee1.publicKey.toBase58()
+  );
+  console.log('Employee1 decrypted:', Buffer.from(employee1Decrypted).toString().substring(0, 50) + '...');
+  
+  const employee3Decrypted = await manager.decryptInContext(
+    context.contextId,
+    encrypted2,
+    employee3.secretKey,
+    employee3.publicKey.toBase58()
+  );
+  console.log('Employee3 decrypted:', Buffer.from(employee3Decrypted).toString().substring(0, 50) + '...');
+  
+  return { context: updatedContext, messages: [encrypted1, encrypted2] };
+}
+```
+
+### Digital Signatures
+
+Sign and verify important documents:
+
+```typescript
+import { signData, verifySignature, signWithMetadata, verifyWithMetadata } from '@gorbchain-xyz/chaindecode';
+import { Keypair } from '@solana/web3.js';
+
+async function contractSigningExample() {
+  const ceo = Keypair.generate();
+  const cfo = Keypair.generate();
+  const legalCounsel = Keypair.generate();
+  
+  const contractDocument = `
+SERVICE AGREEMENT
+
+This Service Agreement ("Agreement") is entered into on ${new Date().toDateString()}.
+
+PARTIES:
+- Service Provider: [Company Name]
+- Client: [Client Name]
+
+TERMS:
+1. Service Description: [Service details]
+2. Payment Terms: [Payment details]
+3. Duration: [Contract duration]
+
+By signing below, parties agree to the terms outlined above.
+  `.trim();
+  
+  console.log('Document to sign:');
+  console.log(contractDocument);
+  console.log('\n' + '='.repeat(50) + '\n');
+  
+  // CEO signs the document
+  const ceoSignature = signData(contractDocument, ceo.secretKey);
+  console.log('✅ CEO signed the document');
+  
+  // CFO signs with metadata
+  const cfoSignatureWithMetadata = signWithMetadata(
+    contractDocument,
+    cfo.secretKey,
+    {
+      role: 'Chief Financial Officer',
+      department: 'Finance',
+      signedAt: new Date().toISOString(),
+      ipAddress: '192.168.1.100',
+      approved: true
+    }
+  );
+  console.log('✅ CFO signed with metadata');
+  
+  // Legal counsel signs
+  const legalSignature = signWithMetadata(
+    contractDocument,
+    legalCounsel.secretKey,
+    {
+      role: 'Legal Counsel',
+      department: 'Legal',
+      signedAt: new Date().toISOString(),
+      reviewCompleted: true,
+      complianceVerified: true
+    }
+  );
+  console.log('✅ Legal Counsel signed with metadata');
+  
+  // Verify all signatures
+  const ceoValid = verifySignature(
+    contractDocument,
+    ceoSignature,
+    ceo.publicKey.toBase58()
+  );
+  console.log(`CEO signature valid: ${ceoValid}`);
+  
+  const cfoVerification = verifyWithMetadata(
+    cfoSignatureWithMetadata,
+    cfo.publicKey.toBase58()
+  );
+  console.log(`CFO signature valid: ${cfoVerification.valid}`);
+  console.log(`CFO metadata:`, cfoVerification.metadata);
+  
+  const legalVerification = verifyWithMetadata(
+    legalSignature,
+    legalCounsel.publicKey.toBase58()
+  );
+  console.log(`Legal signature valid: ${legalVerification.valid}`);
+  console.log(`Legal metadata:`, legalVerification.metadata);
+  
+  // Create signature summary
+  const signatureSummary = {
+    document: contractDocument,
+    signatures: [
+      {
+        signer: 'CEO',
+        publicKey: ceo.publicKey.toBase58(),
+        signature: ceoSignature,
+        valid: ceoValid
+      },
+      {
+        signer: 'CFO',
+        publicKey: cfo.publicKey.toBase58(),
+        signatureWithMetadata: cfoSignatureWithMetadata,
+        valid: cfoVerification.valid,
+        metadata: cfoVerification.metadata
+      },
+      {
+        signer: 'Legal Counsel',
+        publicKey: legalCounsel.publicKey.toBase58(),
+        signatureWithMetadata: legalSignature,
+        valid: legalVerification.valid,
+        metadata: legalVerification.metadata
+      }
+    ],
+    allSignaturesValid: ceoValid && cfoVerification.valid && legalVerification.valid,
+    completedAt: new Date().toISOString()
+  };
+  
+  console.log('\n📋 Signature Summary:');
+  console.log(`All signatures valid: ${signatureSummary.allSignaturesValid}`);
+  console.log(`Total signers: ${signatureSummary.signatures.length}`);
+  
+  return signatureSummary;
+}
+```
+
+## Crypto Real-World Application Examples
+
+### Secure Messaging Application
+
+```typescript
+import {
+  encryptDirect,
+  decryptDirectString,
+  createSignatureGroup,
+  encryptForSignatureGroup,
+  decryptSignatureGroupData,
+  MemberRole
+} from '@gorbchain-xyz/chaindecode';
+
+class SecureMessagingApp {
+  private userKeypair: Keypair;
+  private groups: Map<string, any> = new Map();
+  
+  constructor(userKeypair: Keypair) {
+    this.userKeypair = userKeypair;
+  }
+  
+  // Send direct message
+  async sendDirectMessage(recipientPublicKey: string, message: string) {
+    const encrypted = await encryptDirect(
+      JSON.stringify({
+        type: 'direct_message',
+        content: message,
+        timestamp: Date.now(),
+        sender: this.userKeypair.publicKey.toBase58()
+      }),
+      recipientPublicKey,
+      this.userKeypair.secretKey
+    );
+    
+    return {
+      messageId: crypto.randomUUID(),
+      encrypted,
+      recipientPublicKey,
+      sentAt: Date.now()
+    };
+  }
+  
+  // Receive direct message
+  async receiveDirectMessage(encryptedMessage: any) {
+    const decrypted = await decryptDirectString(encryptedMessage, this.userKeypair.secretKey);
+    const messageData = JSON.parse(decrypted);
+    
+    return {
+      type: messageData.type,
+      content: messageData.content,
+      sender: messageData.sender,
+      timestamp: messageData.timestamp,
+      receivedAt: Date.now()
+    };
+  }
+  
+  // Create group chat
+  async createGroupChat(groupName: string, members: Array<{publicKey: string, role: MemberRole}>) {
+    const group = await createSignatureGroup(
+      groupName,
+      this.userKeypair.secretKey,
+      members
+    );
+    
+    this.groups.set(group.groupId, group);
+    return group;
+  }
+  
+  // Send group message
+  async sendGroupMessage(groupId: string, message: string) {
+    const group = this.groups.get(groupId);
+    if (!group) throw new Error('Group not found');
+    
+    const encrypted = await encryptForSignatureGroup(
+      JSON.stringify({
+        type: 'group_message',
+        content: message,
+        timestamp: Date.now(),
+        sender: this.userKeypair.publicKey.toBase58(),
+        groupId
+      }),
+      group,
+      this.userKeypair.secretKey,
+      this.userKeypair.publicKey.toBase58()
+    );
+    
+    return {
+      messageId: crypto.randomUUID(),
+      encrypted,
+      groupId,
+      sentAt: Date.now()
+    };
+  }
+  
+  // Receive group message
+  async receiveGroupMessage(encryptedMessage: any) {
+    const decrypted = await decryptSignatureGroupData(
+      encryptedMessage,
+      this.userKeypair.secretKey,
+      this.userKeypair.publicKey.toBase58()
+    );
+    
+    const messageData = JSON.parse(Buffer.from(decrypted).toString());
+    
+    return {
+      type: messageData.type,
+      content: messageData.content,
+      sender: messageData.sender,
+      groupId: messageData.groupId,
+      timestamp: messageData.timestamp,
+      receivedAt: Date.now()
+    };
+  }
+}
+
+// Usage example
+async function messagingAppDemo() {
+  const alice = new SecureMessagingApp(Keypair.generate());
+  const bob = new SecureMessagingApp(Keypair.generate());
+  const charlie = new SecureMessagingApp(Keypair.generate());
+  
+  // Alice sends direct message to Bob
+  const directMessage = await alice.sendDirectMessage(
+    bob.userKeypair.publicKey.toBase58(),
+    'Hey Bob, want to grab coffee later?'
+  );
+  
+  // Bob receives and decrypts the message
+  const receivedMessage = await bob.receiveDirectMessage(directMessage.encrypted);
+  console.log('Bob received:', receivedMessage.content);
+  
+  // Alice creates a group chat
+  const group = await alice.createGroupChat('Coffee Plans', [
+    { publicKey: bob.userKeypair.publicKey.toBase58(), role: MemberRole.MEMBER },
+    { publicKey: charlie.userKeypair.publicKey.toBase58(), role: MemberRole.MEMBER }
+  ]);
+  
+  // Alice sends group message
+  const groupMessage = await alice.sendGroupMessage(
+    group.groupId,
+    'Let\'s meet at the coffee shop at 3 PM!'
+  );
+  
+  console.log('Secure messaging app demo completed!');
+  return { directMessage, groupMessage };
+}
+```
+
+---
 
 ## Setup and Initialization
 
@@ -787,4 +1451,88 @@ class TradingBotIntegration {
 }
 ```
 
-This comprehensive examples documentation provides practical, real-world usage patterns for the Gorbchain SDK. Each example includes complete, runnable code with proper error handling and best practices. 
+This comprehensive examples documentation provides practical, real-world usage patterns for GorbchainSDK V1.3+. Each example includes complete, runnable code with proper error handling and best practices.
+
+## 🔐 Crypto Integration Patterns
+
+### Enterprise Document Management
+
+```typescript
+class EnterpriseDocumentManager {
+  private sharedKeyManager: SharedKeyManager;
+  private userKeypair: Keypair;
+  
+  constructor(userKeypair: Keypair) {
+    this.userKeypair = userKeypair;
+    this.sharedKeyManager = new SharedKeyManager();
+  }
+  
+  async createSecureProjectSpace(projectName: string, teamMembers: Array<{publicKey: string, role: string}>) {
+    const permissions = this.mapRoleToPermissions;
+    
+    const sharedKey = await this.sharedKeyManager.createSharedKey(
+      {
+        name: `${projectName} Documents`,
+        purpose: 'Project document sharing and collaboration',
+        creator: this.userKeypair.publicKey.toBase58(),
+        algorithm: 'AES-256-GCM',
+        derivationMethod: 'ECDH',
+        properties: { project: projectName, created: Date.now() }
+      },
+      teamMembers.map(member => ({
+        publicKey: member.publicKey,
+        permissions: permissions(member.role)
+      })),
+      this.userKeypair.secretKey
+    );
+    
+    return {
+      projectName,
+      keyId: sharedKey.keyId,
+      teamSize: teamMembers.length,
+      createdAt: Date.now()
+    };
+  }
+  
+  private mapRoleToPermissions(role: string) {
+    switch (role.toLowerCase()) {
+      case 'admin':
+        return { canDecrypt: true, canEncrypt: true, canShare: true, canRevoke: true };
+      case 'editor':
+        return { canDecrypt: true, canEncrypt: true, canShare: false, canRevoke: false };
+      case 'viewer':
+        return { canDecrypt: true, canEncrypt: false, canShare: false, canRevoke: false };
+      default:
+        return { canDecrypt: true, canEncrypt: false, canShare: false, canRevoke: false };
+    }
+  }
+}
+```
+
+### Healthcare Data Encryption
+
+```typescript
+class HealthcareDataManager {
+  async encryptPatientRecord(patientData: any, authorizedPersonnel: string[]) {
+    const group = await createSignatureGroup(
+      `Patient-${patientData.patientId}`,
+      doctorPrivateKey,
+      authorizedPersonnel.map(pubKey => ({ publicKey: pubKey, role: MemberRole.MEMBER }))
+    );
+    
+    const hipaaCompliantData = {
+      ...patientData,
+      encryptedAt: Date.now(),
+      hipaaCompliant: true,
+      accessLog: []
+    };
+    
+    return await encryptForSignatureGroup(
+      JSON.stringify(hipaaCompliantData),
+      group,
+      doctorPrivateKey,
+      doctorPublicKey
+    );
+  }
+}
+``` 

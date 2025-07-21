@@ -1,14 +1,17 @@
-# Gorbchain SDK Overview
+# GorbchainSDK V1.3+ Overview
 
 ## Summary
 
-The Gorbchain SDK (`@gorbchain-xyz/chaindecode`) is a comprehensive TypeScript SDK that provides:
+The GorbchainSDK (`@gorbchain-xyz/chaindecode`) is a comprehensive TypeScript SDK that provides:
 
-1. **Transaction Decoding** - Rich analysis of blockchain transactions with instruction decoding
-2. **Token Creation** - Token22 program integration for creating tokens with metadata
-3. **NFT Minting** - Metaplex Core NFT creation with royalties and attributes
-4. **RPC Management** - Optimized RPC client with retry logic and error handling
-5. **Utility Functions** - Helper functions for common blockchain operations
+1. **🔐 Advanced Cryptography Suite** - End-to-end encryption, messaging, and digital signatures
+2. **💬 Secure Messaging** - Personal, direct, and group encryption with dynamic membership
+3. **📄 Document Collaboration** - Secure document sharing with role-based access control  
+4. **🎯 Transaction Decoding** - Rich analysis of blockchain transactions with instruction decoding
+5. **💰 Token Creation** - Token22 program integration for creating tokens with metadata
+6. **🎨 NFT Minting** - Metaplex Core NFT creation with royalties and attributes
+7. **🌐 RPC Management** - Advanced RPC client with health monitoring and connection pooling
+8. **🔧 Utility Functions** - Helper functions for common blockchain operations
 
 ## Installation
 
@@ -17,6 +20,51 @@ npm install @gorbchain-xyz/chaindecode
 ```
 
 ## Core Export Categories
+
+### 🔐 NEW: Cryptography Suite
+
+#### Personal Encryption Functions:
+- `encryptPersonal()` - Encrypt data with your private key
+- `decryptPersonal()` - Decrypt personal encrypted data
+- `decryptPersonalString()` - Decrypt to string format
+
+#### Direct Encryption Functions:
+- `encryptDirect()` - Encrypt for specific recipient using public key
+- `decryptDirect()` - Decrypt direct encrypted data
+- `decryptDirectString()` - Decrypt to string format
+
+#### Group & Signature-Based Encryption:
+- `createSignatureGroup()` - Create dynamic groups with role-based access
+- `encryptForSignatureGroup()` - Encrypt for all group members
+- `decryptSignatureGroupData()` - Decrypt group encrypted data
+- `addMemberToSignatureGroup()` - Add members to existing groups
+- `removeMemberFromSignatureGroup()` - Remove members with key rotation
+
+#### Shared Key Management:
+- `SharedKeyManager` class - Manage shared encryption keys
+  - `createSharedKey()` - Create shared key with permissions
+  - `encryptWithSharedKey()` - Encrypt using shared key
+  - `decryptWithSharedKey()` - Decrypt using shared key
+  - `addRecipientsToSharedKey()` - Add recipients to existing key
+  - `removeRecipientsFromSharedKey()` - Remove recipients with rotation
+
+#### Scalable Encryption:
+- `ScalableEncryptionManager` class - Auto-scaling encryption contexts
+  - `createEncryptionContext()` - Create scalable context
+  - `encryptInContext()` - Encrypt with automatic method selection
+  - `addRecipientsToContext()` - Add recipients (triggers auto-scaling)
+  - `removeRecipientsFromContext()` - Remove recipients with key rotation
+
+#### Digital Signatures:
+- `signData()` - Create Ed25519 signatures
+- `verifySignature()` - Verify digital signatures
+- `signWithMetadata()` - Sign with additional metadata
+- `verifyWithMetadata()` - Verify signatures with metadata
+
+#### Crypto Utilities:
+- `CryptoManager` class - Unified crypto interface
+- `generateKeypair()` - Generate secure keypairs
+- `validatePublicKey()` - Validate public key format
 
 ### 1. Main SDK Class
 
@@ -142,7 +190,128 @@ The primary class that provides all SDK functionality.
 
 ## Usage Patterns
 
-### 1. Basic SDK Usage
+### 🔐 NEW: Cryptography Examples
+
+#### 1. Personal Encryption
+```typescript
+import { encryptPersonal, decryptPersonalString } from '@gorbchain-xyz/chaindecode';
+
+// Encrypt sensitive data
+const encrypted = await encryptPersonal('My secret message', privateKey);
+
+// Decrypt your data
+const decrypted = await decryptPersonalString(encrypted, privateKey);
+```
+
+#### 2. Direct Messaging (1-on-1)
+```typescript
+import { encryptDirect, decryptDirectString } from '@gorbchain-xyz/chaindecode';
+
+// Alice encrypts for Bob
+const encrypted = await encryptDirect(
+  'Hello Bob!',
+  bobPublicKey,
+  alicePrivateKey
+);
+
+// Bob decrypts Alice's message  
+const decrypted = await decryptDirectString(encrypted, bobPrivateKey);
+```
+
+#### 3. Group Messaging
+```typescript
+import { 
+  createSignatureGroup, 
+  encryptForSignatureGroup,
+  MemberRole 
+} from '@gorbchain-xyz/chaindecode';
+
+// Create team group
+const group = await createSignatureGroup(
+  'Dev Team',
+  creatorPrivateKey,
+  [
+    { publicKey: bobPublicKey, role: MemberRole.ADMIN },
+    { publicKey: charliePublicKey, role: MemberRole.MEMBER }
+  ]
+);
+
+// Encrypt for all group members
+const encrypted = await encryptForSignatureGroup(
+  'Team announcement',
+  group,
+  senderPrivateKey,
+  senderPublicKey
+);
+```
+
+#### 4. Document Sharing with Shared Keys
+```typescript
+import { SharedKeyManager } from '@gorbchain-xyz/chaindecode';
+
+const manager = new SharedKeyManager();
+
+// Create shared key for document access
+const sharedKey = await manager.createSharedKey(
+  { name: 'Project Documents', purpose: 'Team collaboration' },
+  [
+    { publicKey: alicePublicKey, permissions: { canDecrypt: true, canEncrypt: true, canShare: true }},
+    { publicKey: bobPublicKey, permissions: { canDecrypt: true, canEncrypt: true, canShare: false }}
+  ],
+  creatorPrivateKey
+);
+
+// Encrypt document
+const encrypted = await manager.encryptWithSharedKey(
+  documentContent,
+  sharedKey.keyId,
+  senderPrivateKey,
+  senderPublicKey
+);
+```
+
+#### 5. Auto-Scaling Team Communications
+```typescript
+import { ScalableEncryptionManager } from '@gorbchain-xyz/chaindecode';
+
+const manager = new ScalableEncryptionManager();
+
+// Create context that auto-scales from direct to group encryption
+const { context } = await manager.createEncryptionContext(
+  'Project Alpha',
+  'Team that will grow',
+  initialRecipientPublicKey,
+  creatorPrivateKey,
+  { autoTransitionThreshold: 3 }
+);
+
+// Add recipients (automatically transitions to shared key when threshold reached)
+await manager.addRecipientsToContext(
+  context.contextId,
+  [bobPublicKey, charliePublicKey, dianaPublicKey],
+  authorizerPrivateKey,
+  authorizerPublicKey
+);
+```
+
+#### 6. Digital Signatures
+```typescript
+import { signData, verifySignature } from '@gorbchain-xyz/chaindecode';
+
+// Sign important document
+const signature = signData(documentContent, privateKey);
+
+// Verify signature
+const isValid = verifySignature(
+  documentContent,
+  signature,
+  publicKey
+);
+```
+
+### 🎯 Blockchain Operations
+
+#### 7. Basic SDK Usage
 ```typescript
 import { GorbchainSDK } from '@gorbchain-xyz/chaindecode';
 
@@ -153,13 +322,13 @@ const sdk = new GorbchainSDK({
 });
 ```
 
-### 2. Transaction Decoding
+#### 8. Transaction Decoding
 ```typescript
 const richTx = await sdk.getAndDecodeTransaction('signature...');
 console.log(richTx.instructions[0].decoded.type);
 ```
 
-### 3. Token Creation
+#### 9. Token Creation
 ```typescript
 import { createToken22TwoTx } from '@gorbchain-xyz/chaindecode';
 
@@ -171,7 +340,7 @@ const result = await createToken22TwoTx(payer, {
 });
 ```
 
-### 4. NFT Creation
+#### 10. NFT Creation
 ```typescript
 import { createNFT } from '@gorbchain-xyz/chaindecode';
 
@@ -181,7 +350,7 @@ const result = await createNFT(wallet, {
 });
 ```
 
-### 5. Balance Checking
+#### 11. Balance Checking
 ```typescript
 import { checkSufficientBalance } from '@gorbchain-xyz/chaindecode';
 

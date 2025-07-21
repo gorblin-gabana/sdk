@@ -13,7 +13,7 @@ import {
 
 export default function ExamplesV1() {
   const [copied, setCopied] = useState<{ [key: string]: boolean }>({})
-  const [openSections, setOpenSections] = useState<Set<string>>(new Set(['basic']))
+  const [openSection, setOpenSection] = useState<string | null>('basic')
 
   const copyToClipboard = (code: string, id: string) => {
     navigator.clipboard.writeText(code)
@@ -23,16 +23,9 @@ export default function ExamplesV1() {
     }, 2000)
   }
 
+  // Only one section open at a time for clarity
   const toggleSection = (sectionId: string) => {
-    setOpenSections(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(sectionId)) {
-        newSet.delete(sectionId)
-      } else {
-        newSet.add(sectionId)
-      }
-      return newSet
-    })
+    setOpenSection(prev => prev === sectionId ? null : sectionId)
   }
 
   const basicUsageCode = `/**
@@ -541,26 +534,26 @@ export { advancedPortfolioExample };`
           GorbchainSDK V1 Examples 🚀
         </h1>
         <p className="text-lg text-gray-600 mb-6">
-          Comprehensive examples showcasing the rich capabilities of GorbchainSDK V1 for rapid Solana application development.
-          These examples demonstrate real-world usage patterns for building super apps within seconds.
+          Explore practical, production-ready examples for the GorbchainSDK V1. Each section below is organized by use-case and references the official SDK documentation for deeper learning.<br />
+          <span className="font-medium">See:</span> <a href="/api-reference" className="text-blue-700 underline">API Reference</a>, <a href="/docs/overview" className="text-blue-700 underline">Overview</a>, <a href="/docs/quick-reference" className="text-blue-700 underline">Quick Reference</a>
         </p>
-        
+
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6 mb-8">
-          <h3 className="font-semibold text-blue-900 mb-3">✨ What Makes V1 Special</h3>
+          <h3 className="font-semibold text-blue-900 mb-3">✨ Key Features from SDK Docs</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-800">
             <div>
               <div className="font-medium mb-2">🎯 Rich Functions</div>
               <ul className="space-y-1 ml-4">
-                <li>• Enhanced token portfolio analysis</li>
-                <li>• Transaction decoding with context</li>
-                <li>• Universal wallet integration</li>
+                <li>• Portfolio analysis with full metadata (see <a href="/docs/token-analysis" className="underline">Token Analysis</a>)</li>
+                <li>• Transaction decoding with context (<a href="/docs/transaction-analysis" className="underline">Transaction Analysis</a>)</li>
+                <li>• Universal wallet integration (<a href="/docs/wallet-integration" className="underline">Wallet Integration</a>)</li>
               </ul>
             </div>
             <div>
               <div className="font-medium mb-2">⚡ Performance Optimized</div>
               <ul className="space-y-1 ml-4">
                 <li>• Concurrent request handling</li>
-                <li>• Intelligent metadata caching</li>
+                <li>• Metadata caching for speed</li>
                 <li>• Configurable rate limiting</li>
               </ul>
             </div>
@@ -569,63 +562,74 @@ export { advancedPortfolioExample };`
       </div>
 
       {examples.map((example) => {
-        const isOpen = openSections.has(example.id)
+        const isOpen = openSection === example.id
         
         return (
           <div key={example.id} className="docs-card">
             <button
               onClick={() => toggleSection(example.id)}
-              className="w-full flex items-center justify-between p-1 text-left"
+              className={`w-full flex items-center justify-between p-4 text-left rounded-lg border border-gray-200 bg-white hover:shadow transition-all ${isOpen ? 'ring-2 ring-blue-200' : ''}`}
+              aria-expanded={isOpen}
             >
               <div className="flex items-center space-x-4">
-                <div className={`w-12 h-12 bg-${example.color}-100 rounded-lg flex items-center justify-center`}>
+                <div className={`w-12 h-12 bg-${example.color}-100 rounded-lg flex items-center justify-center shadow-sm border border-${example.color}-200`}>
                   {example.icon}
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold text-docs-heading">{example.title}</h2>
                   <p className="text-gray-600">{example.description}</p>
+                  {example.id === 'basic' && (
+                    <p className="text-xs text-blue-700 mt-1">Reference: <a href="/docs/basic-usage" className="underline">docs/basic-usage.md</a></p>
+                  )}
+                  {example.id === 'tokens' && (
+                    <p className="text-xs text-emerald-700 mt-1">Reference: <a href="/docs/token-analysis" className="underline">docs/token-analysis.md</a></p>
+                  )}
+                  {example.id === 'transactions' && (
+                    <p className="text-xs text-purple-700 mt-1">Reference: <a href="/docs/transaction-analysis" className="underline">docs/transaction-analysis.md</a></p>
+                  )}
+                  {example.id === 'wallets' && (
+                    <p className="text-xs text-orange-700 mt-1">Reference: <a href="/docs/wallet-integration" className="underline">docs/wallet-integration.md</a></p>
+                  )}
+                  {example.id === 'portfolio' && (
+                    <p className="text-xs text-pink-700 mt-1">Reference: <a href="/docs/portfolio-management" className="underline">docs/portfolio-management.md</a></p>
+                  )}
                   <div className="flex items-center space-x-2 mt-2">
                     {example.features.slice(0, 2).map((feature, index) => (
-                      <span key={index} className={`px-2 py-1 bg-${example.color}-50 text-${example.color}-700 rounded text-xs`}>
-                        {feature}
-                      </span>
+                      <span key={index} className={`px-2 py-1 bg-${example.color}-50 text-${example.color}-700 rounded text-xs font-medium border border-${example.color}-200`}>{feature}</span>
                     ))}
                   </div>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <div className={`px-3 py-1 bg-${example.color}-100 text-${example.color}-800 rounded-full text-sm font-medium`}>
-                  V1
-                </div>
-                {isOpen ? 
-                  <ChevronDownIcon className="w-5 h-5 text-gray-400" /> : 
-                  <ChevronRightIcon className="w-5 h-5 text-gray-400" />
-                }
+                <div className={`px-3 py-1 bg-${example.color}-100 text-${example.color}-800 rounded-full text-sm font-medium border border-${example.color}-200`}>V1</div>
+                <span className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
+                  <ChevronDownIcon className="w-5 h-5 text-gray-400" />
+                </span>
               </div>
             </button>
             
             {isOpen && (
-              <div className="mt-6">
+              <div className="mt-6 rounded-lg border border-gray-100 bg-gray-50 p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-docs-heading">Complete Implementation</h3>
                   <button
                     onClick={() => copyToClipboard(example.code, example.id)}
-                    className="flex items-center space-x-2 px-3 py-1 text-sm text-blue-600 hover:text-blue-700 border border-blue-200 rounded-md hover:border-blue-300 transition-colors"
+                    className={`flex items-center space-x-2 px-3 py-1 text-sm font-medium text-blue-600 hover:text-blue-700 border border-blue-200 rounded-md hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300`}
                   >
                     <DocumentDuplicateIcon className="w-4 h-4" />
                     <span>{copied[example.id] ? 'Copied!' : 'Copy Code'}</span>
                   </button>
                 </div>
-                
-                <CodeBlock
-                  code={example.code}
-                  language="typescript"
-                  title={example.title}
-                  id={example.id}
-                  onCopy={() => copyToClipboard(example.code, example.id)}
-                  copied={copied[example.id] || false}
-                />
-                
+                <div className="mb-4">
+                  <CodeBlock
+                    code={example.code}
+                    language="typescript"
+                    title={example.title}
+                    id={example.id}
+                    onCopy={() => copyToClipboard(example.code, example.id)}
+                    copied={copied[example.id] || false}
+                  />
+                </div>
                 {/* Feature highlights */}
                 <div className={`mt-4 p-4 bg-${example.color}-50 border border-${example.color}-200 rounded-lg`}>
                   <h4 className={`font-medium text-${example.color}-900 mb-2`}>✨ Key Features</h4>
@@ -638,7 +642,6 @@ export { advancedPortfolioExample };`
                     ))}
                   </div>
                 </div>
-
                 {/* Example-specific tips */}
                 {example.id === 'basic' && (
                   <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -650,7 +653,6 @@ export { advancedPortfolioExample };`
                     </ul>
                   </div>
                 )}
-
                 {example.id === 'tokens' && (
                   <div className="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
                     <h4 className="font-medium text-emerald-900 mb-2">📊 Portfolio Analysis Power</h4>
@@ -662,7 +664,6 @@ export { advancedPortfolioExample };`
                     </ul>
                   </div>
                 )}
-
                 {example.id === 'wallets' && (
                   <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
                     <h4 className="font-medium text-orange-900 mb-2">🔗 Wallet Integration Benefits</h4>

@@ -48,7 +48,7 @@ import {
   signData,
   verifySignature
 } from './utils.js';
-import { encode as encodeBase58, decode as decodeBase58 } from 'bs58';
+import { bytesToBase58 as encodeBase58, base58ToBytes as decodeBase58 } from '../utils/base58.js';
 
 /**
  * Main crypto manager for the SDK
@@ -363,5 +363,91 @@ export class CryptoManager {
       publicKey: keypair.publicKey.toBase58(),
       privateKey: encodeBase58(keypair.secretKey)
     };
+  }
+
+  // Direct method aliases for backward compatibility and testing
+  /**
+   * Encrypt data using personal encryption
+   */
+  async encryptPersonal(
+    data: string | Uint8Array,
+    privateKey: string | Uint8Array,
+    options?: { compress?: boolean }
+  ): Promise<EncryptionResult> {
+    return encryptPersonal(data, privateKey, options);
+  }
+
+  /**
+   * Decrypt personal encrypted data
+   */
+  async decryptPersonal(
+    encryptionResult: EncryptionResult,
+    privateKey: string | Uint8Array
+  ): Promise<Uint8Array> {
+    return decryptPersonal(encryptionResult, privateKey);
+  }
+
+  /**
+   * Decrypt personal encrypted data and return as string
+   */
+  async decryptPersonalString(
+    encryptionResult: EncryptionResult,
+    privateKey: string | Uint8Array
+  ): Promise<string> {
+    return decryptPersonalString(encryptionResult, privateKey);
+  }
+
+  /**
+   * Encrypt data for direct communication
+   */
+  async encryptDirect(
+    data: string | Uint8Array,
+    recipientPublicKey: string,
+    senderPrivateKey: string | Uint8Array,
+    options?: { compress?: boolean }
+  ): Promise<EncryptionResult> {
+    return encryptDirect(data, recipientPublicKey, senderPrivateKey, options);
+  }
+
+  /**
+   * Decrypt direct encrypted data
+   */
+  async decryptDirect(
+    encryptionResult: EncryptionResult,
+    recipientPrivateKey: string | Uint8Array
+  ): Promise<Uint8Array> {
+    return decryptDirect(encryptionResult, recipientPrivateKey);
+  }
+
+  /**
+   * Decrypt direct encrypted data and return as string
+   */
+  async decryptDirectString(
+    encryptionResult: EncryptionResult,
+    recipientPrivateKey: string | Uint8Array
+  ): Promise<string> {
+    return decryptDirectString(encryptionResult, recipientPrivateKey);
+  }
+
+  /**
+   * Encrypt data for group
+   */
+  async encryptGroup(
+    data: string | Uint8Array,
+    groupMetadata: SignatureGroupMetadata,
+    options?: { compress?: boolean }
+  ): Promise<EncryptionResult> {
+    return encryptGroup(data, groupMetadata, options);
+  }
+
+  /**
+   * Decrypt group encrypted data
+   */
+  async decryptGroup(
+    encryptionResult: EncryptionResult,
+    privateKey: string | Uint8Array,
+    publicKey: string
+  ): Promise<Uint8Array> {
+    return decryptGroup(encryptionResult, privateKey, publicKey);
   }
 }
