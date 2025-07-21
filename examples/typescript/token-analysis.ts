@@ -105,8 +105,9 @@ async function richTokenAnalysisExample() {
   console.log('  • Multiple usage patterns (SDK method vs standalone function)');
 }
 
-// Run the example
-if (require.main === module) {
+// Run the example if this file is executed directly
+const isMainModule = process.argv[1] && process.argv[1].endsWith('token-analysis.ts');
+if (isMainModule) {
   richTokenAnalysisExample().catch(console.error);
 }
 

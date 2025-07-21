@@ -62,8 +62,9 @@ async function basicUsageExample() {
   console.log('\n✨ Ready to build super apps with GorbchainSDK V1!');
 }
 
-// Run the example
-if (require.main === module) {
+// Run the example if this file is executed directly
+const isMainModule = process.argv[1] && process.argv[1].endsWith('basic-usage.ts');
+if (isMainModule) {
   basicUsageExample().catch(console.error);
 }
 

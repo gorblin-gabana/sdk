@@ -156,8 +156,9 @@ export function createSimulatedInstruction() {
   };
 }
 
-// Run the example
-if (require.main === module) {
+// Run the example if this file is executed directly
+const isMainModule = process.argv[1] && process.argv[1].endsWith('transaction-analysis.ts');
+if (isMainModule) {
   richTransactionAnalysisExample().catch(console.error);
 }
 

@@ -10,7 +10,7 @@ import {
   SharedKeyManager,
   createScalableEncryption,
   type SharePermissions
-} from '../src/crypto/index.js';
+} from '@gorbchain-xyz/chaindecode';
 import { Keypair } from '@solana/web3.js';
 
 async function main() {

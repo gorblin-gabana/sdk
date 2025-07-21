@@ -104,7 +104,8 @@ export const examples = {
 };
 
 // CLI interface
-if (require.main === module) {
+const isMainModule = process.argv[1] && process.argv[1].endsWith('index.ts');
+if (isMainModule) {
   const exampleName = process.argv[2];
   
   if (!exampleName) {

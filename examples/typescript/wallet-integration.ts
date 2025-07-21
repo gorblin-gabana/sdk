@@ -253,8 +253,9 @@ function displayWalletInfo(wallet: any) {
   }
 }
 
-// Run the example
-if (require.main === module) {
+// Run the example if this file is executed directly
+const isMainModule = process.argv[1] && process.argv[1].endsWith('wallet-integration.ts');
+if (isMainModule) {
   walletIntegrationExample().catch(console.error);
 }
 

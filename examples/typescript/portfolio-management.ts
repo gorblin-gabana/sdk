@@ -227,8 +227,9 @@ function generateRebalancingSuggestions(portfolio: any) {
   return suggestions;
 }
 
-// Run the example
-if (require.main === module) {
+// Run the example if this file is executed directly
+const isMainModule = process.argv[1] && process.argv[1].endsWith('portfolio-management.ts');
+if (isMainModule) {
   advancedPortfolioExample().catch(console.error);
 }
 

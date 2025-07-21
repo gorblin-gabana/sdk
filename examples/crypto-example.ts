@@ -14,7 +14,7 @@ import {
   EncryptionMethod,
   MemberRole,
   type SignatureGroupMetadata
-} from '../src/index.js';
+} from '@gorbchain-xyz/chaindecode';
 import { Keypair } from '@solana/web3.js';
 
 async function main() {
