@@ -11,6 +11,7 @@ import {
   PlayIcon,
   ChatBubbleLeftRightIcon,
   MagnifyingGlassIcon,
+  LockClosedIcon,
 } from '@heroicons/react/24/outline'
 import Logo from './Logo'
 import SearchResults from './SearchResults'
@@ -64,6 +65,13 @@ const navigation = [
     href: '/playground',
     icon: PlayIcon,
     description: 'Test SDK functionality live',
+    highlight: true
+  },
+  {
+    name: 'Crypto Playground',
+    href: '/crypto-playground',
+    icon: LockClosedIcon,
+    description: 'Test encryption & decryption features',
     highlight: true
   },
 ]

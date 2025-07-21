@@ -9,6 +9,7 @@ import RpcOperations from './pages/RpcOperations'
 import TransactionDecoding from './pages/TransactionDecoding'
 import ErrorHandling from './pages/ErrorHandling'
 import InteractivePlayground from './pages/InteractivePlayground'
+import CryptoPlayground from './pages/CryptoPlayground'
 import { SearchProvider } from './components/SearchContext'
 
 export default function App() {
@@ -32,6 +33,7 @@ export default function App() {
                 <Route path="/transaction-decoding" element={<TransactionDecoding />} />
                 <Route path="/error-handling" element={<ErrorHandling />} />
                 <Route path="/playground" element={<InteractivePlayground />} />
+                <Route path="/crypto-playground" element={<CryptoPlayground />} />
               </Routes>
             </div>
           </main>
