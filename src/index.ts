@@ -214,6 +214,71 @@ export { decodeMintAccount } from './utils/decodeMintAccount.js';
 export { fetchProgramAccount } from './utils/fetchProgramAccount.js';
 
 // ============================================
+// Cryptographic Operations
+// ============================================
+/**
+ * Advanced encryption and decryption functionality
+ * - Personal encryption (private key based)
+ * - Direct encryption (public key based)
+ * - Group encryption (static and dynamic)
+ * - Signature-based access control
+ */
+export {
+  CryptoManager,
+  // Types
+  EncryptionMethod,
+  EncryptionResult,
+  EncryptionMetadata,
+  PersonalEncryptionMetadata,
+  DirectEncryptionMetadata,
+  GroupEncryptionMetadata,
+  SignatureGroupMetadata,
+  GroupMember,
+  MemberRole,
+  MemberPermissions,
+  GroupPermissions,
+  EncryptionEpoch,
+  KeyShare,
+  // Personal encryption
+  encryptPersonal,
+  decryptPersonal,
+  decryptPersonalString,
+  PersonalEncryptionSession,
+  // Direct encryption
+  encryptDirect,
+  decryptDirect,
+  decryptDirectString,
+  SecureChannel,
+  // Group encryption
+  createGroup,
+  encryptGroup,
+  decryptGroup,
+  decryptGroupString,
+  addGroupMember,
+  // Signature groups
+  createSignatureGroup,
+  addMemberToSignatureGroup,
+  removeMemberFromSignatureGroup,
+  rotateGroupKeys,
+  encryptForSignatureGroup,
+  decryptSignatureGroupData,
+  // Shared key management
+  SharedKeyManager,
+  SharedEncryptionKey,
+  EncryptedKeyShare,
+  SharePermissions,
+  KeyTransitionRequest,
+  // Scalable encryption
+  ScalableEncryptionManager,
+  EncryptionContext,
+  ScalableEncryptionConfig,
+  createScalableEncryption,
+  // Utilities
+  signData,
+  verifySignature
+} from './crypto/index.js';
+
+// ============================================
 // Error Handling
 // ============================================
 export * from './errors/index.js';
