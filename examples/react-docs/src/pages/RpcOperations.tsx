@@ -1,3 +1,5 @@
+import { useState } from "react";
+import CodeBlock from "../components/CodeBlock";
 import {
   WifiIcon,
   ShieldCheckIcon,
@@ -8,6 +10,83 @@ import {
 } from "@heroicons/react/24/outline";
 
 export default function RpcOperations() {
+  const [copied, setCopied] = useState<{ [key: string]: boolean }>({});
+
+  const copyToClipboard = (code: string, id: string) => {
+    navigator.clipboard.writeText(code);
+    setCopied((prev) => ({ ...prev, [id]: true }));
+    setTimeout(() => {
+      setCopied((prev) => ({ ...prev, [id]: false }));
+    }, 2000);
+  };
+
+  const initCode = `import { RpcClient } from '@gorbchain-xyz/chaindecode'
+
+// Basic initialization
+const client = new RpcClient('https://rpc.gorbchain.xyz')
+
+// With advanced configuration
+const client = new RpcClient('https://rpc.gorbchain.xyz', {
+  timeout: 30000,
+  retryAttempts: 3,
+  retryDelay: 1000,
+  circuitBreakerThreshold: 5
+})`;
+
+  const rpcCallsCode = `// Get account info
+const accountInfo = await client.getAccountInfo(publicKey)
+
+// Get transaction
+const transaction = await client.getTransaction(signature, {
+  encoding: 'jsonParsed',
+  maxSupportedTransactionVersion: 0
+})
+
+// Get multiple accounts
+const accounts = await client.getMultipleAccounts([pubkey1, pubkey2])`;
+
+  const connectionPoolCode = `const client = new RpcClient('https://rpc.gorbchain.xyz', {
+  // Connection pool configuration
+  maxConnections: 10,
+  connectionTimeout: 5000,
+  idleTimeout: 30000,
+  
+  // Retry configuration
+  retryAttempts: 3,
+  retryDelay: 1000,
+  retryBackoffMultiplier: 2,
+  
+  // Circuit breaker configuration
+  circuitBreakerThreshold: 5,
+  circuitBreakerTimeout: 60000,
+  circuitBreakerResetTimeout: 30000
+})`;
+
+  const multipleEndpointsCode = `// Load balancing across multiple RPC endpoints
+const client = new RpcClient([
+  'https://rpc.gorbchain.xyz',
+  'https://rpc2.gorbchain.xyz',
+  'https://rpc3.gorbchain.xyz'
+], {
+  loadBalancingStrategy: 'round-robin', // or 'random'
+  healthCheckInterval: 30000
+})`;
+
+  const errorHandlingCode = `try {
+  const accountInfo = await client.getAccountInfo(publicKey)
+  console.log('Account info:', accountInfo)
+} catch (error) {
+  if (error instanceof NetworkError) {
+    console.log('Network issue:', error.message)
+    // Implement fallback logic
+  } else if (error instanceof RpcError) {
+    console.log('RPC error:', error.code, error.message)
+    // Handle specific RPC errors
+  } else {
+    console.log('Unexpected error:', error)
+  }
+}`;
+
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-bold text-docs-heading mb-4">
@@ -73,43 +152,28 @@ export default function RpcOperations() {
             <h3 className="text-lg font-semibold text-docs-heading mb-3">
               Initialize RPC Client
             </h3>
-            <div className="code-block">
-              <pre>
-                <code>{`import { RpcClient } from '@gorbchain-xyz/chaindecode'
-
-// Basic initialization
-const client = new RpcClient('https://rpc.gorbchain.xyz')
-
-// With advanced configuration
-const client = new RpcClient('https://rpc.gorbchain.xyz', {
-  timeout: 30000,
-  retryAttempts: 3,
-  retryDelay: 1000,
-  circuitBreakerThreshold: 5
-})`}</code>
-              </pre>
-            </div>
+            <CodeBlock
+              code={initCode}
+              id="init-rpc"
+              title="Initialize RPC Client"
+              language="typescript"
+              onCopy={() => copyToClipboard(initCode, "init-rpc")}
+              copied={copied["init-rpc"] || false}
+            />
           </div>
 
           <div>
             <h3 className="text-lg font-semibold text-docs-heading mb-3">
               Making RPC Calls
             </h3>
-            <div className="code-block">
-              <pre>
-                <code>{`// Get account info
-const accountInfo = await client.getAccountInfo(publicKey)
-
-// Get transaction
-const transaction = await client.getTransaction(signature, {
-  encoding: 'jsonParsed',
-  maxSupportedTransactionVersion: 0
-})
-
-// Get multiple accounts
-const accounts = await client.getMultipleAccounts([pubkey1, pubkey2])`}</code>
-              </pre>
-            </div>
+            <CodeBlock
+              code={rpcCallsCode}
+              id="rpc-calls"
+              title="Making RPC Calls"
+              language="typescript"
+              onCopy={() => copyToClipboard(rpcCallsCode, "rpc-calls")}
+              copied={copied["rpc-calls"] || false}
+            />
           </div>
         </div>
       </div>
@@ -228,45 +292,28 @@ const accounts = await client.getMultipleAccounts([pubkey1, pubkey2])`}</code>
             <h3 className="text-lg font-semibold text-docs-heading mb-3">
               Connection Pool Settings
             </h3>
-            <div className="code-block">
-              <pre>
-                <code>{`const client = new RpcClient('https://rpc.gorbchain.xyz', {
-  // Connection pool configuration
-  maxConnections: 10,
-  connectionTimeout: 5000,
-  idleTimeout: 30000,
-  
-  // Retry configuration
-  retryAttempts: 3,
-  retryDelay: 1000,
-  retryBackoffMultiplier: 2,
-  
-  // Circuit breaker configuration
-  circuitBreakerThreshold: 5,
-  circuitBreakerTimeout: 60000,
-  circuitBreakerResetTimeout: 30000
-})`}</code>
-              </pre>
-            </div>
+            <CodeBlock
+              code={connectionPoolCode}
+              id="connection-pool"
+              title="Connection Pool Settings"
+              language="typescript"
+              onCopy={() => copyToClipboard(connectionPoolCode, "connection-pool")}
+              copied={copied["connection-pool"] || false}
+            />
           </div>
 
           <div>
             <h3 className="text-lg font-semibold text-docs-heading mb-3">
               Multiple Endpoints
             </h3>
-            <div className="code-block">
-              <pre>
-                <code>{`// Load balancing across multiple RPC endpoints
-const client = new RpcClient([
-  'https://rpc.gorbchain.xyz',
-  'https://rpc2.gorbchain.xyz',
-  'https://rpc3.gorbchain.xyz'
-], {
-  loadBalancingStrategy: 'round-robin', // or 'random'
-  healthCheckInterval: 30000
-})`}</code>
-              </pre>
-            </div>
+            <CodeBlock
+              code={multipleEndpointsCode}
+              id="multiple-endpoints"
+              title="Multiple Endpoints"
+              language="typescript"
+              onCopy={() => copyToClipboard(multipleEndpointsCode, "multiple-endpoints")}
+              copied={copied["multiple-endpoints"] || false}
+            />
           </div>
         </div>
       </div>
@@ -307,24 +354,14 @@ const client = new RpcClient([
             <h3 className="text-lg font-semibold text-docs-heading mb-3">
               Error Handling Example
             </h3>
-            <div className="code-block">
-              <pre>
-                <code>{`try {
-  const accountInfo = await client.getAccountInfo(publicKey)
-  console.log('Account info:', accountInfo)
-} catch (error) {
-  if (error instanceof NetworkError) {
-    console.log('Network issue:', error.message)
-    // Implement fallback logic
-  } else if (error instanceof RpcError) {
-    console.log('RPC error:', error.code, error.message)
-    // Handle specific RPC errors
-  } else {
-    console.log('Unexpected error:', error)
-  }
-}`}</code>
-              </pre>
-            </div>
+            <CodeBlock
+              code={errorHandlingCode}
+              id="error-handling"
+              title="Error Handling Example"
+              language="typescript"
+              onCopy={() => copyToClipboard(errorHandlingCode, "error-handling")}
+              copied={copied["error-handling"] || false}
+            />
           </div>
         </div>
       </div>

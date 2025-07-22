@@ -12,7 +12,7 @@ export default function Home() {
       {/* Hero section */}
       <div className="text-center">
         <h1 className="text-4xl font-bold text-docs-heading mb-4">
-          GorbchainSDK V1.3.0 🚀
+          GorbchainSDK V1.3.1 🚀
         </h1>
         <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
           Rich Solana operations for rapid application development. Specialized

@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 
-// V1.3.0 Test Categories organized by rich functionality
+// V1.3.1 Test Categories organized by rich functionality
 const testCategories = {
-  "Core SDK V1.3.0": [
+  "Core SDK V1.3.1": [
     {
       id: "network-health",
       name: "Network Health",
@@ -251,7 +251,7 @@ export default function InteractivePlaygroundV1() {
   const [expandedCategories, setExpandedCategories] = useState<{
     [key: string]: boolean;
   }>({
-    "Core SDK V1.3.0": true,
+    "Core SDK V1.3.1": true,
     "Rich Token Operations": true,
   });
 
@@ -261,7 +261,7 @@ export default function InteractivePlaygroundV1() {
 
   const initializeSDK = async () => {
     try {
-      console.log("🚀 Initializing GorbchainSDK V1.3.0...");
+      console.log("🚀 Initializing GorbchainSDK V1.3.1...");
 
       // Dynamic import of the SDK
       const { GorbchainSDK } = await import("@gorbchain-xyz/chaindecode");
@@ -292,7 +292,7 @@ export default function InteractivePlaygroundV1() {
         );
       }
 
-      console.log("✅ GorbchainSDK V1.3.0 initialized successfully!");
+      console.log("✅ GorbchainSDK V1.3.1 initialized successfully!");
       setLoading(false);
     } catch (error) {
       console.error("❌ Failed to initialize SDK:", error);
@@ -437,7 +437,7 @@ export default function InteractivePlaygroundV1() {
             network: sdk.config.network,
             rpcEndpoint: sdk.config.rpcEndpoint,
             timeout: sdk.config.timeout,
-            version: "1.3.0",
+            version: "1.3.1",
           };
           break;
 
@@ -485,7 +485,7 @@ export default function InteractivePlaygroundV1() {
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
-          <p className="text-green-600">Initializing GorbchainSDK V1.3.0...</p>
+          <p className="text-green-600">Initializing GorbchainSDK V1.3.1...</p>
         </div>
       </div>
     );
@@ -495,10 +495,10 @@ export default function InteractivePlaygroundV1() {
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-6">
         <h1 className="text-2xl font-bold text-green-900 mb-2">
-          🧪 Interactive Playground - GorbchainSDK V1.3.0
+          🧪 Interactive Playground - GorbchainSDK V1.3.1
         </h1>
         <p className="text-green-700 mb-4">
-          Comprehensive testing environment for GorbchainSDK V1.3.0 rich
+          Comprehensive testing environment for GorbchainSDK V1.3.1 rich
           functionality. Features enhanced token analysis, transaction decoding,
           universal wallet integration, and portfolio insights.
         </p>
@@ -506,7 +506,7 @@ export default function InteractivePlaygroundV1() {
           <div className="flex items-center space-x-2 text-sm">
             <span className="inline-block w-3 h-3 bg-green-500 rounded-full"></span>
             <span className="font-medium text-green-700">
-              ✅ GorbchainSDK V1.3.0 initialized successfully!
+              ✅ GorbchainSDK V1.3.1 initialized successfully!
             </span>
           </div>
           <div className="mt-2 text-sm text-gray-600">
@@ -688,7 +688,7 @@ export default function InteractivePlaygroundV1() {
             </ul>
           </div>
           <div>
-            <h3 className="font-medium mb-2">🚀 V1.3.0 Features:</h3>
+            <h3 className="font-medium mb-2">🚀 V1.3.1 Features:</h3>
             <ul className="space-y-1 text-gray-600">
               <li>• Rich token portfolio analysis with metadata</li>
               <li>• Enhanced transaction decoding with context</li>

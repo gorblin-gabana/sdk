@@ -7,7 +7,6 @@ import {
   MagnifyingGlassIcon,
   BeakerIcon,
   ChevronDownIcon,
-  ChevronRightIcon,
   DocumentDuplicateIcon,
 } from "@heroicons/react/24/outline";
 
@@ -29,13 +28,13 @@ export default function ExamplesV1() {
   };
 
   const basicUsageCode = `/**
- * GorbchainSDK V1 - Basic Usage Example
+ * GorbchainSDK V1.3.1 - Basic Usage Example
  * Demonstrates SDK initialization and basic operations
  */
 import { GorbchainSDK } from '@gorbchain-xyz/chaindecode';
 
 async function basicUsageExample() {
-  console.log('🚀 GorbchainSDK V1 - Basic Usage Example\\n');
+  console.log('🚀 GorbchainSDK V1.3.1 - Basic Usage Example\\n');
 
   // Initialize the SDK with Gorbchain custom program addresses
   const sdk = new GorbchainSDK({
@@ -90,13 +89,13 @@ async function basicUsageExample() {
   console.log('- sdk.getRichTransaction(signature) - Decoded transaction context');
   console.log('- sdk.createWalletManager() - Universal wallet integration');
 
-  console.log('\\n✨ Ready to build super apps with GorbchainSDK V1!');
+  console.log('\\n✨ Ready to build super apps with GorbchainSDK V1.3.1!');
 }
 
 export { basicUsageExample };`;
 
   const richTokenAnalysisCode = `/**
- * GorbchainSDK V1 - Rich Token Analysis Example
+ * GorbchainSDK V1.3.1 - Rich Token Analysis Example
  * Demonstrates portfolio analysis with metadata and insights
  */
 import { GorbchainSDK, getRichTokenAccountsByOwner } from '@gorbchain-xyz/chaindecode';

@@ -87,7 +87,7 @@ export default function Sidebar() {
           <div className="flex items-center justify-between mb-3">
             <Logo size="lg" showText={true} />
             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-gorbchain-primary to-gorbchain-secondary text-white shadow-sm">
-              v1.0.0
+              v1.3.1
             </span>
           </div>
         </div>

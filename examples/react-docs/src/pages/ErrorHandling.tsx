@@ -1,3 +1,5 @@
+import { useState } from "react";
+import CodeBlock from "../components/CodeBlock";
 import {
   ExclamationTriangleIcon,
   ShieldCheckIcon,
@@ -9,6 +11,123 @@ import {
 } from "@heroicons/react/24/outline";
 
 export default function ErrorHandling() {
+  const [copied, setCopied] = useState<{ [key: string]: boolean }>({});
+
+  const copyToClipboard = (code: string, id: string) => {
+    navigator.clipboard.writeText(code);
+    setCopied((prev) => ({ ...prev, [id]: true }));
+    setTimeout(() => {
+      setCopied((prev) => ({ ...prev, [id]: false }));
+    }, 2000);
+  };
+
+  const structuredErrorCode = `import { 
+  NetworkConnectionError, 
+  RpcNetworkError, 
+  DecoderError, 
+  TransactionNotFoundError 
+} from '@gorbchain-xyz/chaindecode'
+
+try {
+  const result = await sdk.getAndDecodeTransaction(signature)
+  return result
+} catch (error) {
+  if (error instanceof NetworkConnectionError) {
+    // Network issues - retry with backoff
+    console.log('Network error:', error.message)
+    return await retryWithBackoff(() => 
+      sdk.getAndDecodeTransaction(signature)
+    )
+  } else if (error instanceof RpcNetworkError) {
+    // RPC-specific handling
+    console.log('RPC network error:', error.message)
+    // Retry with exponential backoff
+  } else if (error instanceof DecoderError) {
+    // Fallback to raw transaction data
+    console.log('Decoder failed, using raw data')
+    return await sdk.getTransaction(signature)
+  } else if (error instanceof TransactionNotFoundError) {
+    // Transaction-specific logic
+    console.log('Transaction not found:', error.message)
+    throw error // Don't retry transaction errors
+  }
+}`;
+
+  const retryConfigCode = `// Configure retry behavior
+const sdk = new GorbchainSDK({
+  rpcEndpoint: 'https://rpc.gorbchain.xyz',
+  retryConfig: {
+    maxAttempts: 3,
+    baseDelay: 1000,
+    maxDelay: 10000,
+    backoffMultiplier: 2,
+    jitter: true
+  },
+  circuitBreaker: {
+    threshold: 5,
+    timeout: 60000,
+    resetTimeout: 30000
+  }
+})`;
+
+  const gracefulDegradationCode = `async function getTransactionWithFallback(signature: string) {
+  try {
+    // Try full decoding first
+    return await sdk.getAndDecodeTransaction(signature, {
+      richDecoding: true
+    })
+  } catch (error) {
+    if (error instanceof DecoderError) {
+      // Fallback to basic decoding
+      console.warn('Rich decoding failed, using basic decoding')
+      return await sdk.getAndDecodeTransaction(signature, {
+        richDecoding: false
+      })
+    }
+    
+    if (error instanceof NetworkError) {
+      // Fallback to cached data if available
+      const cached = await cache.get(signature)
+      if (cached) {
+        console.warn('Using cached transaction data')
+        return cached
+      }
+    }
+    
+    throw error
+  }
+}`;
+
+  const errorContextCode = `// Error objects include comprehensive context
+try {
+  await sdk.getAccountInfo(invalidAddress)
+} catch (error) {
+  console.log('Error details:', {
+    type: error.constructor.name,
+    message: error.message,
+    code: error.code,
+    context: error.context,
+    timestamp: error.timestamp,
+    requestId: error.requestId,
+    stack: error.stack
+  })
+  
+  // Example output:
+  // {
+  //   type: 'ValidationError',
+  //   message: 'Invalid public key format',
+  //   code: 'INVALID_ADDRESS',
+  //   context: {
+  //     address: 'invalid-address',
+  //     expectedFormat: 'Base58 encoded string',
+  //     actualLength: 15,
+  //     expectedLength: 44
+  //   },
+  //   timestamp: '2024-01-15T10:30:00.000Z',
+  //   requestId: 'req_123456789'
+  // }
+}`;
+
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-bold text-docs-heading mb-4">
@@ -327,104 +446,42 @@ export default function ErrorHandling() {
             <h3 className="text-lg font-semibold text-docs-heading mb-3">
               1. Structured Error Handling
             </h3>
-            <div className="code-block">
-              <pre>
-                <code>{`import { 
-  NetworkConnectionError, 
-  RpcNetworkError, 
-  DecoderError, 
-  TransactionNotFoundError 
-} from '@gorbchain-xyz/chaindecode'
-
-try {
-  const result = await sdk.getAndDecodeTransaction(signature)
-  return result
-} catch (error) {
-  if (error instanceof NetworkConnectionError) {
-    // Network issues - retry with backoff
-    console.log('Network error:', error.message)
-    return await retryWithBackoff(() => 
-      sdk.getAndDecodeTransaction(signature)
-    )
-  } else if (error instanceof RpcNetworkError) {
-    // RPC-specific handling
-    console.log('RPC network error:', error.message)
-    // Retry with exponential backoff
-  } else if (error instanceof DecoderError) {
-    // Fallback to raw transaction data
-    console.log('Decoder failed, using raw data')
-    return await sdk.getTransaction(signature)
-  } else if (error instanceof TransactionNotFoundError) {
-    // Transaction-specific logic
-    console.log('Transaction not found:', error.message)
-    throw error // Don't retry transaction errors
-  }
-}`}</code>
-              </pre>
-            </div>
+            <CodeBlock
+              code={structuredErrorCode}
+              language="typescript"
+              id="structured-error"
+              title="Structured Error Handling"
+              onCopy={() => copyToClipboard(structuredErrorCode, "structured-error")}
+              copied={copied["structured-error"] || false}
+            />
           </div>
 
           <div>
             <h3 className="text-lg font-semibold text-docs-heading mb-3">
               2. Retry Configuration
             </h3>
-            <div className="code-block">
-              <pre>
-                <code>{`// Configure retry behavior
-const sdk = new GorbchainSDK({
-  rpcEndpoint: 'https://rpc.gorbchain.xyz',
-  retryConfig: {
-    maxAttempts: 3,
-    baseDelay: 1000,
-    maxDelay: 10000,
-    backoffMultiplier: 2,
-    jitter: true
-  },
-  circuitBreaker: {
-    threshold: 5,
-    timeout: 60000,
-    resetTimeout: 30000
-  }
-})`}</code>
-              </pre>
-            </div>
+            <CodeBlock
+              code={retryConfigCode}
+              language="typescript"
+              id="retry-config"
+              title="Retry Configuration"
+              onCopy={() => copyToClipboard(retryConfigCode, "retry-config")}
+              copied={copied["retry-config"] || false}
+            />
           </div>
 
           <div>
             <h3 className="text-lg font-semibold text-docs-heading mb-3">
               3. Graceful Degradation
             </h3>
-            <div className="code-block">
-              <pre>
-                <code>{`async function getTransactionWithFallback(signature: string) {
-  try {
-    // Try full decoding first
-    return await sdk.getAndDecodeTransaction(signature, {
-      richDecoding: true
-    })
-  } catch (error) {
-    if (error instanceof DecoderError) {
-      // Fallback to basic decoding
-      console.warn('Rich decoding failed, using basic decoding')
-      return await sdk.getAndDecodeTransaction(signature, {
-        richDecoding: false
-      })
-    }
-    
-    if (error instanceof NetworkError) {
-      // Fallback to cached data if available
-      const cached = await cache.get(signature)
-      if (cached) {
-        console.warn('Using cached transaction data')
-        return cached
-      }
-    }
-    
-    throw error
-  }
-}`}</code>
-              </pre>
-            </div>
+            <CodeBlock
+              code={gracefulDegradationCode}
+              language="typescript"
+              id="graceful-degradation"
+              title="Graceful Degradation"
+              onCopy={() => copyToClipboard(gracefulDegradationCode, "graceful-degradation")}
+              copied={copied["graceful-degradation"] || false}
+            />
           </div>
         </div>
       </div>
@@ -440,39 +497,14 @@ const sdk = new GorbchainSDK({
             debugging:
           </p>
 
-          <div className="code-block">
-            <pre>
-              <code>{`// Error objects include comprehensive context
-try {
-  await sdk.getAccountInfo(invalidAddress)
-} catch (error) {
-  console.log('Error details:', {
-    type: error.constructor.name,
-    message: error.message,
-    code: error.code,
-    context: error.context,
-    timestamp: error.timestamp,
-    requestId: error.requestId,
-    stack: error.stack
-  })
-  
-  // Example output:
-  // {
-  //   type: 'ValidationError',
-  //   message: 'Invalid public key format',
-  //   code: 'INVALID_ADDRESS',
-  //   context: {
-  //     address: 'invalid-address',
-  //     expectedFormat: 'Base58 encoded string',
-  //     actualLength: 15,
-  //     expectedLength: 44
-  //   },
-  //   timestamp: '2024-01-15T10:30:00.000Z',
-  //   requestId: 'req_123456789'
-  // }
-}`}</code>
-            </pre>
-          </div>
+          <CodeBlock
+            code={errorContextCode}
+            language="typescript"
+            id="error-context"
+            title="Error Context & Debugging"
+            onCopy={() => copyToClipboard(errorContextCode, "error-context")}
+            copied={copied["error-context"] || false}
+          />
         </div>
       </div>
 

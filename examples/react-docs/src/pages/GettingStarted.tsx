@@ -23,7 +23,7 @@ export default function GettingStarted() {
 
   const basicUsageCode = `import { GorbchainSDK } from '@gorbchain-xyz/chaindecode'
 
-// Initialize GorbchainSDK V1.3.0 for rich Gorbchain operations
+// Initialize GorbchainSDK V1.3.1 for rich Gorbchain operations
 const sdk = new GorbchainSDK({
   rpcEndpoint: 'https://rpc.gorbchain.xyz',
   network: 'gorbchain',
@@ -36,7 +36,7 @@ console.log('Network Status:', health.status) // 'healthy' | 'degraded' | 'unhea
 console.log('Current Slot:', health.currentSlot)
 console.log('Response Time:', health.responseTime, 'ms')`;
 
-  const quickExampleCode = `// GorbchainSDK V1.3.0 Rich Functions Examples
+  const quickExampleCode = `// GorbchainSDK V1.3.1 Rich Functions Examples
 
 // Example 1: Rich Token Portfolio Analysis
 const portfolio = await sdk.getRichTokenAccounts(walletAddress, {
@@ -93,10 +93,10 @@ try {
       {/* Introduction */}
       <div>
         <h1 className="text-3xl font-bold text-docs-heading mb-4">
-          Getting Started with GorbchainSDK V1.3.0
+          Getting Started with GorbchainSDK V1.3.1
         </h1>
         <p className="text-lg text-gray-600 mb-6">
-          Get up and running with GorbchainSDK V1.3.0 in minutes. This guide
+          Get up and running with GorbchainSDK V1.3.1 in minutes. This guide
           covers installation, basic setup, and your first rich function calls
           for enhanced Solana operations.
         </p>
