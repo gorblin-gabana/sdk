@@ -1,6 +1,6 @@
 /**
  * Rich Transaction Operations - Enhanced transaction functions with decoded context
- * 
+ *
  * These functions provide comprehensive transaction analysis including:
  * - Decoded instruction details
  * - Token metadata for token-related transactions
@@ -8,7 +8,7 @@
  * - Balance changes and effects
  */
 
-import type { GorbchainSDK } from '../sdk/GorbchainSDK.js';
+import type { GorbchainSDK } from "../sdk/GorbchainSDK.js";
 
 /**
  * Rich instruction with complete context and metadata
@@ -61,7 +61,7 @@ export interface RichInstruction {
       /** Account address */
       account: string;
       /** Change type */
-      type: 'created' | 'closed' | 'frozen' | 'thawed';
+      type: "created" | "closed" | "frozen" | "thawed";
       /** Associated token mint */
       mint?: string;
       /** Token metadata */
@@ -81,7 +81,7 @@ export interface RichInstruction {
     /** Balance change in SOL */
     changeSOL: number;
     /** Change type */
-    type: 'debit' | 'credit';
+    type: "debit" | "credit";
   }>;
   /** Fees consumed by this instruction */
   fees?: {
@@ -114,7 +114,7 @@ export interface RichTransaction {
   /** Block time timestamp */
   blockTime?: number;
   /** Confirmation status */
-  confirmationStatus?: 'processed' | 'confirmed' | 'finalized';
+  confirmationStatus?: "processed" | "confirmed" | "finalized";
   /** Transaction fee in lamports */
   fee: number;
   /** Whether transaction succeeded */
@@ -130,13 +130,20 @@ export interface RichTransaction {
     /** Human-readable description */
     description: string;
     /** Transaction category */
-    category: 'transfer' | 'swap' | 'nft' | 'defi' | 'governance' | 'system' | 'unknown';
+    category:
+      | "transfer"
+      | "swap"
+      | "nft"
+      | "defi"
+      | "governance"
+      | "system"
+      | "unknown";
     /** Key participants */
     participants: Array<{
       /** Wallet address */
       address: string;
       /** Role in transaction */
-      role: 'sender' | 'receiver' | 'authority' | 'program';
+      role: "sender" | "receiver" | "authority" | "program";
       /** Address label if known */
       label?: string;
     }>;
@@ -191,39 +198,39 @@ export interface RichTransaction {
 
 /**
  * Get rich transaction with complete decoded context and metadata
- * 
+ *
  * This function enhances the basic getTransaction with:
  * - Complete instruction decoding with human-readable descriptions
  * - Token metadata for all token-related operations
  * - Balance change analysis
  * - Transaction categorization and summary
  * - Human-readable transaction description
- * 
+ *
  * @param sdk - GorbchainSDK instance
  * @param signature - Transaction signature to analyze
  * @param options - Configuration options
  * @returns Promise resolving to rich transaction with full context
- * 
+ *
  * @example
  * ```typescript
  * const sdk = new GorbchainSDK({ rpcEndpoint: 'https://rpc.gorbchain.xyz' });
- * 
+ *
  * const richTx = await getRichTransaction(sdk, 'transaction_signature', {
  *   includeTokenMetadata: true,
  *   includeBalanceChanges: true,
  *   resolveAddressLabels: true
  * });
- * 
+ *
  * console.log(richTx.summary.description);
  * // "Alice sent 100 USDC to Bob"
- * 
+ *
  * console.log(`Category: ${richTx.summary.category}`);
  * console.log(`Total SOL involved: ${richTx.summary.totalSOL}`);
- * 
+ *
  * // Analyze each instruction
  * richTx.instructions.forEach((instruction, i) => {
  *   console.log(`${i + 1}. ${instruction.description}`);
- *   
+ *
  *   if (instruction.tokens?.transfers) {
  *     instruction.tokens.transfers.forEach(transfer => {
  *       console.log(`  → ${transfer.amountFormatted} ${transfer.token.symbol} from ${transfer.from} to ${transfer.to}`);
@@ -245,17 +252,17 @@ export async function getRichTransaction(
     /** Maximum retries for metadata fetching */
     maxRetries?: number;
     /** Custom commitment level */
-    commitment?: 'processed' | 'confirmed' | 'finalized';
-  } = {}
+    commitment?: "processed" | "confirmed" | "finalized";
+  } = {},
 ): Promise<RichTransaction> {
   const startTime = Date.now();
-  
+
   const {
     includeTokenMetadata = true,
     includeBalanceChanges = true,
     resolveAddressLabels = false,
     maxRetries = 3,
-    commitment = 'finalized'
+    commitment = "finalized",
   } = options;
 
   try {
@@ -263,29 +270,32 @@ export async function getRichTransaction(
     const decodedTx = await sdk.getAndDecodeTransaction(signature, {
       richDecoding: true,
       includeTokenMetadata,
-      maxRetries
+      maxRetries,
     });
 
-    if (!decodedTx || !decodedTx.decoded) {
-      throw new Error('Transaction not found or could not be decoded');
+    if (!decodedTx?.decoded) {
+      throw new Error("Transaction not found or could not be decoded");
     }
 
     // Get raw transaction for additional metadata
-    const rawTx = await sdk.rpc.request('getTransaction', [signature, {
-      commitment,
-      maxSupportedTransactionVersion: 0
-    }]);
+    const rawTx = await sdk.rpc.request("getTransaction", [
+      signature,
+      {
+        commitment,
+        maxSupportedTransactionVersion: 0,
+      },
+    ]);
 
     if (!rawTx) {
-      throw new Error('Raw transaction data not found');
+      throw new Error("Raw transaction data not found");
     }
 
     // Build rich instructions
     const richInstructions: RichInstruction[] = [];
-    
+
     for (let i = 0; i < decodedTx.decoded.length; i++) {
       const instruction = decodedTx.decoded[i];
-      
+
       const richInstruction = await enrichInstruction(
         sdk,
         instruction,
@@ -293,47 +303,52 @@ export async function getRichTransaction(
         rawTx,
         {
           includeTokenMetadata,
-          resolveAddressLabels
-        }
+          resolveAddressLabels,
+        },
       );
-      
+
       richInstructions.push(richInstruction);
     }
 
     // Analyze balance changes if requested
-    let balanceChanges: RichTransaction['balanceChanges'] = {
+    let balanceChanges: RichTransaction["balanceChanges"] = {
       sol: [],
-      tokens: []
+      tokens: [],
     };
 
     if (includeBalanceChanges && rawTx && (rawTx as any).meta) {
-      balanceChanges = await analyzeBalanceChanges(
-        sdk,
-        rawTx,
-        { includeTokenMetadata }
-      );
+      balanceChanges = await analyzeBalanceChanges(sdk, rawTx, {
+        includeTokenMetadata,
+      });
     }
 
     // Generate transaction summary
-    const summary = generateTransactionSummary(richInstructions, balanceChanges);
+    const summary = generateTransactionSummary(
+      richInstructions,
+      balanceChanges,
+    );
 
     // Extract metadata safely
     const txMeta = (rawTx as any).meta;
     const txData = (rawTx as any).transaction;
-    
+
     const meta = {
       computeUnitsConsumed: txMeta?.computeUnitsConsumed,
       innerInstructionsCount: txMeta?.innerInstructions?.length || 0,
       totalAccounts: txData?.message?.accountKeys?.length || 0,
-      programsInvolved: [...new Set(richInstructions.map(ix => ix.programId))],
+      programsInvolved: [
+        ...new Set(richInstructions.map((ix) => ix.programId)),
+      ],
       analysisDuration: Date.now() - startTime,
-      metadataResolved: includeTokenMetadata
+      metadataResolved: includeTokenMetadata,
     };
 
     return {
       signature,
       slot: (rawTx as any).slot,
-      blockTime: (rawTx as any).blockTime ? (rawTx as any).blockTime * 1000 : undefined,
+      blockTime: (rawTx as any).blockTime
+        ? (rawTx as any).blockTime * 1000
+        : undefined,
       confirmationStatus: commitment,
       fee: txMeta?.fee || 0,
       success: !txMeta?.err,
@@ -341,11 +356,12 @@ export async function getRichTransaction(
       instructions: richInstructions,
       summary,
       balanceChanges,
-      meta
+      meta,
     };
-
   } catch (error) {
-    throw new Error(`Failed to get rich transaction: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(
+      `Failed to get rich transaction: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
   }
 }
 
@@ -360,7 +376,7 @@ async function enrichInstruction(
   options: {
     includeTokenMetadata: boolean;
     resolveAddressLabels: boolean;
-  }
+  },
 ): Promise<RichInstruction> {
   const { includeTokenMetadata, resolveAddressLabels } = options;
 
@@ -369,7 +385,7 @@ async function enrichInstruction(
     index,
     programId: instruction.programId,
     programName: getProgramName(instruction.programId),
-    type: instruction.type || 'unknown',
+    type: instruction.type || "unknown",
     description: await generateInstructionDescription(instruction),
     data: instruction.data || new Uint8Array(),
     accounts: instruction.accounts || [],
@@ -377,24 +393,22 @@ async function enrichInstruction(
     result: {
       success: true, // Will be updated based on transaction success
       error: undefined,
-      logs: []
-    }
+      logs: [],
+    },
   };
 
   // Add program logs if available
   if (rawTx.meta?.logMessages) {
     richInstruction.result.logs = rawTx.meta.logMessages.filter((log: string) =>
-      log.includes(instruction.programId)
+      log.includes(instruction.programId),
     );
   }
 
   // Analyze token-related operations
   if (isTokenRelatedInstruction(instruction)) {
-    richInstruction.tokens = await analyzeTokenOperations(
-      sdk,
-      instruction,
-      { includeTokenMetadata }
-    );
+    richInstruction.tokens = await analyzeTokenOperations(sdk, instruction, {
+      includeTokenMetadata,
+    });
   }
 
   // Analyze SOL balance changes for this instruction
@@ -411,35 +425,37 @@ async function enrichInstruction(
 /**
  * Generate human-readable description for an instruction
  */
-async function generateInstructionDescription(instruction: any): Promise<string> {
+async function generateInstructionDescription(
+  instruction: any,
+): Promise<string> {
   const programName = getProgramName(instruction.programId);
-  const type = instruction.type || 'unknown';
+  const type = instruction.type || "unknown";
 
   // Generate descriptions based on program and instruction type
   switch (instruction.programId) {
-    case '11111111111111111111111111111111': // System Program
+    case "11111111111111111111111111111111": // System Program
       switch (type) {
-        case 'transfer':
-          return `Transfer SOL between accounts`;
-        case 'createAccount':
-          return `Create new account`;
-        case 'allocate':
-          return `Allocate account space`;
+        case "transfer":
+          return "Transfer SOL between accounts";
+        case "createAccount":
+          return "Create new account";
+        case "allocate":
+          return "Allocate account space";
         default:
           return `${programName} ${type} operation`;
       }
 
-    case 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA': // SPL Token
-    case 'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn': // Token-2022
+    case "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA": // SPL Token
+    case "FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn": // Token-2022
       switch (type) {
-        case 'transfer':
-          return `Transfer tokens between accounts`;
-        case 'mint':
-          return `Mint new tokens`;
-        case 'burn':
-          return `Burn tokens`;
-        case 'createAccount':
-          return `Create token account`;
+        case "transfer":
+          return "Transfer tokens between accounts";
+        case "mint":
+          return "Mint new tokens";
+        case "burn":
+          return "Burn tokens";
+        case "createAccount":
+          return "Create token account";
         default:
           return `${programName} ${type} operation`;
       }
@@ -454,15 +470,15 @@ async function generateInstructionDescription(instruction: any): Promise<string>
  */
 function getProgramName(programId: string): string {
   const programNames: Record<string, string> = {
-    '11111111111111111111111111111111': 'System Program',
-    'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA': 'SPL Token',
-    'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn': 'Token-2022',
-    '4YpYoLVTQ8bxcne9GneN85RUXeN7pqGTwgPcY71ZL5gX': 'Associated Token Account',
-    'BvoSmPBF6mBRxBMY9FPguw1zUoUg3xrc5CaWf7y5ACkc': 'MPL Core NFT',
-    'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s': 'Metaplex NFT'
+    "11111111111111111111111111111111": "System Program",
+    TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA: "SPL Token",
+    FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn: "Token-2022",
+    "4YpYoLVTQ8bxcne9GneN85RUXeN7pqGTwgPcY71ZL5gX": "Associated Token Account",
+    BvoSmPBF6mBRxBMY9FPguw1zUoUg3xrc5CaWf7y5ACkc: "MPL Core NFT",
+    metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s: "Metaplex NFT",
   };
 
-  return programNames[programId] || 'Unknown Program';
+  return programNames[programId] || "Unknown Program";
 }
 
 /**
@@ -470,10 +486,10 @@ function getProgramName(programId: string): string {
  */
 function isTokenRelatedInstruction(instruction: any): boolean {
   const tokenPrograms = [
-    'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-    'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn',
-    'BvoSmPBF6mBRxBMY9FPguw1zUoUg3xrc5CaWf7y5ACkc',
-    'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s'
+    "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+    "FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn",
+    "BvoSmPBF6mBRxBMY9FPguw1zUoUg3xrc5CaWf7y5ACkc",
+    "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s",
   ];
 
   return tokenPrograms.includes(instruction.programId);
@@ -483,7 +499,7 @@ function isTokenRelatedInstruction(instruction: any): boolean {
  * Check if instruction is SOL-related
  */
 function isSOLRelatedInstruction(instruction: any): boolean {
-  return instruction.programId === '11111111111111111111111111111111';
+  return instruction.programId === "11111111111111111111111111111111";
 }
 
 /**
@@ -492,37 +508,42 @@ function isSOLRelatedInstruction(instruction: any): boolean {
 async function analyzeTokenOperations(
   sdk: GorbchainSDK,
   instruction: any,
-  options: { includeTokenMetadata: boolean }
-): Promise<RichInstruction['tokens']> {
+  options: { includeTokenMetadata: boolean },
+): Promise<RichInstruction["tokens"]> {
   const transfers: any[] = [];
   const accountChanges: any[] = [];
 
   // Extract token transfer information based on instruction type
-  if (instruction.type === 'transfer' && instruction.decoded) {
+  if (instruction.type === "transfer" && instruction.decoded) {
     const transfer = {
-      from: instruction.accounts[0] || 'unknown',
-      to: instruction.accounts[1] || 'unknown',
-      mint: instruction.decoded.mint || 'unknown',
-      amount: instruction.decoded.amount?.toString() || '0',
+      from: instruction.accounts[0] || "unknown",
+      to: instruction.accounts[1] || "unknown",
+      mint: instruction.decoded.mint || "unknown",
+      amount: instruction.decoded.amount?.toString() || "0",
       amountFormatted: formatTokenAmount(
-        instruction.decoded.amount?.toString() || '0',
-        instruction.decoded.decimals || 0
+        instruction.decoded.amount?.toString() || "0",
+        instruction.decoded.decimals || 0,
       ),
       token: {
         name: instruction.decoded.tokenName,
         symbol: instruction.decoded.tokenSymbol,
         decimals: instruction.decoded.decimals || 0,
         isNFT: instruction.decoded.isNFT || false,
-        image: instruction.decoded.tokenImage
-      }
+        image: instruction.decoded.tokenImage,
+      },
     };
 
     // Only fetch additional metadata if not already present and requested
-    if (options.includeTokenMetadata && 
-        transfer.mint !== 'unknown' && 
-        (!transfer.token.name || !transfer.token.symbol)) {
+    if (
+      options.includeTokenMetadata &&
+      transfer.mint !== "unknown" &&
+      (!transfer.token.name || !transfer.token.symbol)
+    ) {
       try {
-        const metadata = await fetchTokenMetadataForTransfer(sdk, transfer.mint);
+        const metadata = await fetchTokenMetadataForTransfer(
+          sdk,
+          transfer.mint,
+        );
         if (metadata) {
           // Only override if current values are empty
           transfer.token = {
@@ -530,7 +551,7 @@ async function analyzeTokenOperations(
             name: transfer.token.name || metadata.name,
             symbol: transfer.token.symbol || metadata.symbol,
             decimals: transfer.token.decimals || metadata.decimals,
-            isNFT: transfer.token.isNFT || metadata.isNFT
+            isNFT: transfer.token.isNFT || metadata.isNFT,
           };
         }
       } catch (error) {
@@ -543,29 +564,32 @@ async function analyzeTokenOperations(
 
   return {
     transfers,
-    accountChanges
+    accountChanges,
   };
 }
 
 /**
  * Analyze SOL balance changes in an instruction
  */
-async function analyzeSOLChanges(instruction: any, rawTx: any): Promise<RichInstruction['solChanges']> {
+async function analyzeSOLChanges(
+  instruction: any,
+  rawTx: any,
+): Promise<RichInstruction["solChanges"]> {
   const changes: any[] = [];
 
-  if (instruction.type === 'transfer' && instruction.decoded?.lamports) {
+  if (instruction.type === "transfer" && instruction.decoded?.lamports) {
     changes.push({
-      account: instruction.accounts[0] || 'unknown',
+      account: instruction.accounts[0] || "unknown",
       change: -instruction.decoded.lamports,
       changeSOL: -instruction.decoded.lamports / 1e9,
-      type: 'debit'
+      type: "debit",
     });
 
     changes.push({
-      account: instruction.accounts[1] || 'unknown',
+      account: instruction.accounts[1] || "unknown",
       change: instruction.decoded.lamports,
       changeSOL: instruction.decoded.lamports / 1e9,
-      type: 'credit'
+      type: "credit",
     });
   }
 
@@ -575,14 +599,20 @@ async function analyzeSOLChanges(instruction: any, rawTx: any): Promise<RichInst
 /**
  * Estimate fees consumed by an instruction
  */
-function estimateInstructionFees(instruction: any, rawTx: any): RichInstruction['fees'] {
+function estimateInstructionFees(
+  instruction: any,
+  rawTx: any,
+): RichInstruction["fees"] {
   // Basic fee estimation - in reality this would be more sophisticated
-  const baseFee = Math.floor((rawTx.meta?.fee || 5000) / (rawTx.transaction?.message?.instructions?.length || 1));
+  const baseFee = Math.floor(
+    (rawTx.meta?.fee || 5000) /
+      (rawTx.transaction?.message?.instructions?.length || 1),
+  );
 
   return {
     base: baseFee,
     computeUnits: instruction.computeUnits,
-    priority: 0 // Would need to analyze priority fees
+    priority: 0, // Would need to analyze priority fees
   };
 }
 
@@ -592,15 +622,15 @@ function estimateInstructionFees(instruction: any, rawTx: any): RichInstruction[
 async function analyzeBalanceChanges(
   sdk: GorbchainSDK,
   rawTx: any,
-  options: { includeTokenMetadata: boolean }
-): Promise<RichTransaction['balanceChanges']> {
+  options: { includeTokenMetadata: boolean },
+): Promise<RichTransaction["balanceChanges"]> {
   const solChanges: any[] = [];
   const tokenChanges: any[] = [];
 
   // Analyze SOL balance changes
   if (rawTx.meta?.preBalances && rawTx.meta?.postBalances) {
     const accountKeys = rawTx.transaction?.message?.accountKeys || [];
-    
+
     for (let i = 0; i < accountKeys.length; i++) {
       const preBalance = rawTx.meta.preBalances[i] || 0;
       const postBalance = rawTx.meta.postBalances[i] || 0;
@@ -611,7 +641,7 @@ async function analyzeBalanceChanges(
           account: accountKeys[i],
           before: preBalance,
           after: postBalance,
-          change
+          change,
         });
       }
     }
@@ -625,7 +655,7 @@ async function analyzeBalanceChanges(
 
   return {
     sol: solChanges,
-    tokens: tokenChanges
+    tokens: tokenChanges,
   };
 }
 
@@ -634,66 +664,72 @@ async function analyzeBalanceChanges(
  */
 function generateTransactionSummary(
   instructions: RichInstruction[],
-  balanceChanges: RichTransaction['balanceChanges']
-): RichTransaction['summary'] {
+  balanceChanges: RichTransaction["balanceChanges"],
+): RichTransaction["summary"] {
   // Analyze primary action
-  let primaryAction = 'Unknown transaction';
-  let category: RichTransaction['summary']['category'] = 'unknown';
+  let primaryAction = "Unknown transaction";
+  let category: RichTransaction["summary"]["category"] = "unknown";
 
   // Simple heuristics for categorization
-  const hasTokenTransfer = instructions.some(ix => 
-    ix.tokens?.transfers && ix.tokens.transfers.length > 0
-  );
-  
-  const hasSOLTransfer = instructions.some(ix => 
-    ix.solChanges && ix.solChanges.length > 0
+  const hasTokenTransfer = instructions.some(
+    (ix) => ix.tokens?.transfers && ix.tokens.transfers.length > 0,
   );
 
-  const hasNFTOperation = instructions.some(ix =>
-    ix.tokens?.transfers?.some(transfer => transfer.token.isNFT)
+  const hasSOLTransfer = instructions.some(
+    (ix) => ix.solChanges && ix.solChanges.length > 0,
+  );
+
+  const hasNFTOperation = instructions.some((ix) =>
+    ix.tokens?.transfers?.some((transfer) => transfer.token.isNFT),
   );
 
   if (hasNFTOperation) {
-    category = 'nft';
-    primaryAction = 'NFT transaction';
+    category = "nft";
+    primaryAction = "NFT transaction";
   } else if (hasTokenTransfer) {
-    category = 'transfer';
-    primaryAction = 'Token transfer';
+    category = "transfer";
+    primaryAction = "Token transfer";
   } else if (hasSOLTransfer) {
-    category = 'transfer';
-    primaryAction = 'SOL transfer';
+    category = "transfer";
+    primaryAction = "SOL transfer";
   } else {
-    category = 'system';
-    primaryAction = 'System transaction';
+    category = "system";
+    primaryAction = "System transaction";
   }
 
   // Extract participants
   const participants: any[] = [];
   const addressSet = new Set<string>();
 
-  instructions.forEach(ix => {
-    ix.accounts.forEach(account => {
+  instructions.forEach((ix) => {
+    ix.accounts.forEach((account) => {
       if (!addressSet.has(account)) {
         addressSet.add(account);
         participants.push({
           address: account,
-          role: 'participant' // Would need more sophisticated role detection
+          role: "participant", // Would need more sophisticated role detection
         });
       }
     });
   });
 
   // Calculate totals
-  const totalSOL = balanceChanges.sol.reduce((sum, change) => 
-    sum + Math.abs(change.change), 0
-  ) / 1e9;
+  const totalSOL =
+    balanceChanges.sol.reduce(
+      (sum, change) => sum + Math.abs(change.change),
+      0,
+    ) / 1e9;
 
-  const totalTokens = instructions.reduce((sum, ix) => 
-    sum + (ix.tokens?.transfers?.filter(t => !t.token.isNFT).length || 0), 0
+  const totalTokens = instructions.reduce(
+    (sum, ix) =>
+      sum + (ix.tokens?.transfers?.filter((t) => !t.token.isNFT).length || 0),
+    0,
   );
 
-  const totalNFTs = instructions.reduce((sum, ix) => 
-    sum + (ix.tokens?.transfers?.filter(t => t.token.isNFT).length || 0), 0
+  const totalNFTs = instructions.reduce(
+    (sum, ix) =>
+      sum + (ix.tokens?.transfers?.filter((t) => t.token.isNFT).length || 0),
+    0,
   );
 
   return {
@@ -703,16 +739,18 @@ function generateTransactionSummary(
     participants: participants.slice(0, 10), // Limit to first 10
     totalSOL,
     totalTokens,
-    totalNFTs
+    totalNFTs,
   };
 }
 
 /**
  * Generate human-readable transaction description
  */
-function generateHumanReadableDescription(instructions: RichInstruction[]): string {
-  if (instructions.length === 0) return 'Empty transaction';
-  
+function generateHumanReadableDescription(
+  instructions: RichInstruction[],
+): string {
+  if (instructions.length === 0) return "Empty transaction";
+
   if (instructions.length === 1) {
     return instructions[0].description;
   }
@@ -725,9 +763,9 @@ function generateHumanReadableDescription(instructions: RichInstruction[]): stri
  */
 function formatTokenAmount(amount: string, decimals: number): string {
   const num = parseFloat(amount) / Math.pow(10, decimals);
-  return num.toLocaleString('en-US', {
+  return num.toLocaleString("en-US", {
     minimumFractionDigits: 0,
-    maximumFractionDigits: decimals
+    maximumFractionDigits: decimals,
   });
 }
 
@@ -742,7 +780,10 @@ let lastCleanup = Date.now();
 /**
  * Fetch token metadata for transfer analysis with caching
  */
-async function fetchTokenMetadataForTransfer(sdk: GorbchainSDK, mint: string): Promise<any> {
+async function fetchTokenMetadataForTransfer(
+  sdk: GorbchainSDK,
+  mint: string,
+): Promise<any> {
   // Cleanup cache periodically
   const now = Date.now();
   if (now - lastCleanup > CACHE_CLEANUP_INTERVAL) {
@@ -752,7 +793,7 @@ async function fetchTokenMetadataForTransfer(sdk: GorbchainSDK, mint: string): P
 
   // Check cache first
   const cached = metadataCache.get(mint);
-  if (cached && (now - cached.timestamp < CACHE_DURATION)) {
+  if (cached && now - cached.timestamp < CACHE_DURATION) {
     return cached.data;
   }
 
@@ -763,15 +804,15 @@ async function fetchTokenMetadataForTransfer(sdk: GorbchainSDK, mint: string): P
     // Basic metadata - would be enhanced with actual metadata fetching
     const metadata = {
       name: `Token ${mint.substring(0, 8)}...`,
-      symbol: 'TOKEN',
+      symbol: "TOKEN",
       decimals: 9,
-      isNFT: false
+      isNFT: false,
     };
 
     // Cache the result
     metadataCache.set(mint, {
       data: metadata,
-      timestamp: now
+      timestamp: now,
     });
 
     return metadata;

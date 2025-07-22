@@ -1,12 +1,12 @@
 /**
  * Rich Token Operations - Enhanced token functions with metadata and context
- * 
+ *
  * These functions provide comprehensive token information including metadata,
  * market data, and decoded transaction context for frontend developers.
  */
 
-import type { GorbchainSDK } from '../sdk/GorbchainSDK.js';
-import type { RpcClient } from '../rpc/client.js';
+import type { GorbchainSDK } from "../sdk/GorbchainSDK.js";
+import type { RpcClient } from "../rpc/client.js";
 
 /**
  * Rich token account information with complete metadata
@@ -70,7 +70,7 @@ export interface RichTokenAccount {
     /** Program ID that manages this token */
     id: string;
     /** Program type (SPL Token, Token-2022, etc.) */
-    type: 'spl-token' | 'token-2022' | 'nft' | 'custom';
+    type: "spl-token" | "token-2022" | "nft" | "custom";
     /** Program version */
     version?: string;
   };
@@ -125,32 +125,32 @@ export interface RichTokenAccountsResponse {
 
 /**
  * Get rich token accounts with complete metadata and context
- * 
+ *
  * This function enhances the basic getTokenAccountsByOwner with:
  * - Complete token metadata (name, symbol, image, etc.)
  * - Market data (price, market cap, etc.)
  * - NFT collection information
  * - Portfolio analysis and summary
  * - Performance metrics
- * 
+ *
  * @param sdk - GorbchainSDK instance
  * @param ownerAddress - Wallet address to get token accounts for
  * @param options - Configuration options
  * @returns Promise resolving to rich token accounts with metadata
- * 
+ *
  * @example
  * ```typescript
  * const sdk = new GorbchainSDK({ rpcEndpoint: 'https://rpc.gorbchain.xyz' });
- * 
+ *
  * const richTokens = await getRichTokenAccountsByOwner(sdk, 'wallet_address', {
  *   includeMetadata: true,
  *   includeMarketData: true,
  *   includeNFTs: true
  * });
- * 
+ *
  * console.log(`Found ${richTokens.accounts.length} tokens`);
  * console.log(`Portfolio value: $${richTokens.summary.totalValueUsd}`);
- * 
+ *
  * // Access individual token data
  * richTokens.accounts.forEach(token => {
  *   console.log(`${token.metadata.symbol}: ${token.balance} tokens`);
@@ -176,17 +176,17 @@ export async function getRichTokenAccountsByOwner(
     maxConcurrentRequests?: number;
     /** Custom token programs to include */
     customPrograms?: string[];
-  } = {}
+  } = {},
 ): Promise<RichTokenAccountsResponse> {
   const startTime = Date.now();
-  
+
   const {
     includeMetadata = true,
     includeMarketData = false,
     includeNFTs = true,
     includeZeroBalance = false,
     maxConcurrentRequests = 5,
-    customPrograms = []
+    customPrograms = [],
   } = options;
 
   try {
@@ -195,14 +195,14 @@ export async function getRichTokenAccountsByOwner(
       includeStandardTokens: true,
       includeCustomTokens: true,
       includeNFTs,
-      customPrograms
+      customPrograms,
     });
 
     // Filter out zero balance accounts if requested
-    const filteredHoldings = includeZeroBalance 
+    const filteredHoldings = includeZeroBalance
       ? holdings.holdings
-      : holdings.holdings.filter(holding => 
-          parseFloat(holding.balance?.toString() || '0') > 0
+      : holdings.holdings.filter(
+          (holding) => parseFloat(holding.balance?.toString() || "0") > 0,
         );
 
     // Convert to rich token accounts with metadata
@@ -213,17 +213,20 @@ export async function getRichTokenAccountsByOwner(
     const batchSize = maxConcurrentRequests;
     for (let i = 0; i < filteredHoldings.length; i += batchSize) {
       const batch = filteredHoldings.slice(i, i + batchSize);
-      
+
       const batchPromises = batch.map(async (holding) => {
         try {
           return await enrichTokenAccount(sdk, holding, {
             includeMetadata,
-            includeMarketData
+            includeMarketData,
           });
         } catch (error) {
           failedMetadataRequests++;
-          console.warn(`Failed to enrich token account ${holding.mint}:`, error);
-          
+          console.warn(
+            `Failed to enrich token account ${holding.mint}:`,
+            error,
+          );
+
           // Return basic account info even if enrichment fails
           return createBasicRichAccount(holding);
         }
@@ -246,12 +249,13 @@ export async function getRichTokenAccountsByOwner(
         marketDataFetched: includeMarketData,
         failedMetadataRequests,
         duration,
-        timestamp: Date.now()
-      }
+        timestamp: Date.now(),
+      },
     };
-
   } catch (error) {
-    throw new Error(`Failed to get rich token accounts: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(
+      `Failed to get rich token accounts: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
   }
 }
 
@@ -264,20 +268,20 @@ async function enrichTokenAccount(
   options: {
     includeMetadata: boolean;
     includeMarketData: boolean;
-  }
+  },
 ): Promise<RichTokenAccount> {
   const { includeMetadata, includeMarketData } = options;
 
   // Note: Could get basic account information for enhanced data
   // const accountInfo = await sdk.rpc.getAccountInfo(holding.account || holding.address);
-  
+
   // Start with basic token data
   const richAccount: RichTokenAccount = {
     address: holding.account || holding.address,
-    owner: holding.owner || '',
-    mint: holding.mint || '',
-    amount: holding.amount?.toString() || '0',
-    balance: holding.balance?.formatted || holding.balance?.toString() || '0',
+    owner: holding.owner || "",
+    mint: holding.mint || "",
+    amount: holding.amount?.toString() || "0",
+    balance: holding.balance?.formatted || holding.balance?.toString() || "0",
     decimals: holding.decimals || 0,
     frozen: holding.frozen || false,
     metadata: {
@@ -286,17 +290,17 @@ async function enrichTokenAccount(
       description: holding.metadata?.description,
       image: holding.metadata?.image,
       isNFT: holding.isNFT || false,
-      attributes: holding.metadata?.attributes || []
+      attributes: holding.metadata?.attributes || [],
     },
     program: {
-      id: holding.programId || 'unknown',
+      id: holding.programId || "unknown",
       type: determineTokenType(holding.programId),
-      version: holding.programVersion
+      version: holding.programVersion,
     },
     created: {
       // Note: Basic getAccountInfo doesn't include slot/blockTime
       // Would need enhanced account info for creation data
-    }
+    },
   };
 
   // Enhance with additional metadata if requested
@@ -306,7 +310,7 @@ async function enrichTokenAccount(
       if (enhancedMetadata) {
         richAccount.metadata = {
           ...richAccount.metadata,
-          ...enhancedMetadata
+          ...enhancedMetadata,
         };
       }
     } catch (error) {
@@ -317,7 +321,10 @@ async function enrichTokenAccount(
   // Add market data if requested
   if (includeMarketData && holding.mint) {
     try {
-      const marketData = await fetchMarketData(holding.mint, holding.metadata?.symbol);
+      const marketData = await fetchMarketData(
+        holding.mint,
+        holding.metadata?.symbol,
+      );
       if (marketData) {
         richAccount.market = marketData;
       }
@@ -334,43 +341,45 @@ async function enrichTokenAccount(
  */
 function createBasicRichAccount(holding: any): RichTokenAccount {
   return {
-    address: holding.account || holding.address || 'unknown',
-    owner: holding.owner || 'unknown',
-    mint: holding.mint || 'unknown',
-    amount: holding.amount?.toString() || '0',
-    balance: holding.balance?.formatted || holding.balance?.toString() || '0',
+    address: holding.account || holding.address || "unknown",
+    owner: holding.owner || "unknown",
+    mint: holding.mint || "unknown",
+    amount: holding.amount?.toString() || "0",
+    balance: holding.balance?.formatted || holding.balance?.toString() || "0",
     decimals: holding.decimals || 0,
     frozen: holding.frozen || false,
     metadata: {
-      name: holding.metadata?.name || 'Unknown Token',
-      symbol: holding.metadata?.symbol || 'UNKNOWN',
+      name: holding.metadata?.name || "Unknown Token",
+      symbol: holding.metadata?.symbol || "UNKNOWN",
       isNFT: holding.isNFT || false,
-      attributes: []
+      attributes: [],
     },
     program: {
-      id: holding.programId || 'unknown',
-      type: 'custom',
+      id: holding.programId || "unknown",
+      type: "custom",
     },
-    created: {}
+    created: {},
   };
 }
 
 /**
  * Determine token type based on program ID
  */
-function determineTokenType(programId?: string): 'spl-token' | 'token-2022' | 'nft' | 'custom' {
-  if (!programId) return 'custom';
-  
+function determineTokenType(
+  programId?: string,
+): "spl-token" | "token-2022" | "nft" | "custom" {
+  if (!programId) return "custom";
+
   switch (programId) {
-    case 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA':
-      return 'spl-token';
-    case 'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn':
-      return 'token-2022';
-    case 'BvoSmPBF6mBRxBMY9FPguw1zUoUg3xrc5CaWf7y5ACkc':
-    case 'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s':
-      return 'nft';
+    case "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA":
+      return "spl-token";
+    case "FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn":
+      return "token-2022";
+    case "BvoSmPBF6mBRxBMY9FPguw1zUoUg3xrc5CaWf7y5ACkc":
+    case "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s":
+      return "nft";
     default:
-      return 'custom';
+      return "custom";
   }
 }
 
@@ -381,18 +390,21 @@ const TOKEN_CACHE_DURATION = 10 * 60 * 1000; // 10 minutes for token metadata
 /**
  * Fetch additional token metadata from various sources with caching
  */
-async function fetchTokenMetadata(sdk: GorbchainSDK, mintAddress: string): Promise<Partial<RichTokenAccount['metadata']> | null> {
+async function fetchTokenMetadata(
+  sdk: GorbchainSDK,
+  mintAddress: string,
+): Promise<Partial<RichTokenAccount["metadata"]> | null> {
   // Check cache first
   const now = Date.now();
   const cached = tokenMetadataCache.get(mintAddress);
-  if (cached && (now - cached.timestamp < TOKEN_CACHE_DURATION)) {
+  if (cached && now - cached.timestamp < TOKEN_CACHE_DURATION) {
     return cached.data;
   }
 
   try {
     // Try to get account info for the mint
     const mintInfo = await sdk.rpc.getAccountInfo(mintAddress);
-    
+
     if (!mintInfo) {
       // Cache null result to avoid repeated failed requests
       tokenMetadataCache.set(mintAddress, { data: null, timestamp: now });
@@ -400,17 +412,19 @@ async function fetchTokenMetadata(sdk: GorbchainSDK, mintAddress: string): Promi
     }
 
     // Basic metadata structure
-    const metadata: Partial<RichTokenAccount['metadata']> = {};
+    const metadata: Partial<RichTokenAccount["metadata"]> = {};
 
     // Try to decode mint account data if it's a known token program
     if (mintInfo.owner) {
       const programId = mintInfo.owner.toString();
-      
+
       // For NFTs, try to fetch metadata from metadata account
-      if (programId === 'BvoSmPBF6mBRxBMY9FPguw1zUoUg3xrc5CaWf7y5ACkc' ||
-          programId === 'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s') {
+      if (
+        programId === "BvoSmPBF6mBRxBMY9FPguw1zUoUg3xrc5CaWf7y5ACkc" ||
+        programId === "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+      ) {
         metadata.isNFT = true;
-        
+
         // Try to fetch NFT metadata (only if not cached separately)
         try {
           const nftMetadata = await fetchNFTMetadata(sdk, mintAddress);
@@ -425,7 +439,7 @@ async function fetchTokenMetadata(sdk: GorbchainSDK, mintAddress: string): Promi
 
     // Cache the result
     tokenMetadataCache.set(mintAddress, { data: metadata, timestamp: now });
-    
+
     return metadata;
   } catch (error) {
     // Cache failed attempts to avoid retrying immediately
@@ -437,23 +451,29 @@ async function fetchTokenMetadata(sdk: GorbchainSDK, mintAddress: string): Promi
 /**
  * Fetch NFT-specific metadata
  */
-async function fetchNFTMetadata(_sdk: GorbchainSDK, _mintAddress: string): Promise<Partial<RichTokenAccount['metadata']> | null> {
+async function fetchNFTMetadata(
+  _sdk: GorbchainSDK,
+  _mintAddress: string,
+): Promise<Partial<RichTokenAccount["metadata"]> | null> {
   // This would integrate with NFT metadata standards
   // For now, return basic structure
   return {
     isNFT: true,
     collection: {
-      name: 'Unknown Collection',
-      family: 'Unknown',
-      verified: false
-    }
+      name: "Unknown Collection",
+      family: "Unknown",
+      verified: false,
+    },
   };
 }
 
 /**
  * Fetch market data for a token (placeholder - would integrate with price APIs)
  */
-async function fetchMarketData(_mintAddress: string, _symbol?: string): Promise<RichTokenAccount['market'] | null> {
+async function fetchMarketData(
+  _mintAddress: string,
+  _symbol?: string,
+): Promise<RichTokenAccount["market"] | null> {
   // This would integrate with price APIs like CoinGecko, Jupiter, etc.
   // For now, return null as this requires external API integration
   return null;
@@ -462,17 +482,19 @@ async function fetchMarketData(_mintAddress: string, _symbol?: string): Promise<
 /**
  * Generate portfolio summary from rich accounts
  */
-function generatePortfolioSummary(accounts: RichTokenAccount[]): RichTokenAccountsResponse['summary'] {
-  const totalTokens = accounts.filter(acc => !acc.metadata.isNFT).length;
-  const totalNFTs = accounts.filter(acc => acc.metadata.isNFT).length;
-  
+function generatePortfolioSummary(
+  accounts: RichTokenAccount[],
+): RichTokenAccountsResponse["summary"] {
+  const totalTokens = accounts.filter((acc) => !acc.metadata.isNFT).length;
+  const totalNFTs = accounts.filter((acc) => acc.metadata.isNFT).length;
+
   // Calculate total USD value if market data is available
   let totalValueUsd = 0;
   let hasMarketData = false;
-  
-  accounts.forEach(account => {
+
+  accounts.forEach((account) => {
     if (account.market?.priceUsd && !account.metadata.isNFT) {
-      const balance = parseFloat(account.balance.replace(/[^0-9.-]/g, ''));
+      const balance = parseFloat(account.balance.replace(/[^0-9.-]/g, ""));
       totalValueUsd += balance * account.market.priceUsd;
       hasMarketData = true;
     }
@@ -483,19 +505,26 @@ function generatePortfolioSummary(accounts: RichTokenAccount[]): RichTokenAccoun
 
   // Get top holdings
   const sortedAccounts = accounts
-    .filter(acc => !acc.metadata.isNFT)
+    .filter((acc) => !acc.metadata.isNFT)
     .sort((a, b) => {
-      const aValue = a.market?.priceUsd ? parseFloat(a.balance.replace(/[^0-9.-]/g, '')) * a.market.priceUsd : 0;
-      const bValue = b.market?.priceUsd ? parseFloat(b.balance.replace(/[^0-9.-]/g, '')) * b.market.priceUsd : 0;
+      const aValue = a.market?.priceUsd
+        ? parseFloat(a.balance.replace(/[^0-9.-]/g, "")) * a.market.priceUsd
+        : 0;
+      const bValue = b.market?.priceUsd
+        ? parseFloat(b.balance.replace(/[^0-9.-]/g, "")) * b.market.priceUsd
+        : 0;
       return bValue - aValue;
     });
 
-  const topHoldings = sortedAccounts.slice(0, 5).map(account => {
-    const value = account.market?.priceUsd ? parseFloat(account.balance.replace(/[^0-9.-]/g, '')) * account.market.priceUsd : 0;
+  const topHoldings = sortedAccounts.slice(0, 5).map((account) => {
+    const value = account.market?.priceUsd
+      ? parseFloat(account.balance.replace(/[^0-9.-]/g, "")) *
+        account.market.priceUsd
+      : 0;
     return {
-      symbol: account.metadata.symbol || 'UNKNOWN',
+      symbol: account.metadata.symbol || "UNKNOWN",
       percentage: totalValueUsd > 0 ? (value / totalValueUsd) * 100 : 0,
-      valueUsd: value > 0 ? value : undefined
+      valueUsd: value > 0 ? value : undefined,
     };
   });
 
@@ -504,6 +533,6 @@ function generatePortfolioSummary(accounts: RichTokenAccount[]): RichTokenAccoun
     totalNFTs,
     totalValueUsd: hasMarketData ? totalValueUsd : undefined,
     diversityScore,
-    topHoldings
+    topHoldings,
   };
 }

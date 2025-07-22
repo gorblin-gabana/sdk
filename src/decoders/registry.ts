@@ -37,7 +37,9 @@ export interface RawInstruction {
  * @param instruction - Raw instruction object to decode
  * @returns Decoded instruction with structured data
  */
-export type DecoderFunction = (instruction: RawInstruction) => DecodedInstruction;
+export type DecoderFunction = (
+  instruction: RawInstruction,
+) => DecodedInstruction;
 
 /**
  * Registry for managing instruction decoders across multiple programs
@@ -92,7 +94,11 @@ export class DecoderRegistry {
    * );
    * ```
    */
-  register(programName: string, programId: string, decoder: DecoderFunction): void {
+  register(
+    programName: string,
+    programId: string,
+    decoder: DecoderFunction,
+  ): void {
     this.decoders.set(programName, decoder);
     this.programIdToName.set(programId, programName);
   }
@@ -120,14 +126,14 @@ export class DecoderRegistry {
       return result;
     } catch (error) {
       return {
-        type: 'error',
+        type: "error",
         programId: instruction.programId,
         data: {
           error: (error as Error).message,
-          originalData: instruction.data
+          originalData: instruction.data,
         },
         accounts: instruction.accounts ?? [],
-        raw: instruction as unknown as Record<string, unknown>
+        raw: instruction as unknown as Record<string, unknown>,
       };
     }
   }
@@ -167,43 +173,53 @@ export class DecoderRegistry {
 
   private createRawResult(instruction: RawInstruction): DecodedInstruction {
     let data: Uint8Array | number[];
-    
+
     // Handle malformed data
     if (!instruction.data) {
       data = new Uint8Array(0);
-    } else if (instruction.data instanceof Uint8Array || Array.isArray(instruction.data)) {
+    } else if (
+      instruction.data instanceof Uint8Array ||
+      Array.isArray(instruction.data)
+    ) {
       data = instruction.data;
     } else {
       // Handle invalid data types
       data = new Uint8Array(0);
     }
-    
+
     return {
-      type: 'unknown',
-      programId: instruction.programAddress?.toString() ?? instruction.programId,
+      type: "unknown",
+      programId:
+        instruction.programAddress?.toString() ?? instruction.programId,
       data: {
         raw: Array.from(data),
-        hex: this.toHexString(data)
+        hex: this.toHexString(data),
       },
       accounts: instruction.accounts ?? [],
-      raw: instruction as unknown as Record<string, unknown>
+      raw: instruction as unknown as Record<string, unknown>,
     };
   }
 
-  private createErrorResult(instruction: RawInstruction, error: string): DecodedInstruction {
+  private createErrorResult(
+    instruction: RawInstruction,
+    error: string,
+  ): DecodedInstruction {
     return {
-      type: 'error',
-      programId: instruction.programAddress?.toString() ?? instruction.programId,
+      type: "error",
+      programId:
+        instruction.programAddress?.toString() ?? instruction.programId,
       data: { error },
       accounts: instruction.accounts ?? [],
-      raw: instruction as unknown as Record<string, unknown>
+      raw: instruction as unknown as Record<string, unknown>,
     };
   }
 
   private toHexString(data: Uint8Array | number[]): string {
-    return Array.from(data).map(b => {
-      const hex = b.toString(16);
-      return hex.length === 1 ? `0${  hex}` : hex;
-    }).join('');
+    return Array.from(data)
+      .map((b) => {
+        const hex = b.toString(16);
+        return hex.length === 1 ? `0${hex}` : hex;
+      })
+      .join("");
   }
 }

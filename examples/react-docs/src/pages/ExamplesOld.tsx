@@ -1,38 +1,40 @@
-import { useState } from 'react'
-import CodeBlock from '../components/CodeBlock'
-import { 
+import { useState } from "react";
+import CodeBlock from "../components/CodeBlock";
+import {
   CubeIcon,
   WifiIcon,
   ShieldCheckIcon,
   ClockIcon,
   DocumentDuplicateIcon,
   ChevronDownIcon,
-  ChevronRightIcon
-} from '@heroicons/react/24/outline'
+  ChevronRightIcon,
+} from "@heroicons/react/24/outline";
 
 export default function Examples() {
-  const [copied, setCopied] = useState<{ [key: string]: boolean }>({})
-  const [openSections, setOpenSections] = useState<Set<string>>(new Set(['basic']))
+  const [copied, setCopied] = useState<{ [key: string]: boolean }>({});
+  const [openSections, setOpenSections] = useState<Set<string>>(
+    new Set(["basic"]),
+  );
 
   const copyToClipboard = (code: string, id: string) => {
-    navigator.clipboard.writeText(code)
-    setCopied(prev => ({ ...prev, [id]: true }))
+    navigator.clipboard.writeText(code);
+    setCopied((prev) => ({ ...prev, [id]: true }));
     setTimeout(() => {
-      setCopied(prev => ({ ...prev, [id]: false }))
-    }, 2000)
-  }
+      setCopied((prev) => ({ ...prev, [id]: false }));
+    }, 2000);
+  };
 
   const toggleSection = (sectionId: string) => {
-    setOpenSections(prev => {
-      const newSet = new Set(prev)
+    setOpenSections((prev) => {
+      const newSet = new Set(prev);
       if (newSet.has(sectionId)) {
-        newSet.delete(sectionId)
+        newSet.delete(sectionId);
       } else {
-        newSet.add(sectionId)
+        newSet.add(sectionId);
       }
-      return newSet
-    })
-  }
+      return newSet;
+    });
+  };
 
   const initializationCode = `// Basic SDK setup
 import { GorbchainSDK } from '@gorbchain-xyz/chaindecode'
@@ -59,7 +61,7 @@ if (health.status !== 'healthy') {
 }
 
 // Now all getAndDecodeTransaction calls will automatically include
-// rich metadata without requiring additional parameters!`
+// rich metadata without requiring additional parameters!`;
 
   const transactionAnalysisCode = `// Transaction Analysis Workflow
 import { GorbchainSDK, RpcNetworkError, TransactionNotFoundError, NetworkConnectionError } from '@gorbchain-xyz/chaindecode'
@@ -159,7 +161,7 @@ async function analyzeTransaction(signature: string) {
 }
 
 // Usage with a real transaction that has token metadata
-const result = await analyzeTransaction('5Nm3CvXWYjDaeVPTXifXHFzpovVZo6pLQdMfZoBjBjHM8rHehcfT97MYTQv528LwrNDWDtwZeW5FoUK9z3vE4ABM')`
+const result = await analyzeTransaction('5Nm3CvXWYjDaeVPTXifXHFzpovVZo6pLQdMfZoBjBjHM8rHehcfT97MYTQv528LwrNDWDtwZeW5FoUK9z3vE4ABM')`;
 
   const tokenCreationCode = `// Token Creation with Validation
 import { GorbchainSDK } from '@gorbchain-xyz/chaindecode'
@@ -218,7 +220,7 @@ const tokenResult = await createTokenSafely({
   decimals: 6,
   supply: 1000000,
   walletPublicKey: 'your-wallet-address'
-})`
+})`;
 
   const nftCreationCode = `// NFT Creation with Metadata
 async function createNFTWithMetadata(params: {
@@ -279,7 +281,7 @@ const nftResult = await createNFTWithMetadata({
     { trait_type: 'Rarity', value: 'Legendary' },
     { trait_type: 'Power', value: '100' }
   ]
-})`
+})`;
 
   const batchOperationsCode = `// Batch Operations for Efficiency
 async function processBatchTransactions(signatures: string[]) {
@@ -363,7 +365,7 @@ const signatures = [
   '3K7XxugEXv8CBQCaL1ZYB7cgYiCGE4THakb23hw3Ltv1XsYDCNctCEivhwCLvtyrfo3gsS9tS3CPqX6kYTe4WqZn',
   '2QhjK8Xr9QAb7G8K4mfCp3DdnJ7VvTrYbqR8Fg2N5HjLmW9Q'
 ]
-const batchResult = await processBatchTransactions(signatures)`
+const batchResult = await processBatchTransactions(signatures)`;
 
   const tokenHoldingsCode = `// Token Holdings Analyzer - Get All Tokens for an Address
 import { GorbchainSDK } from '@gorbchain-xyz/chaindecode'
@@ -529,7 +531,7 @@ console.log('NFTs:', categorized.nfts.length)
 console.log('Fungible Tokens:', categorized.fungibleTokens.length)
 
 // Get top holdings
-const topHoldings = await analyzer.getTopHoldings('wallet-address-here', 5)`
+const topHoldings = await analyzer.getTopHoldings('wallet-address-here', 5)`;
 
   const simpleTokenHoldingsCode = `// Simple Token Holdings Example
 async function getWalletTokens(walletAddress: string) {
@@ -577,7 +579,7 @@ async function getWalletTokens(walletAddress: string) {
 const walletTokens = await getWalletTokens('your-wallet-address')
 walletTokens.forEach(token => {
   console.log(\`\${token.name} (\${token.symbol}): \${token.balance}\`)
-})`
+})`;
 
   const portfolioAnalyzerCode = `// Portfolio Analyzer - Real-world Application
 class PortfolioAnalyzer {
@@ -717,7 +719,7 @@ class PortfolioAnalyzer {
 
 // Usage
 const analyzer = new PortfolioAnalyzer(sdk)
-const portfolio = await analyzer.analyzeWalletActivity('wallet-address', 30)`
+const portfolio = await analyzer.analyzeWalletActivity('wallet-address', 30)`;
 
   const errorHandlingCode = `// Comprehensive Error Handling Strategy
 import { 
@@ -838,96 +840,105 @@ const tokenResult = await operations.safeTokenCreation({
   symbol: 'TEST',
   decimals: 6,
   supply: 1000000
-})`
+})`;
 
   const examples = [
     {
-      id: 'basic',
-      title: 'Basic SDK Setup',
-      description: 'Initialize the SDK and check network health',
+      id: "basic",
+      title: "Basic SDK Setup",
+      description: "Initialize the SDK and check network health",
       icon: <CubeIcon className="w-5 h-5" />,
-      color: 'blue',
-      code: initializationCode
+      color: "blue",
+      code: initializationCode,
     },
     {
-      id: 'transaction',
-      title: 'Transaction Analysis',
-      description: 'Decode and analyze blockchain transactions',
+      id: "transaction",
+      title: "Transaction Analysis",
+      description: "Decode and analyze blockchain transactions",
       icon: <WifiIcon className="w-5 h-5" />,
-      color: 'green',
-      code: transactionAnalysisCode
+      color: "green",
+      code: transactionAnalysisCode,
     },
     {
-      id: 'token',
-      title: 'Safe Token Creation',
-      description: 'Create tokens with validation and cost estimation',
+      id: "token",
+      title: "Safe Token Creation",
+      description: "Create tokens with validation and cost estimation",
       icon: <ShieldCheckIcon className="w-5 h-5" />,
-      color: 'purple',
-      code: tokenCreationCode
+      color: "purple",
+      code: tokenCreationCode,
     },
     {
-      id: 'nft',
-      title: 'NFT Creation with Metadata',
-      description: 'Create NFTs with rich metadata and attributes',
+      id: "nft",
+      title: "NFT Creation with Metadata",
+      description: "Create NFTs with rich metadata and attributes",
       icon: <ClockIcon className="w-5 h-5" />,
-      color: 'orange',
-      code: nftCreationCode
+      color: "orange",
+      code: nftCreationCode,
     },
     {
-      id: 'batch',
-      title: 'Batch Operations',
-      description: 'Process multiple transactions efficiently',
+      id: "batch",
+      title: "Batch Operations",
+      description: "Process multiple transactions efficiently",
       icon: <CubeIcon className="w-5 h-5" />,
-      color: 'indigo',
-      code: batchOperationsCode
+      color: "indigo",
+      code: batchOperationsCode,
     },
     {
-      id: 'token-holdings',
-      title: 'Token Holdings Analyzer',
-      description: 'Get all token holdings for any wallet address',
+      id: "token-holdings",
+      title: "Token Holdings Analyzer",
+      description: "Get all token holdings for any wallet address",
       icon: <WifiIcon className="w-5 h-5" />,
-      color: 'emerald',
-      code: tokenHoldingsCode
+      color: "emerald",
+      code: tokenHoldingsCode,
     },
     {
-      id: 'simple-holdings',
-      title: 'Simple Token Holdings',
-      description: 'Quick way to get wallet token balances',
+      id: "simple-holdings",
+      title: "Simple Token Holdings",
+      description: "Quick way to get wallet token balances",
       icon: <CubeIcon className="w-5 h-5" />,
-      color: 'cyan',
-      code: simpleTokenHoldingsCode
+      color: "cyan",
+      code: simpleTokenHoldingsCode,
     },
     {
-      id: 'portfolio',
-      title: 'Portfolio Analyzer',
-      description: 'Real-world application for wallet analysis',
+      id: "portfolio",
+      title: "Portfolio Analyzer",
+      description: "Real-world application for wallet analysis",
       icon: <WifiIcon className="w-5 h-5" />,
-      color: 'pink',
-      code: portfolioAnalyzerCode
+      color: "pink",
+      code: portfolioAnalyzerCode,
     },
     {
-      id: 'errors',
-      title: 'Error Handling Patterns',
-      description: 'Comprehensive error handling strategies',
+      id: "errors",
+      title: "Error Handling Patterns",
+      description: "Comprehensive error handling strategies",
       icon: <ShieldCheckIcon className="w-5 h-5" />,
-      color: 'red',
-      code: errorHandlingCode
-    }
-  ]
+      color: "red",
+      code: errorHandlingCode,
+    },
+  ];
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-docs-heading mb-4">Code Examples</h1>
+        <h1 className="text-3xl font-bold text-docs-heading mb-4">
+          Code Examples
+        </h1>
         <p className="text-lg text-gray-600 mb-6">
-          Practical examples and patterns for building applications with the Gorbchain SDK. 
-          All examples assume the SDK is imported and available.
+          Practical examples and patterns for building applications with the
+          Gorbchain SDK. All examples assume the SDK is imported and available.
         </p>
-        
+
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <h3 className="font-semibold text-blue-900 mb-2">💡 Before You Start</h3>
+          <h3 className="font-semibold text-blue-900 mb-2">
+            💡 Before You Start
+          </h3>
           <div className="text-sm text-blue-800 space-y-1">
-            <div>• Install the SDK: <code className="bg-blue-100 px-1 rounded">npm install @gorbchain-xyz/chaindecode</code></div>
+            <div>
+              • Install the SDK:{" "}
+              <code className="bg-blue-100 px-1 rounded">
+                npm install @gorbchain-xyz/chaindecode
+              </code>
+            </div>
             <div>• Replace placeholder values with your actual data</div>
             <div>• All examples include proper error handling</div>
             <div>• Examples are production-ready patterns</div>
@@ -936,8 +947,8 @@ const tokenResult = await operations.safeTokenCreation({
       </div>
 
       {examples.map((example) => {
-        const isOpen = openSections.has(example.id)
-        
+        const isOpen = openSections.has(example.id);
+
         return (
           <div key={example.id} className="docs-card">
             <button
@@ -945,38 +956,47 @@ const tokenResult = await operations.safeTokenCreation({
               className="w-full flex items-center justify-between p-1 text-left"
             >
               <div className="flex items-center space-x-4">
-                <div className={`w-12 h-12 bg-${example.color}-100 rounded-lg flex items-center justify-center`}>
+                <div
+                  className={`w-12 h-12 bg-${example.color}-100 rounded-lg flex items-center justify-center`}
+                >
                   {example.icon}
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-docs-heading">{example.title}</h2>
+                  <h2 className="text-xl font-semibold text-docs-heading">
+                    {example.title}
+                  </h2>
                   <p className="text-gray-600">{example.description}</p>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <div className={`px-3 py-1 bg-${example.color}-100 text-${example.color}-800 rounded-full text-sm font-medium`}>
-                  {example.id === 'portfolio' ? 'Advanced' : 'Ready to Use'}
+                <div
+                  className={`px-3 py-1 bg-${example.color}-100 text-${example.color}-800 rounded-full text-sm font-medium`}
+                >
+                  {example.id === "portfolio" ? "Advanced" : "Ready to Use"}
                 </div>
-                {isOpen ? 
-                  <ChevronDownIcon className="w-5 h-5 text-gray-400" /> : 
+                {isOpen ? (
+                  <ChevronDownIcon className="w-5 h-5 text-gray-400" />
+                ) : (
                   <ChevronRightIcon className="w-5 h-5 text-gray-400" />
-                }
+                )}
               </div>
             </button>
-            
+
             {isOpen && (
               <div className="mt-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-docs-heading">Implementation</h3>
+                  <h3 className="text-lg font-semibold text-docs-heading">
+                    Implementation
+                  </h3>
                   <button
                     onClick={() => copyToClipboard(example.code, example.id)}
                     className="flex items-center space-x-2 px-3 py-1 text-sm text-blue-600 hover:text-blue-700 border border-blue-200 rounded-md hover:border-blue-300 transition-colors"
                   >
                     <DocumentDuplicateIcon className="w-4 h-4" />
-                    <span>{copied[example.id] ? 'Copied!' : 'Copy Code'}</span>
+                    <span>{copied[example.id] ? "Copied!" : "Copy Code"}</span>
                   </button>
                 </div>
-                
+
                 <CodeBlock
                   code={example.code}
                   language="typescript"
@@ -985,63 +1005,81 @@ const tokenResult = await operations.safeTokenCreation({
                   onCopy={() => copyToClipboard(example.code, example.id)}
                   copied={copied[example.id] || false}
                 />
-                
-                {example.id === 'basic' && (
+
+                {example.id === "basic" && (
                   <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <h4 className="font-medium text-green-900 mb-2">✅ What This Does</h4>
+                    <h4 className="font-medium text-green-900 mb-2">
+                      ✅ What This Does
+                    </h4>
                     <ul className="text-sm text-green-800 space-y-1">
                       <li>• Initializes the SDK with your RPC endpoint</li>
-                      <li>• Sets up automatic retry and timeout configuration</li>
+                      <li>
+                        • Sets up automatic retry and timeout configuration
+                      </li>
                       <li>• Verifies network connectivity before proceeding</li>
                     </ul>
                   </div>
                 )}
-                
-                {example.id === 'token-holdings' && (
+
+                {example.id === "token-holdings" && (
                   <div className="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
-                    <h4 className="font-medium text-emerald-900 mb-2">🪙 Token Holdings Features</h4>
+                    <h4 className="font-medium text-emerald-900 mb-2">
+                      🪙 Token Holdings Features
+                    </h4>
                     <ul className="text-sm text-emerald-800 space-y-1">
                       <li>• Fetches both SPL Token and Token-2022 holdings</li>
                       <li>• Automatically detects NFTs vs fungible tokens</li>
                       <li>• Retrieves token metadata (name, symbol, URI)</li>
                       <li>• Provides portfolio summary and categorization</li>
-                      <li>• Handles errors gracefully for problematic tokens</li>
+                      <li>
+                        • Handles errors gracefully for problematic tokens
+                      </li>
                     </ul>
                   </div>
                 )}
-                
-                {example.id === 'simple-holdings' && (
+
+                {example.id === "simple-holdings" && (
                   <div className="mt-4 p-4 bg-cyan-50 border border-cyan-200 rounded-lg">
-                    <h4 className="font-medium text-cyan-900 mb-2">⚡ Quick Implementation</h4>
+                    <h4 className="font-medium text-cyan-900 mb-2">
+                      ⚡ Quick Implementation
+                    </h4>
                     <p className="text-sm text-cyan-800">
-                      A simplified version for basic token balance checking. Perfect for getting started 
-                      or when you only need basic token information without detailed categorization.
+                      A simplified version for basic token balance checking.
+                      Perfect for getting started or when you only need basic
+                      token information without detailed categorization.
                     </p>
                   </div>
                 )}
-                
-                {example.id === 'portfolio' && (
+
+                {example.id === "portfolio" && (
                   <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                    <h4 className="font-medium text-purple-900 mb-2">🚀 Advanced Pattern</h4>
+                    <h4 className="font-medium text-purple-900 mb-2">
+                      🚀 Advanced Pattern
+                    </h4>
                     <p className="text-sm text-purple-800">
-                      This example shows how to build a complete application feature using the SDK. 
-                      It demonstrates batch processing, error handling, and data aggregation patterns 
-                      suitable for production applications.
+                      This example shows how to build a complete application
+                      feature using the SDK. It demonstrates batch processing,
+                      error handling, and data aggregation patterns suitable for
+                      production applications.
                     </p>
                   </div>
                 )}
               </div>
             )}
           </div>
-        )
+        );
       })}
 
       {/* Best Practices */}
       <div className="docs-card">
-        <h2 className="text-xl font-semibold text-docs-heading mb-4">💡 Best Practices</h2>
+        <h2 className="text-xl font-semibold text-docs-heading mb-4">
+          💡 Best Practices
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <h3 className="font-semibold text-docs-heading mb-3">Performance</h3>
+            <h3 className="font-semibold text-docs-heading mb-3">
+              Performance
+            </h3>
             <ul className="text-sm text-gray-600 space-y-2">
               <li>• Use batch operations for multiple transactions</li>
               <li>• Implement proper rate limiting (5 RPS recommended)</li>
@@ -1050,7 +1088,9 @@ const tokenResult = await operations.safeTokenCreation({
             </ul>
           </div>
           <div>
-            <h3 className="font-semibold text-docs-heading mb-3">Error Handling</h3>
+            <h3 className="font-semibold text-docs-heading mb-3">
+              Error Handling
+            </h3>
             <ul className="text-sm text-gray-600 space-y-2">
               <li>• Always catch specific error types</li>
               <li>• Implement exponential backoff for retries</li>
@@ -1085,18 +1125,19 @@ const tokenResult = await operations.safeTokenCreation({
           🎯 Ready to Build?
         </h2>
         <p className="text-gray-600 text-center mb-6">
-          These examples provide the foundation for building robust blockchain applications. 
-          Combine patterns and adapt them to your specific use case.
+          These examples provide the foundation for building robust blockchain
+          applications. Combine patterns and adapt them to your specific use
+          case.
         </p>
         <div className="flex justify-center space-x-4">
-          <a 
-            href="/playground" 
+          <a
+            href="/playground"
             className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             <span>Try Interactive Playground</span>
           </a>
-          <a 
-            href="/api-reference" 
+          <a
+            href="/api-reference"
             className="inline-flex items-center px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
           >
             <span>View Full API Reference</span>
@@ -1104,5 +1145,5 @@ const tokenResult = await operations.safeTokenCreation({
         </div>
       </div>
     </div>
-  )
-} 
+  );
+}

@@ -1,6 +1,5 @@
 // SPL Token Program Decoders - Built from Solana program specifications
-import type { DecodedInstruction } from './registry.js';
-
+import type { DecodedInstruction } from "./registry.js";
 
 interface SPLTokenInstructionData {
   programId: string;
@@ -44,10 +43,12 @@ export enum AuthorityType {
 /**
  * Main SPL Token decoder function
  */
-export function decodeSPLTokenInstruction(instruction: SPLTokenInstructionData): DecodedInstruction {
+export function decodeSPLTokenInstruction(
+  instruction: SPLTokenInstructionData,
+): DecodedInstruction {
   const data = instruction.data;
   if (!data || data.length === 0) {
-    throw new Error('Invalid SPL Token instruction: no data');
+    throw new Error("Invalid SPL Token instruction: no data");
   }
 
   const instructionType = data[0];
@@ -88,14 +89,14 @@ export function decodeSPLTokenInstruction(instruction: SPLTokenInstructionData):
       return decodeSyncNative(instruction, programId);
     default:
       return {
-        type: 'spl-token-unknown',
+        type: "spl-token-unknown",
         programId,
         data: {
           instructionType,
-          error: `Unknown SPL Token instruction type: ${instructionType}`
+          error: `Unknown SPL Token instruction type: ${instructionType}`,
         },
         accounts: instruction.accounts,
-        raw: instruction as unknown as Record<string, unknown>
+        raw: instruction as unknown as Record<string, unknown>,
       };
   }
 }
@@ -112,9 +113,9 @@ export function decodeSPLTokenInstructionWithDetails(data: Uint8Array): {
 } {
   if (data.length === 0) {
     return {
-      type: 'spl-token-unknown',
-      instruction: 'Unknown SPL Token instruction',
-      accounts: []
+      type: "spl-token-unknown",
+      instruction: "Unknown SPL Token instruction",
+      accounts: [],
     };
   }
 
@@ -123,111 +124,127 @@ export function decodeSPLTokenInstructionWithDetails(data: Uint8Array): {
   switch (instructionType) {
     case 3: // Transfer
       if (data.length >= 9) {
-        const amount = new DataView(data.buffer, data.byteOffset + 1, 8).getBigUint64(0, true);
+        const amount = new DataView(
+          data.buffer,
+          data.byteOffset + 1,
+          8,
+        ).getBigUint64(0, true);
         return {
-          type: 'spl-token-transfer',
-          instruction: 'Transfer tokens',
+          type: "spl-token-transfer",
+          instruction: "Transfer tokens",
           amount,
-          accounts: []
+          accounts: [],
         };
       }
       break;
 
     case 7: // MintTo
       if (data.length >= 9) {
-        const amount = new DataView(data.buffer, data.byteOffset + 1, 8).getBigUint64(0, true);
+        const amount = new DataView(
+          data.buffer,
+          data.byteOffset + 1,
+          8,
+        ).getBigUint64(0, true);
         return {
-          type: 'spl-token-mint-to',
-          instruction: 'Mint tokens',
+          type: "spl-token-mint-to",
+          instruction: "Mint tokens",
           amount,
-          accounts: []
+          accounts: [],
         };
       }
       break;
 
     case 8: // Burn
       if (data.length >= 9) {
-        const amount = new DataView(data.buffer, data.byteOffset + 1, 8).getBigUint64(0, true);
+        const amount = new DataView(
+          data.buffer,
+          data.byteOffset + 1,
+          8,
+        ).getBigUint64(0, true);
         return {
-          type: 'spl-token-burn',
-          instruction: 'Burn tokens',
+          type: "spl-token-burn",
+          instruction: "Burn tokens",
           amount,
-          accounts: []
+          accounts: [],
         };
       }
       break;
 
     case 4: // Approve
       if (data.length >= 9) {
-        const amount = new DataView(data.buffer, data.byteOffset + 1, 8).getBigUint64(0, true);
+        const amount = new DataView(
+          data.buffer,
+          data.byteOffset + 1,
+          8,
+        ).getBigUint64(0, true);
         return {
-          type: 'spl-token-approve',
-          instruction: 'Approve token spending',
+          type: "spl-token-approve",
+          instruction: "Approve token spending",
           amount,
-          accounts: []
+          accounts: [],
         };
       }
       break;
 
     case 5: // Revoke
       return {
-        type: 'spl-token-revoke',
-        instruction: 'Revoke token approval',
-        accounts: []
+        type: "spl-token-revoke",
+        instruction: "Revoke token approval",
+        accounts: [],
       };
 
     case 9: // CloseAccount
       return {
-        type: 'spl-token-close-account',
-        instruction: 'Close token account',
-        accounts: []
+        type: "spl-token-close-account",
+        instruction: "Close token account",
+        accounts: [],
       };
 
     case 10: // FreezeAccount
       return {
-        type: 'spl-token-freeze-account',
-        instruction: 'Freeze token account',
-        accounts: []
+        type: "spl-token-freeze-account",
+        instruction: "Freeze token account",
+        accounts: [],
       };
 
     case 11: // ThawAccount
       return {
-        type: 'spl-token-thaw-account',
-        instruction: 'Thaw token account',
-        accounts: []
+        type: "spl-token-thaw-account",
+        instruction: "Thaw token account",
+        accounts: [],
       };
 
     case 0: // InitializeMint
       if (data.length >= 51) {
         const decimals = data[1];
         return {
-          type: 'spl-token-initialize-mint',
+          type: "spl-token-initialize-mint",
           instruction: `Initialize mint with ${decimals} decimals`,
           decimals,
-          accounts: []
+          accounts: [],
         };
       }
       break;
 
     case 1: // InitializeAccount
       return {
-        type: 'spl-token-initialize-account',
-        instruction: 'Initialize token account',
-        accounts: []
+        type: "spl-token-initialize-account",
+        instruction: "Initialize token account",
+        accounts: [],
       };
 
     default:
       return {
-        type: 'spl-token-unknown',
+        type: "spl-token-unknown",
         instruction: `Unknown SPL Token instruction (type: ${instructionType})`,
-        accounts: []
+        accounts: [],
       };
   }
 
   return {
-    type: 'spl-token-unknown',
-    instruction: 'Unknown SPL Token instruction',
-    accounts: []
+    type: "spl-token-unknown",
+    instruction: "Unknown SPL Token instruction",
+    accounts: [],
   };
 }
 
@@ -237,7 +254,7 @@ export function decodeSPLTokenInstructionWithDetails(data: Uint8Array): {
 export function decodeInstructionData(base58Data: string): Uint8Array {
   try {
     // Simple base58 decode - in production use proper base58 library
-    const bytes = new Uint8Array(Buffer.from(base58Data, 'base64'));
+    const bytes = new Uint8Array(Buffer.from(base58Data, "base64"));
     return bytes;
   } catch (error) {
     // Failed to decode instruction data - return empty array
@@ -249,27 +266,30 @@ export function decodeInstructionData(base58Data: string): Uint8Array {
  * Decode Transfer instruction (3)
  * Layout: [u8 instruction, u64 amount]
  */
-function decodeTransfer(instruction: SPLTokenInstructionData, programId: string): DecodedInstruction {
+function decodeTransfer(
+  instruction: SPLTokenInstructionData,
+  programId: string,
+): DecodedInstruction {
   const data = instruction.data;
   if (data.length !== 9) {
-    throw new Error('Invalid Transfer instruction data length');
+    throw new Error("Invalid Transfer instruction data length");
   }
 
   const amount = readU64LE(data, 1);
   const accounts = instruction.accounts;
 
   return {
-    type: 'spl-token-transfer',
+    type: "spl-token-transfer",
     programId,
     data: {
       amount: amount.toString(),
       source: accounts[0] ?? null,
       destination: accounts[1] ?? null,
       authority: accounts[2] ?? null,
-      signers: accounts.slice(3)
+      signers: accounts.slice(3),
     },
     accounts,
-    raw: instruction as unknown as Record<string, unknown>
+    raw: instruction as unknown as Record<string, unknown>,
   };
 }
 
@@ -277,27 +297,30 @@ function decodeTransfer(instruction: SPLTokenInstructionData, programId: string)
  * Decode MintTo instruction (7)
  * Layout: [u8 instruction, u64 amount]
  */
-function decodeMintTo(instruction: SPLTokenInstructionData, programId: string): DecodedInstruction {
+function decodeMintTo(
+  instruction: SPLTokenInstructionData,
+  programId: string,
+): DecodedInstruction {
   const data = instruction.data;
   if (data.length !== 9) {
-    throw new Error('Invalid MintTo instruction data length');
+    throw new Error("Invalid MintTo instruction data length");
   }
 
   const amount = readU64LE(data, 1);
   const accounts = instruction.accounts;
 
   return {
-    type: 'spl-token-mint-to',
+    type: "spl-token-mint-to",
     programId,
     data: {
       amount: amount.toString(),
       mint: accounts[0] ?? null,
       account: accounts[1] ?? null,
       authority: accounts[2] ?? null,
-      signers: accounts.slice(3)
+      signers: accounts.slice(3),
     },
     accounts,
-    raw: instruction as unknown as Record<string, unknown>
+    raw: instruction as unknown as Record<string, unknown>,
   };
 }
 
@@ -305,27 +328,30 @@ function decodeMintTo(instruction: SPLTokenInstructionData, programId: string): 
  * Decode Burn instruction (8)
  * Layout: [u8 instruction, u64 amount]
  */
-function decodeBurn(instruction: SPLTokenInstructionData, programId: string): DecodedInstruction {
+function decodeBurn(
+  instruction: SPLTokenInstructionData,
+  programId: string,
+): DecodedInstruction {
   const data = instruction.data;
   if (data.length !== 9) {
-    throw new Error('Invalid Burn instruction data length');
+    throw new Error("Invalid Burn instruction data length");
   }
 
   const amount = readU64LE(data, 1);
   const accounts = instruction.accounts ?? [];
 
   return {
-    type: 'spl-token-burn',
+    type: "spl-token-burn",
     programId,
     data: {
       amount: amount.toString(),
       account: accounts[0] ?? null,
       mint: accounts[1] ?? null,
       authority: accounts[2] ?? null,
-      signers: accounts.slice(3)
+      signers: accounts.slice(3),
     },
     accounts,
-    raw: instruction as unknown as Record<string, unknown>
+    raw: instruction as unknown as Record<string, unknown>,
   };
 }
 
@@ -333,10 +359,13 @@ function decodeBurn(instruction: SPLTokenInstructionData, programId: string): De
  * Decode InitializeMint instruction (0)
  * Layout: [u8 instruction, u8 decimals, [u8; 32] mint_authority, Option<[u8; 32]> freeze_authority]
  */
-function decodeInitializeMint(instruction: any, programId: string): DecodedInstruction {
+function decodeInitializeMint(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   const data = instruction.data;
   if (data.length !== 67) {
-    throw new Error('Invalid InitializeMint instruction data length');
+    throw new Error("Invalid InitializeMint instruction data length");
   }
 
   const decimals = data[1];
@@ -345,35 +374,38 @@ function decodeInitializeMint(instruction: any, programId: string): DecodedInstr
   const freezeAuthority = freezeAuthorityOption ? data.slice(35, 67) : null;
 
   return {
-    type: 'spl-token-initialize-mint',
+    type: "spl-token-initialize-mint",
     programId,
     data: {
       decimals,
       mintAuthority: bufferToBase58(mintAuthority),
-      freezeAuthority: freezeAuthority ? bufferToBase58(freezeAuthority) : null
+      freezeAuthority: freezeAuthority ? bufferToBase58(freezeAuthority) : null,
     },
     accounts: instruction.accounts ?? [],
-    raw: instruction as unknown as Record<string, unknown>
+    raw: instruction as unknown as Record<string, unknown>,
   };
 }
 
 /**
  * Decode InitializeAccount instruction (1)
  */
-function decodeInitializeAccount(instruction: any, programId: string): DecodedInstruction {
+function decodeInitializeAccount(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   const accounts = instruction.accounts ?? [];
 
   return {
-    type: 'spl-token-initialize-account',
+    type: "spl-token-initialize-account",
     programId,
     data: {
       account: accounts[0]?.address ?? accounts[0],
       mint: accounts[1]?.address ?? accounts[1],
       owner: accounts[2]?.address ?? accounts[2],
-      rentSysvar: accounts[3]?.address ?? accounts[3]
+      rentSysvar: accounts[3]?.address ?? accounts[3],
     },
     accounts,
-    raw: instruction as unknown as Record<string, unknown>
+    raw: instruction as unknown as Record<string, unknown>,
   };
 }
 
@@ -381,10 +413,13 @@ function decodeInitializeAccount(instruction: any, programId: string): DecodedIn
  * Decode SetAuthority instruction (6)
  * Layout: [u8 instruction, u8 authority_type, Option<[u8; 32]> new_authority]
  */
-function decodeSetAuthority(instruction: any, programId: string): DecodedInstruction {
+function decodeSetAuthority(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   const data = instruction.data;
   if (data.length !== 35) {
-    throw new Error('Invalid SetAuthority instruction data length');
+    throw new Error("Invalid SetAuthority instruction data length");
   }
 
   const authorityType = data[1];
@@ -392,143 +427,170 @@ function decodeSetAuthority(instruction: any, programId: string): DecodedInstruc
   const newAuthority = newAuthorityOption ? data.slice(3, 35) : null;
 
   return {
-    type: 'spl-token-set-authority',
+    type: "spl-token-set-authority",
     programId,
     data: {
       authorityType: getAuthorityTypeName(authorityType),
-      newAuthority: newAuthority ? bufferToBase58(newAuthority) : null
+      newAuthority: newAuthority ? bufferToBase58(newAuthority) : null,
     },
     accounts: instruction.accounts ?? [],
-    raw: instruction as unknown as Record<string, unknown>
+    raw: instruction as unknown as Record<string, unknown>,
   };
 }
 
 /**
  * Decode other instructions with simple layouts
  */
-function decodeApprove(instruction: any, programId: string): DecodedInstruction {
+function decodeApprove(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   const data = instruction.data;
   const amount = readU64LE(data, 1);
   const accounts = instruction.accounts;
 
   return {
-    type: 'spl-token-approve',
+    type: "spl-token-approve",
     programId,
     data: {
       amount: amount.toString(),
-      source: accounts[0] ?? null,           // Token account
-      delegate: accounts[1] ?? null,         // Delegate account
-      authority: accounts[2] ?? null,        // Authority (owner)
-      signers: accounts.slice(3)
+      source: accounts[0] ?? null, // Token account
+      delegate: accounts[1] ?? null, // Delegate account
+      authority: accounts[2] ?? null, // Authority (owner)
+      signers: accounts.slice(3),
     },
     accounts,
-    raw: instruction as unknown as Record<string, unknown>
+    raw: instruction as unknown as Record<string, unknown>,
   };
 }
 
 function decodeRevoke(instruction: any, programId: string): DecodedInstruction {
   return {
-    type: 'spl-token-revoke',
+    type: "spl-token-revoke",
     programId,
     data: {},
     accounts: instruction.accounts ?? [],
-    raw: instruction as unknown as Record<string, unknown>
+    raw: instruction as unknown as Record<string, unknown>,
   };
 }
 
-function decodeCloseAccount(instruction: any, programId: string): DecodedInstruction {
+function decodeCloseAccount(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   return {
-    type: 'spl-token-close-account',
+    type: "spl-token-close-account",
     programId,
     data: {},
     accounts: instruction.accounts ?? [],
-    raw: instruction as unknown as Record<string, unknown>
+    raw: instruction as unknown as Record<string, unknown>,
   };
 }
 
-function decodeFreezeAccount(instruction: any, programId: string): DecodedInstruction {
+function decodeFreezeAccount(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   return {
-    type: 'spl-token-freeze-account',
+    type: "spl-token-freeze-account",
     programId,
     data: {},
     accounts: instruction.accounts ?? [],
-    raw: instruction as unknown as Record<string, unknown>
+    raw: instruction as unknown as Record<string, unknown>,
   };
 }
 
-function decodeThawAccount(instruction: any, programId: string): DecodedInstruction {
+function decodeThawAccount(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   return {
-    type: 'spl-token-thaw-account',
+    type: "spl-token-thaw-account",
     programId,
     data: {},
     accounts: instruction.accounts ?? [],
-    raw: instruction as unknown as Record<string, unknown>
+    raw: instruction as unknown as Record<string, unknown>,
   };
 }
 
-function decodeTransferChecked(instruction: any, programId: string): DecodedInstruction {
+function decodeTransferChecked(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   const data = instruction.data;
   const amount = readU64LE(data, 1);
   const decimals = data[9];
 
   return {
-    type: 'spl-token-transfer-checked',
+    type: "spl-token-transfer-checked",
     programId,
     data: { amount: amount.toString(), decimals },
     accounts: instruction.accounts ?? [],
-    raw: instruction as unknown as Record<string, unknown>
+    raw: instruction as unknown as Record<string, unknown>,
   };
 }
 
-function decodeApproveChecked(instruction: any, programId: string): DecodedInstruction {
+function decodeApproveChecked(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   const data = instruction.data;
   const amount = readU64LE(data, 1);
   const decimals = data[9];
 
   return {
-    type: 'spl-token-approve-checked',
+    type: "spl-token-approve-checked",
     programId,
     data: { amount: amount.toString(), decimals },
     accounts: instruction.accounts ?? [],
-    raw: instruction as unknown as Record<string, unknown>
+    raw: instruction as unknown as Record<string, unknown>,
   };
 }
 
-function decodeMintToChecked(instruction: any, programId: string): DecodedInstruction {
+function decodeMintToChecked(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   const data = instruction.data;
   const amount = readU64LE(data, 1);
   const decimals = data[9];
 
   return {
-    type: 'spl-token-mint-to-checked',
+    type: "spl-token-mint-to-checked",
     programId,
     data: { amount: amount.toString(), decimals },
     accounts: instruction.accounts ?? [],
-    raw: instruction as unknown as Record<string, unknown>
+    raw: instruction as unknown as Record<string, unknown>,
   };
 }
 
-function decodeBurnChecked(instruction: any, programId: string): DecodedInstruction {
+function decodeBurnChecked(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   const data = instruction.data;
   const amount = readU64LE(data, 1);
   const decimals = data[9];
 
   return {
-    type: 'spl-token-burn-checked',
+    type: "spl-token-burn-checked",
     programId,
     data: { amount: amount.toString(), decimals },
     accounts: instruction.accounts ?? [],
-    raw: instruction as unknown as Record<string, unknown>
+    raw: instruction as unknown as Record<string, unknown>,
   };
 }
 
-function decodeSyncNative(instruction: any, programId: string): DecodedInstruction {
+function decodeSyncNative(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   return {
-    type: 'spl-token-sync-native',
+    type: "spl-token-sync-native",
     programId,
     data: {},
     accounts: instruction.accounts ?? [],
-    raw: instruction as unknown as Record<string, unknown>
+    raw: instruction as unknown as Record<string, unknown>,
   };
 }
 
@@ -554,25 +616,32 @@ function readU64LE(buffer: Uint8Array | number[], offset: number): string {
   }
 
   // Combine lower and upper parts, handling overflow by returning as string
-  const total = result + (upper * Math.pow(2, 32));
+  const total = result + upper * Math.pow(2, 32);
   return total.toString();
 }
 
 function bufferToBase58(buffer: Uint8Array | number[]): string {
   // Simplified base58 encoding - in production, use a proper base58 library
   // For now, return hex representation
-  return Array.from(buffer).map((b: number) => {
-    const hex = b.toString(16);
-    return hex.length === 1 ? `0${  hex}` : hex;
-  }).join('');
+  return Array.from(buffer)
+    .map((b: number) => {
+      const hex = b.toString(16);
+      return hex.length === 1 ? `0${hex}` : hex;
+    })
+    .join("");
 }
 
 function getAuthorityTypeName(type: number): string {
   switch (type) {
-    case AuthorityType.MintTokens as number: return 'MintTokens';
-    case AuthorityType.FreezeAccount as number: return 'FreezeAccount';
-    case AuthorityType.AccountOwner as number: return 'AccountOwner';
-    case AuthorityType.CloseAccount as number: return 'CloseAccount';
-    default: return `Unknown(${type})`;
+    case AuthorityType.MintTokens as number:
+      return "MintTokens";
+    case AuthorityType.FreezeAccount as number:
+      return "FreezeAccount";
+    case AuthorityType.AccountOwner as number:
+      return "AccountOwner";
+    case AuthorityType.CloseAccount as number:
+      return "CloseAccount";
+    default:
+      return `Unknown(${type})`;
   }
 }

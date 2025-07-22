@@ -2,26 +2,26 @@
  * Error severity levels for the SDK
  */
 export enum ErrorSeverity {
-  LOW = 'low',
-  MEDIUM = 'medium',
-  HIGH = 'high',
-  CRITICAL = 'critical'
+  LOW = "low",
+  MEDIUM = "medium",
+  HIGH = "high",
+  CRITICAL = "critical",
 }
 
 /**
  * Error categories for classification
  */
 export enum ErrorCategory {
-  NETWORK = 'network',
-  RPC = 'rpc',
-  DECODER = 'decoder',
-  TRANSACTION = 'transaction',
-  VALIDATION = 'validation',
-  CONFIGURATION = 'configuration',
-  AUTHENTICATION = 'authentication',
-  RATE_LIMIT = 'rate_limit',
-  TIMEOUT = 'timeout',
-  UNKNOWN = 'unknown'
+  NETWORK = "network",
+  RPC = "rpc",
+  DECODER = "decoder",
+  TRANSACTION = "transaction",
+  VALIDATION = "validation",
+  CONFIGURATION = "configuration",
+  AUTHENTICATION = "authentication",
+  RATE_LIMIT = "rate_limit",
+  TIMEOUT = "timeout",
+  UNKNOWN = "unknown",
 }
 
 /**
@@ -68,7 +68,7 @@ export abstract class SDKError extends Error {
       retryable?: boolean;
       solution?: string;
       cause?: Error;
-    } = {}
+    } = {},
   ) {
     super(message);
     this.name = this.constructor.name;
@@ -78,7 +78,7 @@ export abstract class SDKError extends Error {
     this.context = {
       ...context,
       timestamp: context.timestamp ?? new Date(),
-      sdkVersion: context.sdkVersion ?? '0.1.0'
+      sdkVersion: context.sdkVersion ?? "0.1.0",
     };
     this.retryable = options.retryable ?? false;
     this.solution = options.solution;
@@ -107,7 +107,7 @@ export abstract class SDKError extends Error {
       retryable: this.retryable,
       solution: this.solution,
       stack: this.stack,
-      cause: this.cause?.message
+      cause: this.cause?.message,
     };
   }
 
@@ -162,15 +162,15 @@ export class GorbchainSDKError extends SDKError {
       retryable?: boolean;
       solution?: string;
       cause?: Error;
-    } = {}
+    } = {},
   ) {
     super(
       message,
-      'GORBCHAIN_SDK_ERROR',
+      "GORBCHAIN_SDK_ERROR",
       ErrorSeverity.MEDIUM,
       ErrorCategory.UNKNOWN,
       context,
-      options
+      options,
     );
   }
 }
@@ -185,18 +185,18 @@ export class ConfigurationError extends SDKError {
     options: {
       solution?: string;
       cause?: Error;
-    } = {}
+    } = {},
   ) {
     super(
       message,
-      'CONFIGURATION_ERROR',
+      "CONFIGURATION_ERROR",
       ErrorSeverity.HIGH,
       ErrorCategory.CONFIGURATION,
       context,
       {
         ...options,
-        retryable: false
-      }
+        retryable: false,
+      },
     );
   }
 }

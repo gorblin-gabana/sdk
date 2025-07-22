@@ -1,16 +1,15 @@
-
-import { Routes, Route } from 'react-router-dom'
-import Sidebar from './components/Sidebar'
-import Home from './pages/Home'
-import GettingStarted from './pages/GettingStarted'
-import APIReference from './pages/APIReference'
-import Examples from './pages/Examples'
-import RpcOperations from './pages/RpcOperations'
-import TransactionDecoding from './pages/TransactionDecoding'
-import ErrorHandling from './pages/ErrorHandling'
-import InteractivePlayground from './pages/InteractivePlayground'
-import CryptoPlayground from './pages/CryptoPlayground'
-import { SearchProvider } from './components/SearchContext'
+import { Routes, Route } from "react-router-dom";
+import Sidebar from "./components/Sidebar";
+import Home from "./pages/Home";
+import GettingStarted from "./pages/GettingStarted";
+import APIReference from "./pages/APIReference";
+import Examples from "./pages/Examples";
+import RpcOperations from "./pages/RpcOperations";
+import TransactionDecoding from "./pages/TransactionDecoding";
+import ErrorHandling from "./pages/ErrorHandling";
+import InteractivePlayground from "./pages/InteractivePlayground";
+import CryptoPlayground from "./pages/CryptoPlayground";
+import { SearchProvider } from "./components/SearchContext";
 
 export default function App() {
   return (
@@ -30,15 +29,21 @@ export default function App() {
                 <Route path="/api-reference" element={<APIReference />} />
                 <Route path="/examples" element={<Examples />} />
                 <Route path="/rpc-operations" element={<RpcOperations />} />
-                <Route path="/transaction-decoding" element={<TransactionDecoding />} />
+                <Route
+                  path="/transaction-decoding"
+                  element={<TransactionDecoding />}
+                />
                 <Route path="/error-handling" element={<ErrorHandling />} />
                 <Route path="/playground" element={<InteractivePlayground />} />
-                <Route path="/crypto-playground" element={<CryptoPlayground />} />
+                <Route
+                  path="/crypto-playground"
+                  element={<CryptoPlayground />}
+                />
               </Routes>
             </div>
           </main>
         </div>
       </div>
     </SearchProvider>
-  )
-} 
+  );
+}

@@ -3,21 +3,23 @@
  * Dynamic groups with membership managed by signatures
  */
 
-import { bytesToBase58 as encodeBase58, base58ToBytes as decodeBase58 } from '../utils/base58.js';
-import { Keypair } from '@solana/web3.js';
 import {
-  EncryptionMethod,
+  bytesToBase58 as encodeBase58,
+  base58ToBytes as decodeBase58,
+} from "../utils/base58.js";
+import { Keypair } from "@solana/web3.js";
+import type {
   EncryptionResult,
   SignatureGroupMetadata,
   GroupMember,
-  MemberRole,
   MemberPermissions,
   GroupPermissions,
   EncryptionEpoch,
   KeyShare,
   EncryptionOptions,
-  KeyRotationRequest
-} from './types.js';
+  KeyRotationRequest,
+} from "./types.js";
+import { EncryptionMethod, MemberRole } from "./types.js";
 import {
   generateRandomBytes,
   deriveKey,
@@ -36,8 +38,8 @@ import {
   getCurrentTimestamp,
   compressData,
   decompressData,
-  isValidPublicKey
-} from './utils.js';
+  isValidPublicKey,
+} from "./utils.js";
 
 /**
  * Default permissions for different roles
@@ -48,29 +50,29 @@ const DEFAULT_ROLE_PERMISSIONS: Record<MemberRole, MemberPermissions> = {
     canEncrypt: true,
     canAddMembers: true,
     canRemoveMembers: true,
-    canRotateKeys: true
+    canRotateKeys: true,
   },
   [MemberRole.ADMIN]: {
     canDecrypt: true,
     canEncrypt: true,
     canAddMembers: true,
     canRemoveMembers: true,
-    canRotateKeys: false
+    canRotateKeys: false,
   },
   [MemberRole.MEMBER]: {
     canDecrypt: true,
     canEncrypt: true,
     canAddMembers: false,
     canRemoveMembers: false,
-    canRotateKeys: false
+    canRotateKeys: false,
   },
   [MemberRole.VIEWER]: {
     canDecrypt: true,
     canEncrypt: false,
     canAddMembers: false,
     canRemoveMembers: false,
-    canRotateKeys: false
-  }
+    canRotateKeys: false,
+  },
 };
 
 /**
@@ -80,30 +82,35 @@ export async function createSignatureGroup(
   groupName: string,
   creatorPrivateKey: string | Uint8Array,
   initialMembers: { publicKey: string; role: MemberRole }[],
-  permissions?: Partial<GroupPermissions>
+  permissions?: Partial<GroupPermissions>,
 ): Promise<SignatureGroupMetadata> {
-  const creatorPrivKeyBytes = typeof creatorPrivateKey === 'string'
-    ? decodeBase58(creatorPrivateKey)
-    : creatorPrivateKey;
+  const creatorPrivKeyBytes =
+    typeof creatorPrivateKey === "string"
+      ? decodeBase58(creatorPrivateKey)
+      : creatorPrivateKey;
 
   // Get creator's public key
   const creatorKeypair = Keypair.fromSecretKey(creatorPrivKeyBytes);
   const creatorPublicKey = creatorKeypair.publicKey.toBase58();
 
   // Generate group ID
-  const groupId = generateId(groupName, creatorPublicKey, Date.now().toString());
+  const groupId = generateId(
+    groupName,
+    creatorPublicKey,
+    Date.now().toString(),
+  );
 
   // Create group data for signature
   const groupData = {
     groupId,
     groupName,
     creatorPublicKey,
-    timestamp: getCurrentTimestamp()
+    timestamp: getCurrentTimestamp(),
   };
 
   // Sign group creation
   const groupSignature = encodeBase58(
-    signData(stringToBytes(JSON.stringify(groupData)), creatorPrivKeyBytes)
+    signData(stringToBytes(JSON.stringify(groupData)), creatorPrivKeyBytes),
   );
 
   // Generate initial master key
@@ -115,7 +122,7 @@ export async function createSignatureGroup(
     epochNumber: 0,
     startTime: getCurrentTimestamp(),
     masterKeyId,
-    rotationReason: 'Group creation'
+    rotationReason: "Group creation",
   };
 
   // Create members list with creator as owner
@@ -125,18 +132,18 @@ export async function createSignatureGroup(
       role: MemberRole.OWNER,
       joinedAt: getCurrentTimestamp(),
       addedBy: creatorPublicKey,
-      permissions: DEFAULT_ROLE_PERMISSIONS[MemberRole.OWNER]
-    }
+      permissions: DEFAULT_ROLE_PERMISSIONS[MemberRole.OWNER],
+    },
   ];
 
   // Add initial members
   const keyShares: KeyShare[] = [];
-  
+
   // Create key share for creator
   const creatorShare = await createKeyShareForMember(
     masterKey,
     creatorPublicKey,
-    creatorPrivKeyBytes
+    creatorPrivKeyBytes,
   );
   keyShares.push(creatorShare);
 
@@ -152,13 +159,13 @@ export async function createSignatureGroup(
         role: member.role,
         joinedAt: getCurrentTimestamp(),
         addedBy: creatorPublicKey,
-        permissions: DEFAULT_ROLE_PERMISSIONS[member.role]
+        permissions: DEFAULT_ROLE_PERMISSIONS[member.role],
       });
 
       const share = await createKeyShareForMember(
         masterKey,
         member.publicKey,
-        creatorPrivKeyBytes
+        creatorPrivKeyBytes,
       );
       keyShares.push(share);
     }
@@ -172,7 +179,7 @@ export async function createSignatureGroup(
     allowKeyRotation: true,
     autoExpireInactiveMembers: false,
     inactivityThresholdDays: 90,
-    ...permissions
+    ...permissions,
   };
 
   return {
@@ -184,9 +191,9 @@ export async function createSignatureGroup(
     epochs: [initialEpoch],
     keyShares,
     creatorPublicKey,
-    nonce: '',
+    nonce: "",
     timestamp: getCurrentTimestamp(),
-    version: '1.0.0'
+    version: "1.0.0",
   };
 }
 
@@ -197,49 +204,52 @@ export async function addMemberToSignatureGroup(
   groupMetadata: SignatureGroupMetadata,
   newMember: { publicKey: string; role: MemberRole },
   authorizedMemberPrivateKey: string | Uint8Array,
-  authorizedMemberPublicKey: string
+  authorizedMemberPublicKey: string,
 ): Promise<SignatureGroupMetadata> {
   // Verify authorized member has permission
   const authorizedMember = groupMetadata.members.find(
-    m => m.publicKey === authorizedMemberPublicKey
+    (m) => m.publicKey === authorizedMemberPublicKey,
   );
 
   if (!authorizedMember) {
-    throw new Error('Authorized member not found in group');
+    throw new Error("Authorized member not found in group");
   }
 
   if (!authorizedMember.permissions.canAddMembers) {
-    throw new Error('Member does not have permission to add new members');
+    throw new Error("Member does not have permission to add new members");
   }
 
   // Check group limits
-  if (groupMetadata.permissions.maxMembers > 0 && 
-      groupMetadata.members.length >= groupMetadata.permissions.maxMembers) {
-    throw new Error('Group has reached maximum member limit');
+  if (
+    groupMetadata.permissions.maxMembers > 0 &&
+    groupMetadata.members.length >= groupMetadata.permissions.maxMembers
+  ) {
+    throw new Error("Group has reached maximum member limit");
   }
 
   // Check if member already exists
-  if (groupMetadata.members.some(m => m.publicKey === newMember.publicKey)) {
-    throw new Error('Member already exists in group');
+  if (groupMetadata.members.some((m) => m.publicKey === newMember.publicKey)) {
+    throw new Error("Member already exists in group");
   }
 
   // Get current master key
-  const authorizedPrivKeyBytes = typeof authorizedMemberPrivateKey === 'string'
-    ? decodeBase58(authorizedMemberPrivateKey)
-    : authorizedMemberPrivateKey;
+  const authorizedPrivKeyBytes =
+    typeof authorizedMemberPrivateKey === "string"
+      ? decodeBase58(authorizedMemberPrivateKey)
+      : authorizedMemberPrivateKey;
 
   const currentEpoch = groupMetadata.epochs[groupMetadata.epochs.length - 1];
   const masterKey = await getMasterKeyForMember(
     groupMetadata,
     authorizedMemberPublicKey,
-    authorizedPrivKeyBytes
+    authorizedPrivKeyBytes,
   );
 
   // Create key share for new member
   const newKeyShare = await createKeyShareForMember(
     masterKey,
     newMember.publicKey,
-    authorizedPrivKeyBytes
+    authorizedPrivKeyBytes,
   );
 
   // Create new member entry
@@ -248,19 +258,22 @@ export async function addMemberToSignatureGroup(
     role: newMember.role,
     joinedAt: getCurrentTimestamp(),
     addedBy: authorizedMemberPublicKey,
-    permissions: DEFAULT_ROLE_PERMISSIONS[newMember.role]
+    permissions: DEFAULT_ROLE_PERMISSIONS[newMember.role],
   };
 
   // Sign the addition
   const additionData = {
     groupId: groupMetadata.groupId,
-    action: 'add_member',
+    action: "add_member",
     member: newMemberEntry,
-    timestamp: getCurrentTimestamp()
+    timestamp: getCurrentTimestamp(),
   };
 
   const additionSignature = encodeBase58(
-    signData(stringToBytes(JSON.stringify(additionData)), authorizedPrivKeyBytes)
+    signData(
+      stringToBytes(JSON.stringify(additionData)),
+      authorizedPrivKeyBytes,
+    ),
   );
 
   // Return updated metadata
@@ -268,7 +281,7 @@ export async function addMemberToSignatureGroup(
     ...groupMetadata,
     members: [...groupMetadata.members, newMemberEntry],
     keyShares: [...groupMetadata.keyShares, newKeyShare],
-    timestamp: getCurrentTimestamp()
+    timestamp: getCurrentTimestamp(),
   };
 }
 
@@ -280,47 +293,47 @@ export async function removeMemberFromSignatureGroup(
   memberToRemove: string,
   authorizedMemberPrivateKey: string | Uint8Array,
   authorizedMemberPublicKey: string,
-  rotateKeys: boolean = true
+  rotateKeys: boolean = true,
 ): Promise<SignatureGroupMetadata> {
   // Verify authorized member has permission
   const authorizedMember = groupMetadata.members.find(
-    m => m.publicKey === authorizedMemberPublicKey
+    (m) => m.publicKey === authorizedMemberPublicKey,
   );
 
   if (!authorizedMember) {
-    throw new Error('Authorized member not found in group');
+    throw new Error("Authorized member not found in group");
   }
 
   if (!authorizedMember.permissions.canRemoveMembers) {
-    throw new Error('Member does not have permission to remove members');
+    throw new Error("Member does not have permission to remove members");
   }
 
   // Cannot remove the owner
   const memberToRemoveData = groupMetadata.members.find(
-    m => m.publicKey === memberToRemove
+    (m) => m.publicKey === memberToRemove,
   );
 
   if (!memberToRemoveData) {
-    throw new Error('Member to remove not found in group');
+    throw new Error("Member to remove not found in group");
   }
 
   if (memberToRemoveData.role === MemberRole.OWNER) {
-    throw new Error('Cannot remove group owner');
+    throw new Error("Cannot remove group owner");
   }
 
   // Remove member and their key share
   const updatedMembers = groupMetadata.members.filter(
-    m => m.publicKey !== memberToRemove
+    (m) => m.publicKey !== memberToRemove,
   );
   const updatedKeyShares = groupMetadata.keyShares.filter(
-    share => share.recipientPublicKey !== memberToRemove
+    (share) => share.recipientPublicKey !== memberToRemove,
   );
 
   let updatedMetadata: SignatureGroupMetadata = {
     ...groupMetadata,
     members: updatedMembers,
     keyShares: updatedKeyShares,
-    timestamp: getCurrentTimestamp()
+    timestamp: getCurrentTimestamp(),
   };
 
   // Rotate keys if requested (recommended for security)
@@ -328,14 +341,14 @@ export async function removeMemberFromSignatureGroup(
     const rotationRequest: KeyRotationRequest = {
       groupId: groupMetadata.groupId,
       reason: `Member removed: ${memberToRemove}`,
-      excludeMembers: [memberToRemove]
+      excludeMembers: [memberToRemove],
     };
 
     updatedMetadata = await rotateGroupKeys(
       updatedMetadata,
       rotationRequest,
       authorizedMemberPrivateKey,
-      authorizedMemberPublicKey
+      authorizedMemberPublicKey,
     );
   }
 
@@ -349,24 +362,25 @@ export async function rotateGroupKeys(
   groupMetadata: SignatureGroupMetadata,
   rotationRequest: KeyRotationRequest,
   authorizedMemberPrivateKey: string | Uint8Array,
-  authorizedMemberPublicKey: string
+  authorizedMemberPublicKey: string,
 ): Promise<SignatureGroupMetadata> {
   // Verify permissions
   const authorizedMember = groupMetadata.members.find(
-    m => m.publicKey === authorizedMemberPublicKey
+    (m) => m.publicKey === authorizedMemberPublicKey,
   );
 
   if (!authorizedMember?.permissions.canRotateKeys) {
-    throw new Error('Member does not have permission to rotate keys');
+    throw new Error("Member does not have permission to rotate keys");
   }
 
   if (!groupMetadata.permissions.allowKeyRotation) {
-    throw new Error('Key rotation is not allowed for this group');
+    throw new Error("Key rotation is not allowed for this group");
   }
 
-  const authorizedPrivKeyBytes = typeof authorizedMemberPrivateKey === 'string'
-    ? decodeBase58(authorizedMemberPrivateKey)
-    : authorizedMemberPrivateKey;
+  const authorizedPrivKeyBytes =
+    typeof authorizedMemberPrivateKey === "string"
+      ? decodeBase58(authorizedMemberPrivateKey)
+      : authorizedMemberPrivateKey;
 
   // Generate new master key
   const newMasterKey = generateRandomBytes(KEY_SIZE);
@@ -381,18 +395,18 @@ export async function rotateGroupKeys(
     epochNumber: currentEpoch.epochNumber + 1,
     startTime: getCurrentTimestamp(),
     masterKeyId: newMasterKeyId,
-    rotationReason: rotationRequest.reason
+    rotationReason: rotationRequest.reason,
   };
 
   // Create new key shares for all active members
   const newKeyShares: KeyShare[] = [];
-  
+
   for (const member of groupMetadata.members) {
     if (!rotationRequest.excludeMembers?.includes(member.publicKey)) {
       const share = await createKeyShareForMember(
         newMasterKey,
         member.publicKey,
-        authorizedPrivKeyBytes
+        authorizedPrivKeyBytes,
       );
       newKeyShares.push(share);
     }
@@ -408,7 +422,7 @@ export async function rotateGroupKeys(
     keyShares: newKeyShares,
     epochs: [...groupMetadata.epochs, newEpoch],
     permissions: updatedPermissions,
-    timestamp: getCurrentTimestamp()
+    timestamp: getCurrentTimestamp(),
   };
 }
 
@@ -420,52 +434,56 @@ export async function encryptForSignatureGroup(
   groupMetadata: SignatureGroupMetadata,
   senderPrivateKey: string | Uint8Array,
   senderPublicKey: string,
-  options?: EncryptionOptions
+  options?: EncryptionOptions,
 ): Promise<EncryptionResult> {
   // Verify sender is a member with encrypt permission
   const senderMember = groupMetadata.members.find(
-    m => m.publicKey === senderPublicKey
+    (m) => m.publicKey === senderPublicKey,
   );
 
   if (!senderMember) {
-    throw new Error('Sender is not a member of this group');
+    throw new Error("Sender is not a member of this group");
   }
 
   if (!senderMember.permissions.canEncrypt) {
-    throw new Error('Sender does not have permission to encrypt for this group');
+    throw new Error(
+      "Sender does not have permission to encrypt for this group",
+    );
   }
 
   // Convert and prepare data
-  let dataBytes = typeof data === 'string' ? stringToBytes(data) : data;
-  
+  let dataBytes = typeof data === "string" ? stringToBytes(data) : data;
+
   if (options?.compress) {
     dataBytes = await compressData(dataBytes);
   }
 
   // Get current master key
-  const senderPrivKeyBytes = typeof senderPrivateKey === 'string'
-    ? decodeBase58(senderPrivateKey)
-    : senderPrivateKey;
+  const senderPrivKeyBytes =
+    typeof senderPrivateKey === "string"
+      ? decodeBase58(senderPrivateKey)
+      : senderPrivateKey;
 
   const masterKey = await getMasterKeyForMember(
     groupMetadata,
     senderPublicKey,
-    senderPrivKeyBytes
+    senderPrivKeyBytes,
   );
 
   // Encrypt data
   const { encrypted, iv, authTag } = encryptAES(dataBytes, masterKey);
-  
+
   // Create metadata signature
   const encryptionData = {
     groupId: groupMetadata.groupId,
     sender: senderPublicKey,
     timestamp: getCurrentTimestamp(),
-    epochNumber: groupMetadata.epochs[groupMetadata.epochs.length - 1].epochNumber
+    epochNumber:
+      groupMetadata.epochs[groupMetadata.epochs.length - 1].epochNumber,
   };
 
   const metadataSignature = encodeBase58(
-    signData(stringToBytes(JSON.stringify(encryptionData)), senderPrivKeyBytes)
+    signData(stringToBytes(JSON.stringify(encryptionData)), senderPrivKeyBytes),
   );
 
   // Combine all parts
@@ -474,14 +492,14 @@ export async function encryptForSignatureGroup(
     decodeBase58(metadataSignature),
     iv,
     authTag,
-    encrypted
+    encrypted,
   );
 
   // Update metadata
   const metadata: SignatureGroupMetadata = {
     ...groupMetadata,
     nonce: encodeBase58(iv),
-    timestamp: getCurrentTimestamp()
+    timestamp: getCurrentTimestamp(),
   };
 
   if (options?.compress) {
@@ -491,7 +509,7 @@ export async function encryptForSignatureGroup(
   return {
     encryptedData: encodeBase58(combined),
     method: EncryptionMethod.SIGNATURE_GROUP,
-    metadata
+    metadata,
   };
 }
 
@@ -502,63 +520,67 @@ export async function decryptSignatureGroupData(
   encryptionResult: EncryptionResult,
   memberPrivateKey: string | Uint8Array,
   memberPublicKey: string,
-  options?: { verifySignature?: boolean }
+  options?: { verifySignature?: boolean },
 ): Promise<Uint8Array> {
   if (encryptionResult.method !== EncryptionMethod.SIGNATURE_GROUP) {
-    throw new Error('Invalid encryption method for signature group decryption');
+    throw new Error("Invalid encryption method for signature group decryption");
   }
 
   const metadata = encryptionResult.metadata as SignatureGroupMetadata;
-  
+
   // Verify member has decrypt permission
-  const member = metadata.members.find(m => m.publicKey === memberPublicKey);
-  
+  const member = metadata.members.find((m) => m.publicKey === memberPublicKey);
+
   if (!member) {
-    throw new Error('Not a member of this group');
+    throw new Error("Not a member of this group");
   }
 
   if (!member.permissions.canDecrypt) {
-    throw new Error('Member does not have permission to decrypt');
+    throw new Error("Member does not have permission to decrypt");
   }
 
-  const memberPrivKeyBytes = typeof memberPrivateKey === 'string'
-    ? decodeBase58(memberPrivateKey)
-    : memberPrivateKey;
+  const memberPrivKeyBytes =
+    typeof memberPrivateKey === "string"
+      ? decodeBase58(memberPrivateKey)
+      : memberPrivateKey;
 
   // Get master key
   const masterKey = await getMasterKeyForMember(
     metadata,
     memberPublicKey,
-    memberPrivKeyBytes
+    memberPrivKeyBytes,
   );
 
   // Decode combined data
   const combined = decodeBase58(encryptionResult.encryptedData);
   const groupIdSize = 32;
   const signatureSize = 64;
-  
+
   const [groupIdBytes, signature, iv, authTag, encrypted] = splitBuffer(
     combined,
     groupIdSize,
     signatureSize,
     IV_SIZE,
-    AUTH_TAG_SIZE
+    AUTH_TAG_SIZE,
   );
 
   // Verify group ID
   if (encodeBase58(groupIdBytes) !== metadata.groupId) {
-    throw new Error('Group ID mismatch');
+    throw new Error("Group ID mismatch");
   }
 
   // Verify signature if requested
-  if (options?.verifySignature && metadata.permissions.requireSignatureVerification) {
+  if (
+    options?.verifySignature &&
+    metadata.permissions.requireSignatureVerification
+  ) {
     // Would need sender's public key from metadata to verify
     // This is a simplified version
   }
 
   // Decrypt data
   let decrypted = decryptAES(encrypted, masterKey, iv, authTag);
-  
+
   // Decompress if needed
   if ((metadata as any).compressed) {
     decrypted = await decompressData(decrypted);
@@ -573,23 +595,23 @@ export async function decryptSignatureGroupData(
 async function createKeyShareForMember(
   masterKey: Uint8Array,
   recipientPublicKey: string,
-  senderPrivateKey: Uint8Array
+  senderPrivateKey: Uint8Array,
 ): Promise<KeyShare> {
   const recipientPubKeyBytes = decodeBase58(recipientPublicKey);
-  
+
   // Use salt-based approach like direct encryption
   const salt = generateRandomBytes(32);
   const sharedSecret = deriveKey(recipientPubKeyBytes, salt, 1000);
-  
+
   // Encrypt master key
   const { encrypted, iv, authTag } = encryptAES(masterKey, sharedSecret);
-  
+
   const combined = combineBuffers(salt, iv, authTag, encrypted);
-  
+
   return {
     recipientPublicKey,
     encryptedShare: encodeBase58(combined),
-    createdAt: getCurrentTimestamp()
+    createdAt: getCurrentTimestamp(),
   };
 }
 
@@ -599,25 +621,30 @@ async function createKeyShareForMember(
 async function getMasterKeyForMember(
   metadata: SignatureGroupMetadata,
   memberPublicKey: string,
-  memberPrivateKey: Uint8Array
+  memberPrivateKey: Uint8Array,
 ): Promise<Uint8Array> {
   // Find member's key share
   const keyShare = metadata.keyShares.find(
-    share => share.recipientPublicKey === memberPublicKey
+    (share) => share.recipientPublicKey === memberPublicKey,
   );
 
   if (!keyShare) {
-    throw new Error('No key share found for member');
+    throw new Error("No key share found for member");
   }
 
   // Check expiration
   if (keyShare.expiresAt && getCurrentTimestamp() > keyShare.expiresAt) {
-    throw new Error('Key share has expired');
+    throw new Error("Key share has expired");
   }
 
   // Decode share
   const combined = decodeBase58(keyShare.encryptedShare);
-  const [salt, iv, authTag, encrypted] = splitBuffer(combined, 32, IV_SIZE, AUTH_TAG_SIZE);
+  const [salt, iv, authTag, encrypted] = splitBuffer(
+    combined,
+    32,
+    IV_SIZE,
+    AUTH_TAG_SIZE,
+  );
 
   // Use salt-based key derivation like in createKeyShareForMember
   const memberPubKeyBytes = decodeBase58(memberPublicKey);

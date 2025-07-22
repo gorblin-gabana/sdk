@@ -3,16 +3,19 @@
  * Manages shared encryption/decryption keys that can be distributed among group members
  */
 
-import { bytesToBase58 as encodeBase58, base58ToBytes as decodeBase58 } from '../utils/base58.js';
-import { Keypair } from '@solana/web3.js';
+import {
+  bytesToBase58 as encodeBase58,
+  base58ToBytes as decodeBase58,
+} from "../utils/base58.js";
+import { Keypair } from "@solana/web3.js";
+import type { EncryptionResult } from "./types.js";
 import {
   EncryptionMethod,
-  EncryptionResult,
   GroupMember,
   MemberRole,
   KeyShare,
-  SignatureGroupMetadata
-} from './types.js';
+  SignatureGroupMetadata,
+} from "./types.js";
 import {
   generateRandomBytes,
   encryptAES,
@@ -27,8 +30,8 @@ import {
   KEY_SIZE,
   IV_SIZE,
   AUTH_TAG_SIZE,
-  getCurrentTimestamp
-} from './utils.js';
+  getCurrentTimestamp,
+} from "./utils.js";
 
 /**
  * Shared encryption key that can be distributed to multiple recipients
@@ -129,11 +132,12 @@ export class SharedKeyManager {
   async createSharedKey(
     keyMetadata: SharedKeyMetadata,
     initialRecipients: { publicKey: string; permissions: SharePermissions }[],
-    creatorPrivateKey: string | Uint8Array
+    creatorPrivateKey: string | Uint8Array,
   ): Promise<SharedEncryptionKey> {
-    const creatorPrivKeyBytes = typeof creatorPrivateKey === 'string'
-      ? decodeBase58(creatorPrivateKey)
-      : creatorPrivateKey;
+    const creatorPrivKeyBytes =
+      typeof creatorPrivateKey === "string"
+        ? decodeBase58(creatorPrivateKey)
+        : creatorPrivateKey;
 
     // Get creator's public key
     const creatorKeypair = Keypair.fromSecretKey(creatorPrivKeyBytes);
@@ -153,9 +157,9 @@ export class SharedKeyManager {
         recipient.publicKey,
         recipient.permissions,
         creatorPrivKeyBytes,
-        creatorPublicKey
+        creatorPublicKey,
       );
-      
+
       encryptedShares.set(recipient.publicKey, share);
       holders.push(recipient.publicKey);
     }
@@ -165,7 +169,7 @@ export class SharedKeyManager {
       encryptedShares,
       metadata: keyMetadata,
       holders,
-      createdAt: getCurrentTimestamp()
+      createdAt: getCurrentTimestamp(),
     };
 
     // Store the key
@@ -179,7 +183,7 @@ export class SharedKeyManager {
    */
   async transitionToSharedKey(
     originalEncryptionResult: EncryptionResult,
-    transitionRequest: KeyTransitionRequest
+    transitionRequest: KeyTransitionRequest,
   ): Promise<{
     sharedKey: SharedEncryptionKey;
     reEncryptedData: EncryptionResult;
@@ -187,7 +191,7 @@ export class SharedKeyManager {
     // First, decrypt the original data (assuming the authorizer has access)
     const originalData = await this.decryptWithOriginalKey(
       originalEncryptionResult,
-      transitionRequest.authorizerPrivateKey
+      transitionRequest.authorizerPrivateKey,
     );
 
     // Create new shared key metadata
@@ -195,12 +199,12 @@ export class SharedKeyManager {
       name: `Shared key transitioned from ${transitionRequest.originalRecipient}`,
       purpose: transitionRequest.reason,
       creator: transitionRequest.authorizerPublicKey,
-      algorithm: 'AES-256-GCM',
-      derivationMethod: 'ECDH + PBKDF2',
+      algorithm: "AES-256-GCM",
+      derivationMethod: "ECDH + PBKDF2",
       properties: {
         originalRecipient: transitionRequest.originalRecipient,
-        transitionedAt: getCurrentTimestamp()
-      }
+        transitionedAt: getCurrentTimestamp(),
+      },
     };
 
     // Include original recipient with full permissions
@@ -211,17 +215,17 @@ export class SharedKeyManager {
           canDecrypt: true,
           canEncrypt: true,
           canShare: true,
-          canRevoke: true
-        }
+          canRevoke: true,
+        },
       },
-      ...transitionRequest.newRecipients
+      ...transitionRequest.newRecipients,
     ];
 
     // Create the shared key
     const sharedKey = await this.createSharedKey(
       keyMetadata,
       allRecipients,
-      transitionRequest.authorizerPrivateKey
+      transitionRequest.authorizerPrivateKey,
     );
 
     // Re-encrypt the data with the shared key
@@ -229,12 +233,12 @@ export class SharedKeyManager {
       originalData,
       sharedKey.keyId,
       transitionRequest.authorizerPrivateKey,
-      transitionRequest.authorizerPublicKey
+      transitionRequest.authorizerPublicKey,
     );
 
     return {
       sharedKey,
-      reEncryptedData
+      reEncryptedData,
     };
   }
 
@@ -245,28 +249,29 @@ export class SharedKeyManager {
     keyId: string,
     newRecipients: { publicKey: string; permissions: SharePermissions }[],
     authorizerPrivateKey: string | Uint8Array,
-    authorizerPublicKey: string
+    authorizerPublicKey: string,
   ): Promise<SharedEncryptionKey> {
     const sharedKey = this.sharedKeys.get(keyId);
     if (!sharedKey) {
-      throw new Error('Shared key not found');
+      throw new Error("Shared key not found");
     }
 
     // Verify authorizer has sharing permissions
     const authorizerShare = sharedKey.encryptedShares.get(authorizerPublicKey);
-    if (!authorizerShare || !authorizerShare.permissions.canShare) {
-      throw new Error('Authorizer does not have permission to share this key');
+    if (!authorizerShare?.permissions.canShare) {
+      throw new Error("Authorizer does not have permission to share this key");
     }
 
-    const authorizerPrivKeyBytes = typeof authorizerPrivateKey === 'string'
-      ? decodeBase58(authorizerPrivateKey)
-      : authorizerPrivateKey;
+    const authorizerPrivKeyBytes =
+      typeof authorizerPrivateKey === "string"
+        ? decodeBase58(authorizerPrivateKey)
+        : authorizerPrivateKey;
 
     // First, decrypt the master key using authorizer's share
     const masterKey = await this.decryptKeyShare(
       authorizerShare,
       authorizerPrivKeyBytes,
-      authorizerShare.createdBy
+      authorizerShare.createdBy,
     );
 
     // Create encrypted shares for new recipients
@@ -283,7 +288,7 @@ export class SharedKeyManager {
         recipient.publicKey,
         recipient.permissions,
         authorizerPrivKeyBytes,
-        authorizerPublicKey
+        authorizerPublicKey,
       );
 
       updatedShares.set(recipient.publicKey, share);
@@ -294,7 +299,7 @@ export class SharedKeyManager {
     const updatedSharedKey: SharedEncryptionKey = {
       ...sharedKey,
       encryptedShares: updatedShares,
-      holders: updatedHolders
+      holders: updatedHolders,
     };
 
     this.sharedKeys.set(keyId, updatedSharedKey);
@@ -310,26 +315,26 @@ export class SharedKeyManager {
     recipientsToRemove: string[],
     authorizerPrivateKey: string | Uint8Array,
     authorizerPublicKey: string,
-    rotateKey: boolean = true
+    rotateKey: boolean = true,
   ): Promise<SharedEncryptionKey> {
     const sharedKey = this.sharedKeys.get(keyId);
     if (!sharedKey) {
-      throw new Error('Shared key not found');
+      throw new Error("Shared key not found");
     }
 
     // Verify authorizer permissions
     const authorizerShare = sharedKey.encryptedShares.get(authorizerPublicKey);
-    if (!authorizerShare || !authorizerShare.permissions.canShare) {
-      throw new Error('Authorizer does not have permission to modify this key');
+    if (!authorizerShare?.permissions.canShare) {
+      throw new Error("Authorizer does not have permission to modify this key");
     }
 
     // Remove specified recipients
     const updatedShares = new Map(sharedKey.encryptedShares);
     const updatedHolders = sharedKey.holders.filter(
-      holder => !recipientsToRemove.includes(holder)
+      (holder) => !recipientsToRemove.includes(holder),
     );
 
-    recipientsToRemove.forEach(recipient => {
+    recipientsToRemove.forEach((recipient) => {
       updatedShares.delete(recipient);
     });
 
@@ -337,16 +342,17 @@ export class SharedKeyManager {
 
     // Rotate key if requested (recommended for security)
     if (rotateKey) {
-      const authorizerPrivKeyBytes = typeof authorizerPrivateKey === 'string'
-        ? decodeBase58(authorizerPrivateKey)
-        : authorizerPrivateKey;
+      const authorizerPrivKeyBytes =
+        typeof authorizerPrivateKey === "string"
+          ? decodeBase58(authorizerPrivateKey)
+          : authorizerPrivateKey;
 
       // Generate new master key
       const newMasterKey = generateRandomBytes(KEY_SIZE);
-      
+
       // Re-encrypt for remaining recipients
       finalShares = new Map();
-      
+
       for (const holder of updatedHolders) {
         const originalShare = updatedShares.get(holder);
         if (originalShare) {
@@ -355,7 +361,7 @@ export class SharedKeyManager {
             holder,
             originalShare.permissions,
             authorizerPrivKeyBytes,
-            authorizerPublicKey
+            authorizerPublicKey,
           );
           finalShares.set(holder, newShare);
         }
@@ -365,7 +371,7 @@ export class SharedKeyManager {
     const updatedSharedKey: SharedEncryptionKey = {
       ...sharedKey,
       encryptedShares: finalShares,
-      holders: updatedHolders
+      holders: updatedHolders,
     };
 
     this.sharedKeys.set(keyId, updatedSharedKey);
@@ -380,32 +386,35 @@ export class SharedKeyManager {
     data: string | Uint8Array,
     keyId: string,
     senderPrivateKey: string | Uint8Array,
-    senderPublicKey: string
+    senderPublicKey: string,
   ): Promise<EncryptionResult> {
     const sharedKey = this.sharedKeys.get(keyId);
     if (!sharedKey) {
-      throw new Error('Shared key not found');
+      throw new Error("Shared key not found");
     }
 
     // Verify sender has encryption permissions
     const senderShare = sharedKey.encryptedShares.get(senderPublicKey);
-    if (!senderShare || !senderShare.permissions.canEncrypt) {
-      throw new Error('Sender does not have permission to encrypt with this key');
+    if (!senderShare?.permissions.canEncrypt) {
+      throw new Error(
+        "Sender does not have permission to encrypt with this key",
+      );
     }
 
-    const senderPrivKeyBytes = typeof senderPrivateKey === 'string'
-      ? decodeBase58(senderPrivateKey)
-      : senderPrivateKey;
+    const senderPrivKeyBytes =
+      typeof senderPrivateKey === "string"
+        ? decodeBase58(senderPrivateKey)
+        : senderPrivateKey;
 
     // Decrypt the master key
     const masterKey = await this.decryptKeyShare(
       senderShare,
       senderPrivKeyBytes,
-      senderShare.createdBy
+      senderShare.createdBy,
     );
 
     // Prepare data
-    const dataBytes = typeof data === 'string' ? stringToBytes(data) : data;
+    const dataBytes = typeof data === "string" ? stringToBytes(data) : data;
 
     // Encrypt with master key
     const { encrypted, iv, authTag } = encryptAES(dataBytes, masterKey);
@@ -415,12 +424,15 @@ export class SharedKeyManager {
     const encryptionMetadata = {
       keyId,
       sender: senderPublicKey,
-      timestamp: timestamp,
-      recipients: sharedKey.holders
+      timestamp,
+      recipients: sharedKey.holders,
     };
 
     const metadataSignature = encodeBase58(
-      signData(stringToBytes(JSON.stringify(encryptionMetadata)), senderPrivKeyBytes)
+      signData(
+        stringToBytes(JSON.stringify(encryptionMetadata)),
+        senderPrivKeyBytes,
+      ),
     );
 
     // Combine all parts
@@ -429,7 +441,7 @@ export class SharedKeyManager {
       decodeBase58(metadataSignature),
       iv,
       authTag,
-      encrypted
+      encrypted,
     );
 
     return {
@@ -437,13 +449,13 @@ export class SharedKeyManager {
       method: EncryptionMethod.GROUP,
       metadata: {
         nonce: encodeBase58(iv),
-        timestamp: timestamp,
-        version: '2.0.0',
+        timestamp,
+        version: "2.0.0",
         keyId,
         sender: senderPublicKey,
         recipients: sharedKey.holders,
-        signature: metadataSignature
-      } as any
+        signature: metadataSignature,
+      } as any,
     };
   }
 
@@ -453,31 +465,34 @@ export class SharedKeyManager {
   async decryptWithSharedKey(
     encryptionResult: EncryptionResult,
     recipientPrivateKey: string | Uint8Array,
-    recipientPublicKey: string
+    recipientPublicKey: string,
   ): Promise<Uint8Array> {
     const metadata = encryptionResult.metadata as any;
     const keyId = metadata.keyId;
 
     const sharedKey = this.sharedKeys.get(keyId);
     if (!sharedKey) {
-      throw new Error('Shared key not found');
+      throw new Error("Shared key not found");
     }
 
     // Verify recipient has decryption permissions
     const recipientShare = sharedKey.encryptedShares.get(recipientPublicKey);
-    if (!recipientShare || !recipientShare.permissions.canDecrypt) {
-      throw new Error('Recipient does not have permission to decrypt with this key');
+    if (!recipientShare?.permissions.canDecrypt) {
+      throw new Error(
+        "Recipient does not have permission to decrypt with this key",
+      );
     }
 
-    const recipientPrivKeyBytes = typeof recipientPrivateKey === 'string'
-      ? decodeBase58(recipientPrivateKey)
-      : recipientPrivateKey;
+    const recipientPrivKeyBytes =
+      typeof recipientPrivateKey === "string"
+        ? decodeBase58(recipientPrivateKey)
+        : recipientPrivateKey;
 
     // Decrypt the master key
     const masterKey = await this.decryptKeyShare(
       recipientShare,
       recipientPrivKeyBytes,
-      recipientShare.createdBy
+      recipientShare.createdBy,
     );
 
     // Decode the combined data
@@ -490,12 +505,12 @@ export class SharedKeyManager {
       keyIdSize,
       signatureSize,
       IV_SIZE,
-      AUTH_TAG_SIZE
+      AUTH_TAG_SIZE,
     );
 
     // Verify key ID
     if (encodeBase58(keyIdBytes) !== keyId) {
-      throw new Error('Key ID mismatch');
+      throw new Error("Key ID mismatch");
     }
 
     // Verify signature if sender is known
@@ -504,17 +519,17 @@ export class SharedKeyManager {
         keyId,
         sender: metadata.sender,
         timestamp: metadata.timestamp,
-        recipients: sharedKey.holders
+        recipients: sharedKey.holders,
       };
 
       const isValidSignature = verifySignature(
         stringToBytes(JSON.stringify(expectedMetadata)),
         decodeBase58(metadata.signature),
-        decodeBase58(metadata.sender)
+        decodeBase58(metadata.sender),
       );
 
       if (!isValidSignature) {
-        throw new Error('Invalid encryption signature');
+        throw new Error("Invalid encryption signature");
       }
     }
 
@@ -531,11 +546,11 @@ export class SharedKeyManager {
     holders: number;
     createdAt: number;
   }> {
-    return Array.from(this.sharedKeys.values()).map(key => ({
+    return Array.from(this.sharedKeys.values()).map((key) => ({
       keyId: key.keyId,
       name: key.metadata.name,
       holders: key.holders.length,
-      createdAt: key.createdAt
+      createdAt: key.createdAt,
     }));
   }
 
@@ -553,23 +568,23 @@ export class SharedKeyManager {
     keyId: string,
     exporterPrivateKey: string | Uint8Array,
     exporterPublicKey: string,
-    backupPassword: string
+    backupPassword: string,
   ): Promise<string> {
     const sharedKey = this.sharedKeys.get(keyId);
     if (!sharedKey) {
-      throw new Error('Shared key not found');
+      throw new Error("Shared key not found");
     }
 
     // Verify exporter has access
     const exporterShare = sharedKey.encryptedShares.get(exporterPublicKey);
     if (!exporterShare) {
-      throw new Error('Exporter does not have access to this key');
+      throw new Error("Exporter does not have access to this key");
     }
 
     const exportData = {
       sharedKey,
       exportedAt: getCurrentTimestamp(),
-      exportedBy: exporterPublicKey
+      exportedBy: exporterPublicKey,
     };
 
     // Encrypt with backup password
@@ -579,14 +594,14 @@ export class SharedKeyManager {
 
     const { encrypted, iv, authTag } = encryptAES(
       stringToBytes(JSON.stringify(exportData)),
-      padded
+      padded,
     );
 
     const exportPackage = {
       encrypted: encodeBase58(encrypted),
       iv: encodeBase58(iv),
       authTag: encodeBase58(authTag),
-      version: '2.0.0'
+      version: "2.0.0",
     };
 
     return encodeBase58(stringToBytes(JSON.stringify(exportPackage)));
@@ -597,11 +612,11 @@ export class SharedKeyManager {
    */
   async importSharedKey(
     exportedData: string,
-    backupPassword: string
+    backupPassword: string,
   ): Promise<SharedEncryptionKey> {
     try {
       const exportPackage = JSON.parse(
-        bytesToString(decodeBase58(exportedData))
+        bytesToString(decodeBase58(exportedData)),
       );
 
       // Decrypt with backup password
@@ -613,7 +628,7 @@ export class SharedKeyManager {
         decodeBase58(exportPackage.encrypted),
         padded,
         decodeBase58(exportPackage.iv),
-        decodeBase58(exportPackage.authTag)
+        decodeBase58(exportPackage.authTag),
       );
 
       const exportData = JSON.parse(bytesToString(decrypted));
@@ -624,7 +639,7 @@ export class SharedKeyManager {
 
       return sharedKey;
     } catch (error) {
-      throw new Error('Failed to import shared key: Invalid data or password');
+      throw new Error("Failed to import shared key: Invalid data or password");
     }
   }
 
@@ -635,57 +650,62 @@ export class SharedKeyManager {
     recipientPublicKey: string,
     permissions: SharePermissions,
     senderPrivateKey: Uint8Array,
-    senderPublicKey: string
+    senderPublicKey: string,
   ): Promise<EncryptedKeyShare> {
     const recipientPubKeyBytes = decodeBase58(recipientPublicKey);
-    
+
     // Use salt-based approach like in direct encryption
     const salt = generateRandomBytes(32);
-    const { deriveKey } = await import('./utils.js');
+    const { deriveKey } = await import("./utils.js");
     const sharedSecret = deriveKey(recipientPubKeyBytes, salt, 1000);
-    
-    // Encrypt master key with shared secret  
+
+    // Encrypt master key with shared secret
     const { encrypted, iv, authTag } = encryptAES(masterKey, sharedSecret);
-    
+
     // Combine salt, iv, authTag, and encrypted key
     const combined = combineBuffers(salt, iv, authTag, encrypted);
-    
+
     return {
       recipientPublicKey,
       encryptedData: encodeBase58(combined),
       nonce: encodeBase58(iv),
       createdAt: getCurrentTimestamp(),
       createdBy: senderPublicKey,
-      permissions
+      permissions,
     };
   }
 
   private async decryptKeyShare(
     keyShare: EncryptedKeyShare,
     recipientPrivateKey: Uint8Array,
-    senderPublicKey: string
+    senderPublicKey: string,
   ): Promise<Uint8Array> {
     const recipientPubKeyBytes = decodeBase58(keyShare.recipientPublicKey);
-    
+
     // Decode the encrypted share
     const combined = decodeBase58(keyShare.encryptedData);
-    const [salt, iv, authTag, encrypted] = splitBuffer(combined, 32, IV_SIZE, AUTH_TAG_SIZE);
-    
+    const [salt, iv, authTag, encrypted] = splitBuffer(
+      combined,
+      32,
+      IV_SIZE,
+      AUTH_TAG_SIZE,
+    );
+
     // Use same salt-based approach as encryption
-    const { deriveKey } = await import('./utils.js');
+    const { deriveKey } = await import("./utils.js");
     const sharedSecret = deriveKey(recipientPubKeyBytes, salt, 1000);
-    
+
     // Decrypt the master key
     return decryptAES(encrypted, sharedSecret, iv, authTag);
   }
 
   private async decryptWithOriginalKey(
     encryptionResult: EncryptionResult,
-    privateKey: string | Uint8Array
+    privateKey: string | Uint8Array,
   ): Promise<Uint8Array> {
     // This would use the appropriate decryption method based on the original encryption method
     // For now, assuming it's a direct encryption
-    const { decryptDirect } = await import('./direct.js');
+    const { decryptDirect } = await import("./direct.js");
     return decryptDirect(encryptionResult, privateKey);
   }
 }

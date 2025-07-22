@@ -1,22 +1,24 @@
-
-import { 
-  ExclamationTriangleIcon, 
-  ShieldCheckIcon, 
-  ClockIcon, 
+import {
+  ExclamationTriangleIcon,
+  ShieldCheckIcon,
+  ClockIcon,
   WifiIcon,
   XCircleIcon,
   CheckCircleIcon,
-  InformationCircleIcon
-} from '@heroicons/react/24/outline'
+  InformationCircleIcon,
+} from "@heroicons/react/24/outline";
 
 export default function ErrorHandling() {
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold text-docs-heading mb-4">Error Handling</h1>
+      <h1 className="text-3xl font-bold text-docs-heading mb-4">
+        Error Handling
+      </h1>
       <p className="text-lg text-gray-600 mb-6">
-        Comprehensive error handling strategies and error types in the Gorbchain SDK for building robust applications.
+        Comprehensive error handling strategies and error types in the Gorbchain
+        SDK for building robust applications.
       </p>
-      
+
       {/* Overview */}
       <div className="docs-card">
         <h2 className="text-xl font-semibold text-docs-heading mb-4">
@@ -24,33 +26,41 @@ export default function ErrorHandling() {
           Error Handling Philosophy
         </h2>
         <p className="text-gray-600 mb-4">
-          The Gorbchain SDK implements a comprehensive error taxonomy with 7 distinct error categories, 
-          each designed to provide specific context and enable appropriate recovery strategies:
+          The Gorbchain SDK implements a comprehensive error taxonomy with 7
+          distinct error categories, each designed to provide specific context
+          and enable appropriate recovery strategies:
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <CheckCircleIcon className="w-8 h-8 text-green-600 mb-2" />
             <h4 className="font-semibold text-green-800">Recoverable Errors</h4>
-            <p className="text-sm text-green-700">Automatic retry with exponential backoff</p>
+            <p className="text-sm text-green-700">
+              Automatic retry with exponential backoff
+            </p>
           </div>
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <ClockIcon className="w-8 h-8 text-yellow-600 mb-2" />
             <h4 className="font-semibold text-yellow-800">Transient Errors</h4>
-            <p className="text-sm text-yellow-700">Circuit breaker protection</p>
+            <p className="text-sm text-yellow-700">
+              Circuit breaker protection
+            </p>
           </div>
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <XCircleIcon className="w-8 h-8 text-red-600 mb-2" />
             <h4 className="font-semibold text-red-800">Fatal Errors</h4>
-            <p className="text-sm text-red-700">Immediate failure with context</p>
+            <p className="text-sm text-red-700">
+              Immediate failure with context
+            </p>
           </div>
         </div>
       </div>
 
       {/* Error Categories */}
       <div className="docs-card">
-        <h2 className="text-xl font-semibold text-docs-heading mb-6">7 Error Categories</h2>
+        <h2 className="text-xl font-semibold text-docs-heading mb-6">
+          7 Error Categories
+        </h2>
         <div className="space-y-6">
-          
           {/* Network Errors */}
           <div className="border-l-4 border-red-500 pl-4">
             <h3 className="font-semibold text-docs-heading mb-2">
@@ -62,14 +72,27 @@ export default function ErrorHandling() {
             </p>
             <div className="bg-gray-50 rounded p-4">
               <div className="space-y-2 text-sm">
-                <div><span className="font-medium">ConnectionError:</span> Failed to establish connection</div>
-                <div><span className="font-medium">TimeoutError:</span> Request exceeded timeout limit</div>
-                <div><span className="font-medium">NetworkUnavailableError:</span> Network interface down</div>
+                <div>
+                  <span className="font-medium">ConnectionError:</span> Failed
+                  to establish connection
+                </div>
+                <div>
+                  <span className="font-medium">TimeoutError:</span> Request
+                  exceeded timeout limit
+                </div>
+                <div>
+                  <span className="font-medium">NetworkUnavailableError:</span>{" "}
+                  Network interface down
+                </div>
               </div>
             </div>
             <div className="mt-3 p-3 bg-blue-50 rounded">
-              <span className="text-sm font-medium text-blue-800">Recovery Strategy:</span>
-              <span className="text-sm text-blue-700 ml-2">Automatic retry with exponential backoff</span>
+              <span className="text-sm font-medium text-blue-800">
+                Recovery Strategy:
+              </span>
+              <span className="text-sm text-blue-700 ml-2">
+                Automatic retry with exponential backoff
+              </span>
             </div>
           </div>
 
@@ -84,15 +107,31 @@ export default function ErrorHandling() {
             </p>
             <div className="bg-gray-50 rounded p-4">
               <div className="space-y-2 text-sm">
-                <div><span className="font-medium">RpcMethodNotFoundError:</span> Invalid RPC method</div>
-                <div><span className="font-medium">RpcInvalidParamsError:</span> Invalid parameters</div>
-                <div><span className="font-medium">RateLimitError:</span> Too many requests</div>
-                <div><span className="font-medium">RpcServerError:</span> Internal server error</div>
+                <div>
+                  <span className="font-medium">RpcMethodNotFoundError:</span>{" "}
+                  Invalid RPC method
+                </div>
+                <div>
+                  <span className="font-medium">RpcInvalidParamsError:</span>{" "}
+                  Invalid parameters
+                </div>
+                <div>
+                  <span className="font-medium">RateLimitError:</span> Too many
+                  requests
+                </div>
+                <div>
+                  <span className="font-medium">RpcServerError:</span> Internal
+                  server error
+                </div>
               </div>
             </div>
             <div className="mt-3 p-3 bg-blue-50 rounded">
-              <span className="text-sm font-medium text-blue-800">Recovery Strategy:</span>
-              <span className="text-sm text-blue-700 ml-2">Context-specific retry or immediate failure</span>
+              <span className="text-sm font-medium text-blue-800">
+                Recovery Strategy:
+              </span>
+              <span className="text-sm text-blue-700 ml-2">
+                Context-specific retry or immediate failure
+              </span>
             </div>
           </div>
 
@@ -103,18 +142,34 @@ export default function ErrorHandling() {
               3. Decoder Errors
             </h3>
             <p className="text-gray-600 mb-3">
-              Instruction decoding failures, missing decoders, and data format issues.
+              Instruction decoding failures, missing decoders, and data format
+              issues.
             </p>
             <div className="bg-gray-50 rounded p-4">
               <div className="space-y-2 text-sm">
-                <div><span className="font-medium">DecoderNotFoundError:</span> No decoder for program</div>
-                <div><span className="font-medium">InvalidInstructionDataError:</span> Malformed instruction data</div>
-                <div><span className="font-medium">DecodingFailedError:</span> Decoding process failed</div>
+                <div>
+                  <span className="font-medium">DecoderNotFoundError:</span> No
+                  decoder for program
+                </div>
+                <div>
+                  <span className="font-medium">
+                    InvalidInstructionDataError:
+                  </span>{" "}
+                  Malformed instruction data
+                </div>
+                <div>
+                  <span className="font-medium">DecodingFailedError:</span>{" "}
+                  Decoding process failed
+                </div>
               </div>
             </div>
             <div className="mt-3 p-3 bg-blue-50 rounded">
-              <span className="text-sm font-medium text-blue-800">Recovery Strategy:</span>
-              <span className="text-sm text-blue-700 ml-2">Fallback to raw data or custom decoder</span>
+              <span className="text-sm font-medium text-blue-800">
+                Recovery Strategy:
+              </span>
+              <span className="text-sm text-blue-700 ml-2">
+                Fallback to raw data or custom decoder
+              </span>
             </div>
           </div>
 
@@ -125,18 +180,32 @@ export default function ErrorHandling() {
               4. Transaction Errors
             </h3>
             <p className="text-gray-600 mb-3">
-              Transaction-specific failures, not found errors, and processing issues.
+              Transaction-specific failures, not found errors, and processing
+              issues.
             </p>
             <div className="bg-gray-50 rounded p-4">
               <div className="space-y-2 text-sm">
-                <div><span className="font-medium">TransactionNotFoundError:</span> Transaction signature not found</div>
-                <div><span className="font-medium">TransactionFailedError:</span> Transaction execution failed</div>
-                <div><span className="font-medium">InvalidSignatureError:</span> Invalid transaction signature</div>
+                <div>
+                  <span className="font-medium">TransactionNotFoundError:</span>{" "}
+                  Transaction signature not found
+                </div>
+                <div>
+                  <span className="font-medium">TransactionFailedError:</span>{" "}
+                  Transaction execution failed
+                </div>
+                <div>
+                  <span className="font-medium">InvalidSignatureError:</span>{" "}
+                  Invalid transaction signature
+                </div>
               </div>
             </div>
             <div className="mt-3 p-3 bg-blue-50 rounded">
-              <span className="text-sm font-medium text-blue-800">Recovery Strategy:</span>
-              <span className="text-sm text-blue-700 ml-2">Application-specific handling, no automatic retry</span>
+              <span className="text-sm font-medium text-blue-800">
+                Recovery Strategy:
+              </span>
+              <span className="text-sm text-blue-700 ml-2">
+                Application-specific handling, no automatic retry
+              </span>
             </div>
           </div>
 
@@ -151,14 +220,27 @@ export default function ErrorHandling() {
             </p>
             <div className="bg-gray-50 rounded p-4">
               <div className="space-y-2 text-sm">
-                <div><span className="font-medium">InvalidAddressError:</span> Invalid public key format</div>
-                <div><span className="font-medium">InvalidParameterError:</span> Parameter validation failed</div>
-                <div><span className="font-medium">ConfigurationError:</span> Invalid SDK configuration</div>
+                <div>
+                  <span className="font-medium">InvalidAddressError:</span>{" "}
+                  Invalid public key format
+                </div>
+                <div>
+                  <span className="font-medium">InvalidParameterError:</span>{" "}
+                  Parameter validation failed
+                </div>
+                <div>
+                  <span className="font-medium">ConfigurationError:</span>{" "}
+                  Invalid SDK configuration
+                </div>
               </div>
             </div>
             <div className="mt-3 p-3 bg-blue-50 rounded">
-              <span className="text-sm font-medium text-blue-800">Recovery Strategy:</span>
-              <span className="text-sm text-blue-700 ml-2">Immediate failure, fix input and retry</span>
+              <span className="text-sm font-medium text-blue-800">
+                Recovery Strategy:
+              </span>
+              <span className="text-sm text-blue-700 ml-2">
+                Immediate failure, fix input and retry
+              </span>
             </div>
           </div>
 
@@ -173,14 +255,27 @@ export default function ErrorHandling() {
             </p>
             <div className="bg-gray-50 rounded p-4">
               <div className="space-y-2 text-sm">
-                <div><span className="font-medium">UnauthorizedError:</span> Missing or invalid credentials</div>
-                <div><span className="font-medium">ForbiddenError:</span> Insufficient permissions</div>
-                <div><span className="font-medium">ApiKeyError:</span> Invalid or expired API key</div>
+                <div>
+                  <span className="font-medium">UnauthorizedError:</span>{" "}
+                  Missing or invalid credentials
+                </div>
+                <div>
+                  <span className="font-medium">ForbiddenError:</span>{" "}
+                  Insufficient permissions
+                </div>
+                <div>
+                  <span className="font-medium">ApiKeyError:</span> Invalid or
+                  expired API key
+                </div>
               </div>
             </div>
             <div className="mt-3 p-3 bg-blue-50 rounded">
-              <span className="text-sm font-medium text-blue-800">Recovery Strategy:</span>
-              <span className="text-sm text-blue-700 ml-2">Refresh credentials or contact administrator</span>
+              <span className="text-sm font-medium text-blue-800">
+                Recovery Strategy:
+              </span>
+              <span className="text-sm text-blue-700 ml-2">
+                Refresh credentials or contact administrator
+              </span>
             </div>
           </div>
 
@@ -191,18 +286,32 @@ export default function ErrorHandling() {
               7. General SDK Errors
             </h3>
             <p className="text-gray-600 mb-3">
-              SDK-specific errors, initialization failures, and unexpected conditions.
+              SDK-specific errors, initialization failures, and unexpected
+              conditions.
             </p>
             <div className="bg-gray-50 rounded p-4">
               <div className="space-y-2 text-sm">
-                <div><span className="font-medium">SDKNotInitializedError:</span> SDK not properly initialized</div>
-                <div><span className="font-medium">InternalError:</span> Unexpected internal error</div>
-                <div><span className="font-medium">VersionMismatchError:</span> API version compatibility issue</div>
+                <div>
+                  <span className="font-medium">SDKNotInitializedError:</span>{" "}
+                  SDK not properly initialized
+                </div>
+                <div>
+                  <span className="font-medium">InternalError:</span> Unexpected
+                  internal error
+                </div>
+                <div>
+                  <span className="font-medium">VersionMismatchError:</span> API
+                  version compatibility issue
+                </div>
               </div>
             </div>
             <div className="mt-3 p-3 bg-blue-50 rounded">
-              <span className="text-sm font-medium text-blue-800">Recovery Strategy:</span>
-              <span className="text-sm text-blue-700 ml-2">Check SDK configuration and version compatibility</span>
+              <span className="text-sm font-medium text-blue-800">
+                Recovery Strategy:
+              </span>
+              <span className="text-sm text-blue-700 ml-2">
+                Check SDK configuration and version compatibility
+              </span>
             </div>
           </div>
         </div>
@@ -210,13 +319,17 @@ export default function ErrorHandling() {
 
       {/* Error Handling Best Practices */}
       <div className="docs-card">
-        <h2 className="text-xl font-semibold text-docs-heading mb-4">Best Practices</h2>
+        <h2 className="text-xl font-semibold text-docs-heading mb-4">
+          Best Practices
+        </h2>
         <div className="space-y-6">
-          
           <div>
-            <h3 className="text-lg font-semibold text-docs-heading mb-3">1. Structured Error Handling</h3>
+            <h3 className="text-lg font-semibold text-docs-heading mb-3">
+              1. Structured Error Handling
+            </h3>
             <div className="code-block">
-              <pre><code>{`import { 
+              <pre>
+                <code>{`import { 
   NetworkConnectionError, 
   RpcNetworkError, 
   DecoderError, 
@@ -246,14 +359,18 @@ try {
     console.log('Transaction not found:', error.message)
     throw error // Don't retry transaction errors
   }
-}`}</code></pre>
+}`}</code>
+              </pre>
             </div>
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold text-docs-heading mb-3">2. Retry Configuration</h3>
+            <h3 className="text-lg font-semibold text-docs-heading mb-3">
+              2. Retry Configuration
+            </h3>
             <div className="code-block">
-              <pre><code>{`// Configure retry behavior
+              <pre>
+                <code>{`// Configure retry behavior
 const sdk = new GorbchainSDK({
   rpcEndpoint: 'https://rpc.gorbchain.xyz',
   retryConfig: {
@@ -268,14 +385,18 @@ const sdk = new GorbchainSDK({
     timeout: 60000,
     resetTimeout: 30000
   }
-})`}</code></pre>
+})`}</code>
+              </pre>
             </div>
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold text-docs-heading mb-3">3. Graceful Degradation</h3>
+            <h3 className="text-lg font-semibold text-docs-heading mb-3">
+              3. Graceful Degradation
+            </h3>
             <div className="code-block">
-              <pre><code>{`async function getTransactionWithFallback(signature: string) {
+              <pre>
+                <code>{`async function getTransactionWithFallback(signature: string) {
   try {
     // Try full decoding first
     return await sdk.getAndDecodeTransaction(signature, {
@@ -301,7 +422,8 @@ const sdk = new GorbchainSDK({
     
     throw error
   }
-}`}</code></pre>
+}`}</code>
+              </pre>
             </div>
           </div>
         </div>
@@ -309,14 +431,18 @@ const sdk = new GorbchainSDK({
 
       {/* Error Context and Debugging */}
       <div className="docs-card">
-        <h2 className="text-xl font-semibold text-docs-heading mb-4">Error Context & Debugging</h2>
+        <h2 className="text-xl font-semibold text-docs-heading mb-4">
+          Error Context & Debugging
+        </h2>
         <div className="space-y-4">
           <p className="text-gray-600">
-            All SDK errors include rich context information to help with debugging:
+            All SDK errors include rich context information to help with
+            debugging:
           </p>
-          
+
           <div className="code-block">
-            <pre><code>{`// Error objects include comprehensive context
+            <pre>
+              <code>{`// Error objects include comprehensive context
 try {
   await sdk.getAccountInfo(invalidAddress)
 } catch (error) {
@@ -344,7 +470,8 @@ try {
   //   timestamp: '2024-01-15T10:30:00.000Z',
   //   requestId: 'req_123456789'
   // }
-}`}</code></pre>
+}`}</code>
+            </pre>
           </div>
         </div>
       </div>
@@ -356,7 +483,9 @@ try {
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div>
-            <h4 className="font-semibold text-purple-800 mb-2">Error Metrics</h4>
+            <h4 className="font-semibold text-purple-800 mb-2">
+              Error Metrics
+            </h4>
             <ul className="text-purple-700 space-y-1">
               <li>• Error rate by category</li>
               <li>• Retry success/failure rates</li>
@@ -365,7 +494,9 @@ try {
             </ul>
           </div>
           <div>
-            <h4 className="font-semibold text-purple-800 mb-2">Logging Integration</h4>
+            <h4 className="font-semibold text-purple-800 mb-2">
+              Logging Integration
+            </h4>
             <ul className="text-purple-700 space-y-1">
               <li>• Structured error logging</li>
               <li>• Request correlation IDs</li>
@@ -374,7 +505,7 @@ try {
             </ul>
           </div>
         </div>
-        
+
         <div className="mt-4 p-3 bg-white rounded border border-purple-200">
           <code className="text-sm">
             sdk.on('error', (error) = logger.error(error))
@@ -382,5 +513,5 @@ try {
         </div>
       </div>
     </div>
-  )
-} 
+  );
+}

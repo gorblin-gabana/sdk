@@ -1,35 +1,35 @@
-import { useState } from 'react'
-import { ClipboardIcon, CheckIcon } from '@heroicons/react/24/outline'
+import { useState } from "react";
+import { ClipboardIcon, CheckIcon } from "@heroicons/react/24/outline";
 
 interface CodeBlockProps {
-  code: string
-  language: string
-  title?: string
-  id?: string
-  onCopy?: (code: string, id?: string) => void
-  copied?: boolean
+  code: string;
+  language: string;
+  title?: string;
+  id?: string;
+  onCopy?: (code: string, id?: string) => void;
+  copied?: boolean;
 }
 
-const CodeBlock: React.FC<CodeBlockProps> = ({ 
-  code, 
-  language, 
-  title, 
-  id, 
-  onCopy, 
-  copied: externalCopied 
+const CodeBlock: React.FC<CodeBlockProps> = ({
+  code,
+  language,
+  title,
+  id,
+  onCopy,
+  copied: externalCopied,
 }) => {
-  const [internalCopied, setInternalCopied] = useState(false)
-  const copied = externalCopied !== undefined ? externalCopied : internalCopied
+  const [internalCopied, setInternalCopied] = useState(false);
+  const copied = externalCopied !== undefined ? externalCopied : internalCopied;
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(code)
+    await navigator.clipboard.writeText(code);
     if (onCopy) {
-      onCopy(code, id)
+      onCopy(code, id);
     } else {
-      setInternalCopied(true)
-      setTimeout(() => setInternalCopied(false), 2000)
+      setInternalCopied(true);
+      setTimeout(() => setInternalCopied(false), 2000);
     }
-  }
+  };
 
   return (
     <div className="relative bg-gray-900 rounded-lg overflow-hidden">
@@ -72,7 +72,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
         </pre>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default CodeBlock 
+export default CodeBlock;

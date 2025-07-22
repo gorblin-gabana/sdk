@@ -1,21 +1,33 @@
-import { describe, test, expect, beforeEach, beforeAll, jest } from '@jest/globals';
-import { 
-  GorbchainSDK, 
-  RpcClient, 
-  EnhancedRpcClient, 
-  AdvancedTokenHoldings, 
-  DecoderRegistry, 
+import {
+  describe,
+  test,
+  expect,
+  beforeEach,
+  beforeAll,
+  jest,
+} from "@jest/globals";
+import {
+  GorbchainSDK,
+  RpcClient,
+  EnhancedRpcClient,
+  AdvancedTokenHoldings,
+  DecoderRegistry,
   createDefaultDecoderRegistry,
   base58ToBytes,
   bytesToBase58,
   getRichTokenAccountsByOwner,
   getRichTransaction,
-  getDefaultConfig
-} from '../src/index';
-import { decodeBase64 } from '../src/utils/base64ToHex.js';
-import { createTestSDK, TEST_DATA, PerformanceTracker, shouldSkipNetworkTests } from './setup';
+  getDefaultConfig,
+} from "../src/index";
+import { decodeBase64 } from "../src/utils/base64ToHex.js";
+import {
+  createTestSDK,
+  TEST_DATA,
+  PerformanceTracker,
+  shouldSkipNetworkTests,
+} from "./setup";
 
-describe('Optimized SDK Tests', () => {
+describe("Optimized SDK Tests", () => {
   let sdk: GorbchainSDK;
   let perfTracker: PerformanceTracker;
 
@@ -24,25 +36,25 @@ describe('Optimized SDK Tests', () => {
     perfTracker = new PerformanceTracker();
   });
 
-  describe('1. SDK Initialization & Configuration', () => {
-    test('should initialize with optimized configuration structure', () => {
+  describe("1. SDK Initialization & Configuration", () => {
+    test("should initialize with optimized configuration structure", () => {
       expect(sdk).toBeDefined();
       expect(sdk.config).toBeDefined();
       expect(sdk.config.rpcEndpoint).toBe(TEST_DATA.network.rpcEndpoint);
       expect(sdk.config.network).toBe(TEST_DATA.network.networkName);
     });
 
-    test('should have consolidated GorbchainSDKConfig type', () => {
+    test("should have consolidated GorbchainSDKConfig type", () => {
       // Test that the config uses the consolidated type structure
-      expect(sdk.config).toHaveProperty('rpcEndpoint');
-      expect(sdk.config).toHaveProperty('network');
-      expect(sdk.config).toHaveProperty('timeout');
-      expect(sdk.config).toHaveProperty('retries');
-      expect(sdk.config).toHaveProperty('tokenAnalysis');
-      expect(sdk.config).toHaveProperty('richDecoding');
+      expect(sdk.config).toHaveProperty("rpcEndpoint");
+      expect(sdk.config).toHaveProperty("network");
+      expect(sdk.config).toHaveProperty("timeout");
+      expect(sdk.config).toHaveProperty("retries");
+      expect(sdk.config).toHaveProperty("tokenAnalysis");
+      expect(sdk.config).toHaveProperty("richDecoding");
     });
 
-    test('should have organized export structure', () => {
+    test("should have organized export structure", () => {
       // Test that all major exports are available from the main index
       const exports = {
         GorbchainSDK,
@@ -55,144 +67,186 @@ describe('Optimized SDK Tests', () => {
         bytesToBase58,
         getRichTokenAccountsByOwner,
         getRichTransaction,
-        getDefaultConfig
+        getDefaultConfig,
       };
-      
+
       // Core SDK
       expect(exports.GorbchainSDK).toBeDefined();
       expect(exports.getDefaultConfig).toBeDefined();
-      
+
       // RPC Clients
       expect(exports.RpcClient).toBeDefined();
       expect(exports.EnhancedRpcClient).toBeDefined();
-      
+
       // Decoders
       expect(exports.DecoderRegistry).toBeDefined();
       expect(exports.createDefaultDecoderRegistry).toBeDefined();
-      
+
       // Token Operations
       expect(exports.AdvancedTokenHoldings).toBeDefined();
-      
+
       // Rich Operations
       expect(exports.getRichTokenAccountsByOwner).toBeDefined();
       expect(exports.getRichTransaction).toBeDefined();
-      
+
       // Utilities
       expect(exports.base58ToBytes).toBeDefined();
       expect(exports.bytesToBase58).toBeDefined();
     });
 
-    test('should initialize quickly', () => {
+    test("should initialize quickly", () => {
       perfTracker.start();
       const quickSdk = createTestSDK();
-      perfTracker.expectUnder(100, 'SDK initialization');
-      
+      perfTracker.expectUnder(100, "SDK initialization");
+
       expect(quickSdk).toBeDefined();
     });
   });
 
-  describe('2. Export Organization Validation', () => {
-    test('should have all core SDK exports', () => {
-      const exports = { GorbchainSDK, RpcClient, EnhancedRpcClient, AdvancedTokenHoldings, DecoderRegistry, createDefaultDecoderRegistry, base58ToBytes, bytesToBase58, getRichTokenAccountsByOwner, getRichTransaction, getDefaultConfig };
-      
-      const expectedCoreExports = [
-        'GorbchainSDK',
-        'getDefaultConfig'
-      ];
-      
-      expectedCoreExports.forEach(exportName => {
+  describe("2. Export Organization Validation", () => {
+    test("should have all core SDK exports", () => {
+      const exports = {
+        GorbchainSDK,
+        RpcClient,
+        EnhancedRpcClient,
+        AdvancedTokenHoldings,
+        DecoderRegistry,
+        createDefaultDecoderRegistry,
+        base58ToBytes,
+        bytesToBase58,
+        getRichTokenAccountsByOwner,
+        getRichTransaction,
+        getDefaultConfig,
+      };
+
+      const expectedCoreExports = ["GorbchainSDK", "getDefaultConfig"];
+
+      expectedCoreExports.forEach((exportName) => {
         expect(exports[exportName]).toBeDefined();
       });
     });
 
-    test('should have all type exports available', () => {
-      const exports = { GorbchainSDK, RpcClient, EnhancedRpcClient, AdvancedTokenHoldings, DecoderRegistry, createDefaultDecoderRegistry, base58ToBytes, bytesToBase58, getRichTokenAccountsByOwner, getRichTransaction, getDefaultConfig };
-      
+    test("should have all type exports available", () => {
+      const exports = {
+        GorbchainSDK,
+        RpcClient,
+        EnhancedRpcClient,
+        AdvancedTokenHoldings,
+        DecoderRegistry,
+        createDefaultDecoderRegistry,
+        base58ToBytes,
+        bytesToBase58,
+        getRichTokenAccountsByOwner,
+        getRichTransaction,
+        getDefaultConfig,
+      };
+
       // These should be available as TypeScript types (can't test directly but exported)
       const typeExports = [
-        'GorbchainSDKConfig',
-        'RichTransaction',
-        'TransactionDecodingOptions',
-        'TokenCreationParams',
-        'NFTCreationParams'
+        "GorbchainSDKConfig",
+        "RichTransaction",
+        "TransactionDecodingOptions",
+        "TokenCreationParams",
+        "NFTCreationParams",
       ];
-      
+
       // We can't directly test type exports, but we can verify the module exports them
       const moduleExportKeys = Object.keys(exports);
       expect(moduleExportKeys.length).toBeGreaterThan(5); // Should have core exports
     });
 
-    test('should have properly organized decoder exports', () => {
-      const exports = { GorbchainSDK, RpcClient, EnhancedRpcClient, AdvancedTokenHoldings, DecoderRegistry, createDefaultDecoderRegistry, base58ToBytes, bytesToBase58, getRichTokenAccountsByOwner, getRichTransaction, getDefaultConfig };
-      
+    test("should have properly organized decoder exports", () => {
+      const exports = {
+        GorbchainSDK,
+        RpcClient,
+        EnhancedRpcClient,
+        AdvancedTokenHoldings,
+        DecoderRegistry,
+        createDefaultDecoderRegistry,
+        base58ToBytes,
+        bytesToBase58,
+        getRichTokenAccountsByOwner,
+        getRichTransaction,
+        getDefaultConfig,
+      };
+
       const decoderExports = [
-        'DecoderRegistry',
-        'createDefaultDecoderRegistry'
+        "DecoderRegistry",
+        "createDefaultDecoderRegistry",
       ];
-      
-      decoderExports.forEach(exportName => {
+
+      decoderExports.forEach((exportName) => {
         expect(exports[exportName]).toBeDefined();
       });
     });
 
-    test('should have utility exports organized', () => {
-      const exports = { GorbchainSDK, RpcClient, EnhancedRpcClient, AdvancedTokenHoldings, DecoderRegistry, createDefaultDecoderRegistry, base58ToBytes, bytesToBase58, getRichTokenAccountsByOwner, getRichTransaction, getDefaultConfig };
-      
-      const utilityExports = [
-        'base58ToBytes',
-        'bytesToBase58'
-      ];
-      
-      utilityExports.forEach(exportName => {
+    test("should have utility exports organized", () => {
+      const exports = {
+        GorbchainSDK,
+        RpcClient,
+        EnhancedRpcClient,
+        AdvancedTokenHoldings,
+        DecoderRegistry,
+        createDefaultDecoderRegistry,
+        base58ToBytes,
+        bytesToBase58,
+        getRichTokenAccountsByOwner,
+        getRichTransaction,
+        getDefaultConfig,
+      };
+
+      const utilityExports = ["base58ToBytes", "bytesToBase58"];
+
+      utilityExports.forEach((exportName) => {
         expect(exports[exportName]).toBeDefined();
       });
     });
   });
 
-  describe('3. Optimized Functionality Tests', () => {
-    test('should have clean decoder registry', () => {
+  describe("3. Optimized Functionality Tests", () => {
+    test("should have clean decoder registry", () => {
       const supportedPrograms = sdk.getSupportedPrograms();
-      
+
       expect(Array.isArray(supportedPrograms)).toBe(true);
       expect(supportedPrograms.length).toBeGreaterThan(0);
-      
+
       // Should include core program types
-      expect(supportedPrograms).toContain('system');
-      expect(supportedPrograms).toContain('spl-token');
-      expect(supportedPrograms).toContain('token-2022');
-      expect(supportedPrograms).toContain('ata');
-      expect(supportedPrograms).toContain('nft');
+      expect(supportedPrograms).toContain("system");
+      expect(supportedPrograms).toContain("spl-token");
+      expect(supportedPrograms).toContain("token-2022");
+      expect(supportedPrograms).toContain("ata");
+      expect(supportedPrograms).toContain("nft");
     });
 
-    test('should have network configuration methods', () => {
+    test("should have network configuration methods", () => {
       const networkConfig = sdk.getNetworkConfig();
       expect(networkConfig).toBeDefined();
-      
+
       const capabilities = sdk.getNetworkCapabilities();
-      expect(capabilities).toHaveProperty('supportedMethods');
-      expect(capabilities).toHaveProperty('features');
-      expect(capabilities).toHaveProperty('tokenPrograms');
+      expect(capabilities).toHaveProperty("supportedMethods");
+      expect(capabilities).toHaveProperty("features");
+      expect(capabilities).toHaveProperty("tokenPrograms");
     });
 
-    test('should support feature checking', () => {
-      const supportsTokens = sdk.supportsFeature('standardTokens');
-      const supportsNFTs = sdk.supportsFeature('nftSupport');
-      
-      expect(typeof supportsTokens).toBe('boolean');
-      expect(typeof supportsNFTs).toBe('boolean');
+    test("should support feature checking", () => {
+      const supportsTokens = sdk.supportsFeature("standardTokens");
+      const supportsNFTs = sdk.supportsFeature("nftSupport");
+
+      expect(typeof supportsTokens).toBe("boolean");
+      expect(typeof supportsNFTs).toBe("boolean");
     });
 
-    test('should support RPC method checking', () => {
-      const supportsGetAccountInfo = sdk.supportsMethod('getAccountInfo');
-      const supportsGetSlot = sdk.supportsMethod('getSlot');
-      
-      expect(typeof supportsGetAccountInfo).toBe('boolean');
-      expect(typeof supportsGetSlot).toBe('boolean');
+    test("should support RPC method checking", () => {
+      const supportsGetAccountInfo = sdk.supportsMethod("getAccountInfo");
+      const supportsGetSlot = sdk.supportsMethod("getSlot");
+
+      expect(typeof supportsGetAccountInfo).toBe("boolean");
+      expect(typeof supportsGetSlot).toBe("boolean");
     });
 
-    test('should auto-detect network configuration', () => {
+    test("should auto-detect network configuration", () => {
       const networkConfig = sdk.getNetworkConfig();
-      
+
       expect(networkConfig).toBeDefined();
       if (networkConfig) {
         expect(networkConfig.features).toBeDefined();
@@ -200,9 +254,9 @@ describe('Optimized SDK Tests', () => {
       }
     });
 
-    test('should provide comprehensive network capabilities', () => {
+    test("should provide comprehensive network capabilities", () => {
       const capabilities = sdk.getNetworkCapabilities();
-      
+
       expect(capabilities).toBeDefined();
       expect(capabilities.supportedMethods).toBeInstanceOf(Array);
       expect(capabilities.features).toBeDefined();
@@ -210,66 +264,72 @@ describe('Optimized SDK Tests', () => {
     });
   });
 
-  describe('4. Error Handling & Edge Cases', () => {
-    test('should handle invalid configuration gracefully', () => {
+  describe("4. Error Handling & Edge Cases", () => {
+    test("should handle invalid configuration gracefully", () => {
       expect(() => {
         new GorbchainSDK({
-          rpcEndpoint: '', // Invalid empty endpoint
-          network: 'invalid' as any
+          rpcEndpoint: "", // Invalid empty endpoint
+          network: "invalid" as any,
         });
       }).toThrow();
     });
 
-    test('should handle unknown instruction decoding', () => {
+    test("should handle unknown instruction decoding", () => {
       const unknownInstruction = {
-        programId: 'UnknownProgram11111111111111111111111111111',
+        programId: "UnknownProgram11111111111111111111111111111",
         data: new Uint8Array([255, 255, 255]),
-        accounts: []
+        accounts: [],
       };
 
       const decoded = sdk.decoderRegistry.decode(unknownInstruction);
       expect(decoded).toBeDefined();
-      expect(decoded.type).toBe('unknown');
-      expect(decoded.programId).toBe('UnknownProgram11111111111111111111111111111');
+      expect(decoded.type).toBe("unknown");
+      expect(decoded.programId).toBe(
+        "UnknownProgram11111111111111111111111111111",
+      );
     });
 
-    test('should handle malformed instruction data', () => {
+    test("should handle malformed instruction data", () => {
       const malformedInstruction = {
-        programId: '11111111111111111111111111111111',
-        data: 'invalid-data' as any,
-        accounts: null as any
+        programId: "11111111111111111111111111111111",
+        data: "invalid-data" as any,
+        accounts: null as any,
       };
 
       const decoded = sdk.decoderRegistry.decode(malformedInstruction);
       expect(decoded).toBeDefined();
-      expect(decoded.type).toBe('unknown');
+      expect(decoded.type).toBe("unknown");
     });
   });
 
-  describe('5. Performance Tests', () => {
-    test('should decode instructions quickly', () => {
+  describe("5. Performance Tests", () => {
+    test("should decode instructions quickly", () => {
       const instruction = {
-        programId: '11111111111111111111111111111111',
-        data: new Uint8Array([2, 0, 0, 0, 0, 0, 0, 0, 64, 66, 15, 0, 0, 0, 0, 0]),
-        accounts: ['sender', 'recipient']
+        programId: "11111111111111111111111111111111",
+        data: new Uint8Array([
+          2, 0, 0, 0, 0, 0, 0, 0, 64, 66, 15, 0, 0, 0, 0, 0,
+        ]),
+        accounts: ["sender", "recipient"],
       };
 
       perfTracker.start();
       for (let i = 0; i < 100; i++) {
         sdk.decoderRegistry.decode(instruction);
       }
-      perfTracker.expectUnder(1000, '100 instruction decodings');
+      perfTracker.expectUnder(1000, "100 instruction decodings");
     });
 
-    test('should not leak memory on repeated operations', () => {
+    test("should not leak memory on repeated operations", () => {
       const initialMemory = process.memoryUsage();
 
       // Perform many decoding operations
       for (let i = 0; i < 1000; i++) {
         const instruction = {
-          programId: '11111111111111111111111111111111',
-          data: new Uint8Array([2, 0, 0, 0, 0, 0, 0, 0, 64, 66, 15, 0, 0, 0, 0, 0]),
-          accounts: [`sender${i}`, `recipient${i}`]
+          programId: "11111111111111111111111111111111",
+          data: new Uint8Array([
+            2, 0, 0, 0, 0, 0, 0, 0, 64, 66, 15, 0, 0, 0, 0, 0,
+          ]),
+          accounts: [`sender${i}`, `recipient${i}`],
         };
         sdk.decoderRegistry.decode(instruction);
       }
@@ -287,57 +347,57 @@ describe('Optimized SDK Tests', () => {
     });
   });
 
-  describe('6. Network-dependent Tests', () => {
+  describe("6. Network-dependent Tests", () => {
     const skipNetworkTests = shouldSkipNetworkTests();
 
-    test('should check network health', async () => {
+    test("should check network health", async () => {
       if (skipNetworkTests) {
-        console.log('⏭️  Skipping network health test');
+        console.log("⏭️  Skipping network health test");
         return;
       }
 
       perfTracker.start();
       const health = await sdk.getNetworkHealth();
-      perfTracker.expectUnder(5000, 'Network health check');
+      perfTracker.expectUnder(5000, "Network health check");
 
-      expect(health).toHaveProperty('status');
-      expect(health).toHaveProperty('currentSlot');
-      expect(health).toHaveProperty('responseTime');
-      expect(['healthy', 'degraded', 'unhealthy']).toContain(health.status);
+      expect(health).toHaveProperty("status");
+      expect(health).toHaveProperty("currentSlot");
+      expect(health).toHaveProperty("responseTime");
+      expect(["healthy", "degraded", "unhealthy"]).toContain(health.status);
     });
 
-    test('should detect network capabilities', async () => {
+    test("should detect network capabilities", async () => {
       if (skipNetworkTests) {
-        console.log('⏭️  Skipping network capabilities test');
+        console.log("⏭️  Skipping network capabilities test");
         return;
       }
 
       perfTracker.start();
       const capabilities = await sdk.detectNetworkCapabilities();
-      perfTracker.expectUnder(10000, 'Network capabilities detection');
+      perfTracker.expectUnder(10000, "Network capabilities detection");
 
-      expect(capabilities).toHaveProperty('supportedMethods');
-      expect(capabilities).toHaveProperty('detectedFeatures');
+      expect(capabilities).toHaveProperty("supportedMethods");
+      expect(capabilities).toHaveProperty("detectedFeatures");
       expect(Array.isArray(capabilities.supportedMethods)).toBe(true);
     });
 
-    test('should test RPC performance', async () => {
+    test("should test RPC performance", async () => {
       if (skipNetworkTests) {
-        console.log('⏭️  Skipping RPC performance test');
+        console.log("⏭️  Skipping RPC performance test");
         return;
       }
 
       const performance = await sdk.testRpcPerformance(3);
 
-      expect(performance).toHaveProperty('averageResponseTime');
-      expect(performance).toHaveProperty('successRate');
+      expect(performance).toHaveProperty("averageResponseTime");
+      expect(performance).toHaveProperty("successRate");
       expect(performance.successRate).toBeGreaterThan(0);
       expect(performance.successRate).toBeLessThanOrEqual(100);
     });
   });
 
-  describe('7. Browser Compatibility', () => {
-    test('should work without Buffer in browser environment', () => {
+  describe("7. Browser Compatibility", () => {
+    test("should work without Buffer in browser environment", () => {
       // Test that the SDK doesn't try to use Buffer
       const originalBuffer = global.Buffer;
       delete (global as any).Buffer;
@@ -349,9 +409,9 @@ describe('Optimized SDK Tests', () => {
 
         // Test instruction decoding without Buffer
         const instruction = {
-          programId: '11111111111111111111111111111111',
+          programId: "11111111111111111111111111111111",
           data: new Uint8Array([1, 2, 3, 4]),
-          accounts: ['account1']
+          accounts: ["account1"],
         };
 
         const decoded = browserSdk.decodeInstruction(instruction);
@@ -362,8 +422,8 @@ describe('Optimized SDK Tests', () => {
       }
     });
 
-    test('should handle base64 decoding without Buffer', () => {
-      const base64String = 'SGVsbG8gV29ybGQ='; // "Hello World" in base64
+    test("should handle base64 decoding without Buffer", () => {
+      const base64String = "SGVsbG8gV29ybGQ="; // "Hello World" in base64
 
       // Test that we can decode base64 without Buffer
       const binaryString = atob(base64String);
@@ -373,145 +433,155 @@ describe('Optimized SDK Tests', () => {
       }
 
       const decoded = new TextDecoder().decode(bytes);
-      expect(decoded).toBe('Hello World');
+      expect(decoded).toBe("Hello World");
     });
   });
 
-  describe('8. Comprehensive Decoder Testing', () => {
-    test('should decode System Program instructions with real program ID', () => {
+  describe("8. Comprehensive Decoder Testing", () => {
+    test("should decode System Program instructions with real program ID", () => {
       const systemInstruction = {
-        programId: '11111111111111111111111111111111',
-        data: new Uint8Array([2, 0, 0, 0, 0, 0, 0, 0, 64, 66, 15, 0, 0, 0, 0, 0]), // Transfer 1000000 lamports
-        accounts: ['sender123', 'recipient456']
+        programId: "11111111111111111111111111111111",
+        data: new Uint8Array([
+          2, 0, 0, 0, 0, 0, 0, 0, 64, 66, 15, 0, 0, 0, 0, 0,
+        ]), // Transfer 1000000 lamports
+        accounts: ["sender123", "recipient456"],
       };
 
       const decoded = sdk.decoderRegistry.decode(systemInstruction);
       expect(decoded).toBeDefined();
-      expect(decoded.programId).toBe('11111111111111111111111111111111');
+      expect(decoded.programId).toBe("11111111111111111111111111111111");
     });
 
-    test('should decode SPL Token instructions with real program ID', () => {
+    test("should decode SPL Token instructions with real program ID", () => {
       const splTokenInstruction = {
-        programId: 'Gorbj8Dp27NkXMQUkeHBSmpf6iQ3yT4b2uVe8kM4s6br',
+        programId: "Gorbj8Dp27NkXMQUkeHBSmpf6iQ3yT4b2uVe8kM4s6br",
         data: new Uint8Array([3, 64, 66, 15, 0, 0, 0, 0, 0]), // Transfer 1000000 tokens
-        accounts: ['sourceAccount', 'destinationAccount', 'authority']
+        accounts: ["sourceAccount", "destinationAccount", "authority"],
       };
 
       const decoded = sdk.decoderRegistry.decode(splTokenInstruction);
       expect(decoded).toBeDefined();
-      expect(decoded.programId).toBe('Gorbj8Dp27NkXMQUkeHBSmpf6iQ3yT4b2uVe8kM4s6br');
+      expect(decoded.programId).toBe(
+        "Gorbj8Dp27NkXMQUkeHBSmpf6iQ3yT4b2uVe8kM4s6br",
+      );
     });
 
-    test('should decode Token-2022 instructions with real program ID', () => {
+    test("should decode Token-2022 instructions with real program ID", () => {
       const token2022Instruction = {
-        programId: 'G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6',
+        programId: "G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6",
         data: new Uint8Array([3, 64, 66, 15, 0, 0, 0, 0, 0]), // Transfer 1000000 tokens
-        accounts: ['sourceAccount', 'destinationAccount', 'authority']
+        accounts: ["sourceAccount", "destinationAccount", "authority"],
       };
 
       const decoded = sdk.decoderRegistry.decode(token2022Instruction);
       expect(decoded).toBeDefined();
-      expect(decoded.programId).toBe('G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6');
+      expect(decoded.programId).toBe(
+        "G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6",
+      );
     });
 
-    test('should allow custom decoder registration and usage', () => {
-      const customProgramId = 'CustomProgramId123456789';
+    test("should allow custom decoder registration and usage", () => {
+      const customProgramId = "CustomProgramId123456789";
       const customDecoder = jest.fn().mockReturnValue({
-        type: 'custom-instruction',
+        type: "custom-instruction",
         programId: customProgramId,
         data: { custom: true },
-        accounts: []
+        accounts: [],
       });
 
-      sdk.registerDecoder('custom', customProgramId, customDecoder);
+      sdk.registerDecoder("custom", customProgramId, customDecoder);
 
       const customInstruction = {
         programId: customProgramId,
         data: new Uint8Array([1, 2, 3]),
-        accounts: ['account1']
+        accounts: ["account1"],
       };
 
       const decoded = sdk.decoderRegistry.decode(customInstruction);
       expect(customDecoder).toHaveBeenCalledWith(customInstruction);
-      expect(decoded.type).toBe('custom-instruction');
+      expect(decoded.type).toBe("custom-instruction");
       expect(decoded.data.custom).toBe(true);
     });
 
-    test('should have comprehensive decoder registry initialization', () => {
+    test("should have comprehensive decoder registry initialization", () => {
       expect(sdk.decoders).toBeDefined();
       expect(sdk.decoders).toBeInstanceOf(DecoderRegistry);
 
       const registeredPrograms = sdk.decoders.getRegisteredPrograms();
-      expect(registeredPrograms).toContain('system');
-      expect(registeredPrograms).toContain('spl-token');
-      expect(registeredPrograms).toContain('token-2022');
-      expect(registeredPrograms).toContain('ata');
-      expect(registeredPrograms).toContain('nft');
+      expect(registeredPrograms).toContain("system");
+      expect(registeredPrograms).toContain("spl-token");
+      expect(registeredPrograms).toContain("token-2022");
+      expect(registeredPrograms).toContain("ata");
+      expect(registeredPrograms).toContain("nft");
     });
   });
 
-  describe('9. RPC Client Integration', () => {
-    test('should have complete RPC client functionality', () => {
+  describe("9. RPC Client Integration", () => {
+    test("should have complete RPC client functionality", () => {
       expect(sdk.rpc).toBeDefined();
-      expect(typeof sdk.rpc.request).toBe('function');
-      expect(typeof sdk.rpc.getHealth).toBe('function');
-      expect(typeof sdk.rpc.getSlot).toBe('function');
-      expect(typeof sdk.rpc.getAccountInfo).toBe('function');
+      expect(typeof sdk.rpc.request).toBe("function");
+      expect(typeof sdk.rpc.getHealth).toBe("function");
+      expect(typeof sdk.rpc.getSlot).toBe("function");
+      expect(typeof sdk.rpc.getAccountInfo).toBe("function");
     });
 
-    test('should handle RPC client method errors gracefully', async () => {
+    test("should handle RPC client method errors gracefully", async () => {
       // Test error handling without making actual network calls
       const mockRpc = {
         ...sdk.rpc,
-        getHealth: jest.fn().mockRejectedValue(new Error('Network error'))
+        getHealth: jest.fn().mockRejectedValue(new Error("Network error")),
       };
 
       try {
         await mockRpc.getHealth();
-        fail('Should have thrown an error');
+        fail("Should have thrown an error");
       } catch (error) {
         expect(error).toBeInstanceOf(Error);
-        expect((error as Error).message).toBe('Network error');
+        expect((error as Error).message).toBe("Network error");
       }
     });
   });
 
-  describe('10. Direct Access to Core Components', () => {
-    test('should provide direct access to RPC and decoder components', () => {
+  describe("10. Direct Access to Core Components", () => {
+    test("should provide direct access to RPC and decoder components", () => {
       // Direct access to core components instead of wrapper methods
-      expect(typeof sdk.rpc).toBe('object');
-      expect(typeof sdk.enhancedRpc).toBe('object');
-      expect(typeof sdk.decoderRegistry).toBe('object');
-      
+      expect(typeof sdk.rpc).toBe("object");
+      expect(typeof sdk.enhancedRpc).toBe("object");
+      expect(typeof sdk.decoderRegistry).toBe("object");
+
       // Test RPC client methods
-      expect(typeof sdk.rpc.request).toBe('function');
-      expect(typeof sdk.rpc.getAccountInfo).toBe('function');
-      
+      expect(typeof sdk.rpc.request).toBe("function");
+      expect(typeof sdk.rpc.getAccountInfo).toBe("function");
+
       // Test decoder registry methods
-      expect(typeof sdk.decoderRegistry.decode).toBe('function');
-      expect(typeof sdk.decoderRegistry.register).toBe('function');
+      expect(typeof sdk.decoderRegistry.decode).toBe("function");
+      expect(typeof sdk.decoderRegistry.register).toBe("function");
     });
 
-    test('should have RPC client access', () => {
+    test("should have RPC client access", () => {
       expect(sdk.rpc).toBeDefined();
       expect(sdk.getRpcClient()).toBeDefined();
       expect(sdk.getEnhancedRpcClient()).toBeDefined();
     });
 
-    test('should support legacy decoder methods', () => {
+    test("should support legacy decoder methods", () => {
       const instruction = {
-        programId: '11111111111111111111111111111111',
-        data: new Uint8Array([2, 0, 0, 0, 0, 0, 0, 0, 64, 66, 15, 0, 0, 0, 0, 0]),
-        accounts: ['sender', 'recipient']
+        programId: "11111111111111111111111111111111",
+        data: new Uint8Array([
+          2, 0, 0, 0, 0, 0, 0, 0, 64, 66, 15, 0, 0, 0, 0, 0,
+        ]),
+        accounts: ["sender", "recipient"],
       };
 
       // V1 style decoding
       const decoded = sdk.decoderRegistry.decode(instruction);
       expect(decoded).toBeDefined();
-      expect(decoded.programId).toBe('11111111111111111111111111111111');
+      expect(decoded.programId).toBe("11111111111111111111111111111111");
 
       // Batch decoding
-      const decodedBatch = [instruction, instruction].map(ix => sdk.decoderRegistry.decode(ix));
+      const decodedBatch = [instruction, instruction].map((ix) =>
+        sdk.decoderRegistry.decode(ix),
+      );
       expect(Array.isArray(decodedBatch)).toBe(true);
       expect(decodedBatch).toHaveLength(2);
     });

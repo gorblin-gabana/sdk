@@ -3,15 +3,18 @@
  * Static groups with fixed membership
  */
 
-import { bytesToBase58 as encodeBase58, base58ToBytes as decodeBase58 } from '../utils/base58.js';
-import { Keypair } from '@solana/web3.js';
 import {
-  EncryptionMethod,
+  bytesToBase58 as encodeBase58,
+  base58ToBytes as decodeBase58,
+} from "../utils/base58.js";
+import { Keypair } from "@solana/web3.js";
+import type {
   EncryptionResult,
   GroupEncryptionMetadata,
   KeyShare,
-  EncryptionOptions
-} from './types.js';
+  EncryptionOptions,
+} from "./types.js";
+import { EncryptionMethod } from "./types.js";
 import {
   generateRandomBytes,
   performKeyExchange,
@@ -27,8 +30,8 @@ import {
   AUTH_TAG_SIZE,
   getCurrentTimestamp,
   compressData,
-  decompressData
-} from './utils.js';
+  decompressData,
+} from "./utils.js";
 
 /**
  * Create a static encryption group
@@ -36,11 +39,12 @@ import {
 export async function createGroup(
   groupName: string,
   memberPublicKeys: string[],
-  creatorPrivateKey: string | Uint8Array
+  creatorPrivateKey: string | Uint8Array,
 ): Promise<GroupEncryptionMetadata> {
-  const creatorPrivKeyBytes = typeof creatorPrivateKey === 'string'
-    ? decodeBase58(creatorPrivateKey)
-    : creatorPrivateKey;
+  const creatorPrivKeyBytes =
+    typeof creatorPrivateKey === "string"
+      ? decodeBase58(creatorPrivateKey)
+      : creatorPrivateKey;
 
   // Get creator's public key
   const creatorKeypair = Keypair.fromSecretKey(creatorPrivKeyBytes);
@@ -54,12 +58,12 @@ export async function createGroup(
 
   // Create key shares for each member
   const keyShares: KeyShare[] = [];
-  
+
   for (const memberPublicKey of memberPublicKeys) {
     const share = await createKeyShare(
       masterKey,
       memberPublicKey,
-      creatorPrivKeyBytes
+      creatorPrivKeyBytes,
     );
     keyShares.push(share);
   }
@@ -68,9 +72,9 @@ export async function createGroup(
     groupId,
     keyShares,
     creatorPublicKey,
-    nonce: '', // Will be set during encryption
+    nonce: "", // Will be set during encryption
     timestamp: getCurrentTimestamp(),
-    version: '1.0.0'
+    version: "1.0.0",
   };
 }
 
@@ -80,10 +84,10 @@ export async function createGroup(
 export async function encryptGroup(
   data: string | Uint8Array,
   groupMetadata: GroupEncryptionMetadata,
-  options?: EncryptionOptions
+  options?: EncryptionOptions,
 ): Promise<EncryptionResult> {
   // Convert input
-  let dataBytes = typeof data === 'string' ? stringToBytes(data) : data;
+  let dataBytes = typeof data === "string" ? stringToBytes(data) : data;
 
   // Compress if requested
   if (options?.compress) {
@@ -96,21 +100,16 @@ export async function encryptGroup(
 
   // Encrypt data with master key
   const { encrypted, iv, authTag } = encryptAES(dataBytes, masterKey);
-  
+
   // Combine group ID, iv, authTag, and encrypted data
   const groupIdBytes = decodeBase58(groupMetadata.groupId);
-  const combined = combineBuffers(
-    groupIdBytes,
-    iv,
-    authTag,
-    encrypted
-  );
+  const combined = combineBuffers(groupIdBytes, iv, authTag, encrypted);
 
   // Update metadata with nonce
   const metadata: GroupEncryptionMetadata = {
     ...groupMetadata,
     nonce: encodeBase58(iv),
-    timestamp: getCurrentTimestamp()
+    timestamp: getCurrentTimestamp(),
   };
 
   // Add compression flag if used
@@ -121,7 +120,7 @@ export async function encryptGroup(
   return {
     encryptedData: encodeBase58(combined),
     method: EncryptionMethod.GROUP,
-    metadata
+    metadata,
   };
 }
 
@@ -131,59 +130,60 @@ export async function encryptGroup(
 export async function decryptGroup(
   encryptionResult: EncryptionResult,
   memberPrivateKey: string | Uint8Array,
-  memberPublicKey: string
+  memberPublicKey: string,
 ): Promise<Uint8Array> {
   if (encryptionResult.method !== EncryptionMethod.GROUP) {
-    throw new Error('Invalid encryption method for group decryption');
+    throw new Error("Invalid encryption method for group decryption");
   }
 
   const metadata = encryptionResult.metadata as GroupEncryptionMetadata;
-  const memberPrivKeyBytes = typeof memberPrivateKey === 'string'
-    ? decodeBase58(memberPrivateKey)
-    : memberPrivateKey;
+  const memberPrivKeyBytes =
+    typeof memberPrivateKey === "string"
+      ? decodeBase58(memberPrivateKey)
+      : memberPrivateKey;
 
   // Find member's key share
   const keyShare = metadata.keyShares.find(
-    share => share.recipientPublicKey === memberPublicKey
+    (share) => share.recipientPublicKey === memberPublicKey,
   );
 
   if (!keyShare) {
-    throw new Error('No key share found for this member');
+    throw new Error("No key share found for this member");
   }
 
   // Decrypt the master key
   const masterKey = await decryptKeyShare(
     keyShare,
     memberPrivKeyBytes,
-    metadata.creatorPublicKey
+    metadata.creatorPublicKey,
   );
 
   // Decode the combined data
   const combined = decodeBase58(encryptionResult.encryptedData);
-  
+
   // Split the combined data
   const groupIdSize = 32; // SHA256 hash size
   const [groupIdBytes, iv, authTag, encrypted] = splitBuffer(
     combined,
     groupIdSize,
     IV_SIZE,
-    AUTH_TAG_SIZE
+    AUTH_TAG_SIZE,
   );
 
   // Verify group ID
   const groupId = encodeBase58(groupIdBytes);
   if (groupId !== metadata.groupId) {
-    throw new Error('Group ID mismatch');
+    throw new Error("Group ID mismatch");
   }
 
   // Decrypt the data
   let decrypted = decryptAES(encrypted, masterKey, iv, authTag);
-  
+
   // Decompress if needed
   if ((metadata as any).compressed) {
     decrypted = await decompressData(decrypted);
   }
-  
+
   return decrypted;
 }
 
@@ -193,12 +193,12 @@ export async function decryptGroup(
 export async function decryptGroupString(
   encryptionResult: EncryptionResult,
   memberPrivateKey: string | Uint8Array,
-  memberPublicKey: string
+  memberPublicKey: string,
 ): Promise<string> {
   const decrypted = await decryptGroup(
     encryptionResult,
     memberPrivateKey,
-    memberPublicKey
+    memberPublicKey,
   );
   return bytesToString(decrypted);
 }
@@ -209,23 +209,26 @@ export async function decryptGroupString(
 async function createKeyShare(
   masterKey: Uint8Array,
   recipientPublicKey: string,
-  senderPrivateKey: Uint8Array
+  senderPrivateKey: Uint8Array,
 ): Promise<KeyShare> {
   const recipientPubKeyBytes = decodeBase58(recipientPublicKey);
-  
+
   // Perform key exchange
-  const sharedSecret = performKeyExchange(senderPrivateKey, recipientPubKeyBytes);
-  
+  const sharedSecret = performKeyExchange(
+    senderPrivateKey,
+    recipientPubKeyBytes,
+  );
+
   // Encrypt master key with shared secret
   const { encrypted, iv, authTag } = encryptAES(masterKey, sharedSecret);
-  
+
   // Combine iv, authTag, and encrypted key
   const combined = combineBuffers(iv, authTag, encrypted);
-  
+
   return {
     recipientPublicKey,
     encryptedShare: encodeBase58(combined),
-    createdAt: getCurrentTimestamp()
+    createdAt: getCurrentTimestamp(),
   };
 }
 
@@ -235,17 +238,24 @@ async function createKeyShare(
 async function decryptKeyShare(
   keyShare: KeyShare,
   recipientPrivateKey: Uint8Array,
-  senderPublicKey: string
+  senderPublicKey: string,
 ): Promise<Uint8Array> {
   const senderPubKeyBytes = decodeBase58(senderPublicKey);
-  
+
   // Perform key exchange
-  const sharedSecret = performKeyExchange(recipientPrivateKey, senderPubKeyBytes);
-  
+  const sharedSecret = performKeyExchange(
+    recipientPrivateKey,
+    senderPubKeyBytes,
+  );
+
   // Decode the encrypted share
   const combined = decodeBase58(keyShare.encryptedShare);
-  const [iv, authTag, encrypted] = splitBuffer(combined, IV_SIZE, AUTH_TAG_SIZE);
-  
+  const [iv, authTag, encrypted] = splitBuffer(
+    combined,
+    IV_SIZE,
+    AUTH_TAG_SIZE,
+  );
+
   // Decrypt the master key
   return decryptAES(encrypted, sharedSecret, iv, authTag);
 }
@@ -257,38 +267,39 @@ export async function addGroupMember(
   groupMetadata: GroupEncryptionMetadata,
   newMemberPublicKey: string,
   authorizedMemberPrivateKey: string | Uint8Array,
-  authorizedMemberPublicKey: string
+  authorizedMemberPublicKey: string,
 ): Promise<GroupEncryptionMetadata> {
-  const authorizedPrivKeyBytes = typeof authorizedMemberPrivateKey === 'string'
-    ? decodeBase58(authorizedMemberPrivateKey)
-    : authorizedMemberPrivateKey;
+  const authorizedPrivKeyBytes =
+    typeof authorizedMemberPrivateKey === "string"
+      ? decodeBase58(authorizedMemberPrivateKey)
+      : authorizedMemberPrivateKey;
 
   // First, decrypt the master key as authorized member
   const authorizedKeyShare = groupMetadata.keyShares.find(
-    share => share.recipientPublicKey === authorizedMemberPublicKey
+    (share) => share.recipientPublicKey === authorizedMemberPublicKey,
   );
 
   if (!authorizedKeyShare) {
-    throw new Error('Authorized member not found in group');
+    throw new Error("Authorized member not found in group");
   }
 
   const masterKey = await decryptKeyShare(
     authorizedKeyShare,
     authorizedPrivKeyBytes,
-    groupMetadata.creatorPublicKey
+    groupMetadata.creatorPublicKey,
   );
 
   // Create key share for new member
   const newKeyShare = await createKeyShare(
     masterKey,
     newMemberPublicKey,
-    authorizedPrivKeyBytes
+    authorizedPrivKeyBytes,
   );
 
   // Return updated metadata
   return {
     ...groupMetadata,
     keyShares: [...groupMetadata.keyShares, newKeyShare],
-    timestamp: getCurrentTimestamp()
+    timestamp: getCurrentTimestamp(),
   };
 }

@@ -6,15 +6,14 @@
  * Metaplex Core NFT minting.
  */
 
-import type {
-  Connection } from '@solana/web3.js';
+import type { Connection } from "@solana/web3.js";
 import {
   PublicKey,
   Transaction,
   SystemProgram,
   Keypair,
-  sendAndConfirmTransaction
-} from '@solana/web3.js';
+  sendAndConfirmTransaction,
+} from "@solana/web3.js";
 import {
   createInitializeMintInstruction,
   createMintToInstruction,
@@ -24,19 +23,23 @@ import {
   ExtensionType,
   createInitializeMetadataPointerInstruction,
   createInitializeInstruction,
-  MINT_SIZE
-} from '@solana/spl-token';
-import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
-import { mplCore, createV1 } from '@metaplex-foundation/mpl-core';
-import { generateSigner } from '@metaplex-foundation/umi';
-import { walletAdapterIdentity } from '@metaplex-foundation/umi-signer-wallet-adapters';
+  MINT_SIZE,
+} from "@solana/spl-token";
+import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
+import { mplCore, createV1 } from "@metaplex-foundation/mpl-core";
+import { generateSigner } from "@metaplex-foundation/umi";
+import { walletAdapterIdentity } from "@metaplex-foundation/umi-signer-wallet-adapters";
 
 // Token22 Program ID for Gorbchain
-const TOKEN22_PROGRAM = new PublicKey('FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn');
-const ASSOCIATED_TOKEN_PROGRAM = new PublicKey('4YpYoLVTQ8bxcne9GneN85RUXeN7pqGTwgPcY71ZL5gX');
+const TOKEN22_PROGRAM = new PublicKey(
+  "FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn",
+);
+const ASSOCIATED_TOKEN_PROGRAM = new PublicKey(
+  "4YpYoLVTQ8bxcne9GneN85RUXeN7pqGTwgPcY71ZL5gX",
+);
 
 // Custom MPL Core Program for Gorbchain
-const CUSTOM_MPL_CORE_PROGRAM = 'BvoSmPBF6mBRxBMY9FPguw1zUoUg3xrc5CaWf7y5ACkc';
+const CUSTOM_MPL_CORE_PROGRAM = "BvoSmPBF6mBRxBMY9FPguw1zUoUg3xrc5CaWf7y5ACkc";
 
 /**
  * Token creation parameters
@@ -92,7 +95,7 @@ export interface NFTMintResult {
  * Transaction options
  */
 export interface TransactionOptions {
-  commitment?: 'processed' | 'confirmed' | 'finalized';
+  commitment?: "processed" | "confirmed" | "finalized";
   maxRetries?: number;
   skipPreflight?: boolean;
 }
@@ -100,14 +103,18 @@ export interface TransactionOptions {
 /**
  * Calculate the required space for token metadata
  */
-function calculateMetadataSpace(name: string, symbol: string, uri: string): number {
+function calculateMetadataSpace(
+  name: string,
+  symbol: string,
+  uri: string,
+): number {
   const baseFields = {
     updateAuthority: 32,
     mint: 32,
     name: 4 + name.length,
     symbol: 4 + symbol.length,
     uri: 4 + uri.length,
-    additionalMetadata: 4 // Empty vec
+    additionalMetadata: 4, // Empty vec
   };
 
   const totalSize = Object.values(baseFields).reduce((a, b) => a + b, 0);
@@ -138,23 +145,23 @@ function calculateMintAccountSize(extensions: ExtensionType[]): number {
  */
 function validateTokenParameters(params: TokenCreationParams): void {
   if (!params.name || params.name.length > 32) {
-    throw new Error('Token name must be 1-32 characters');
+    throw new Error("Token name must be 1-32 characters");
   }
 
   if (!params.symbol || params.symbol.length > 10) {
-    throw new Error('Token symbol must be 1-10 characters');
+    throw new Error("Token symbol must be 1-10 characters");
   }
 
   if (params.supply <= 0 || params.supply > 1e15) {
-    throw new Error('Token supply must be between 1 and 1e15');
+    throw new Error("Token supply must be between 1 and 1e15");
   }
 
   if (params.decimals < 0 || params.decimals > 9) {
-    throw new Error('Decimals must be between 0 and 9');
+    throw new Error("Decimals must be between 0 and 9");
   }
 
   if (params.uri && !isValidUrl(params.uri)) {
-    throw new Error('Invalid URI format');
+    throw new Error("Invalid URI format");
   }
 }
 
@@ -163,22 +170,27 @@ function validateTokenParameters(params: TokenCreationParams): void {
  */
 function validateNFTParameters(params: NFTCreationParams): void {
   if (!params.name || params.name.length > 32) {
-    throw new Error('NFT name must be 1-32 characters');
+    throw new Error("NFT name must be 1-32 characters");
   }
 
   if (!params.uri || !isValidUrl(params.uri)) {
-    throw new Error('Valid metadata URI is required');
+    throw new Error("Valid metadata URI is required");
   }
 
-  if (params.royaltyBasisPoints &&
-      (params.royaltyBasisPoints < 0 || params.royaltyBasisPoints > 10000)) {
-    throw new Error('Royalty basis points must be between 0 and 10000');
+  if (
+    params.royaltyBasisPoints &&
+    (params.royaltyBasisPoints < 0 || params.royaltyBasisPoints > 10000)
+  ) {
+    throw new Error("Royalty basis points must be between 0 and 10000");
   }
 
   if (params.creators) {
-    const totalPercentage = params.creators.reduce((sum, creator) => sum + creator.percentage, 0);
+    const totalPercentage = params.creators.reduce(
+      (sum, creator) => sum + creator.percentage,
+      0,
+    );
     if (totalPercentage !== 100) {
-      throw new Error('Creator percentages must sum to 100');
+      throw new Error("Creator percentages must sum to 100");
     }
   }
 }
@@ -202,25 +214,26 @@ async function sendTransactionWithRetry(
   connection: Connection,
   transaction: Transaction,
   signers: Keypair[],
-  options: TransactionOptions = {}
+  options: TransactionOptions = {},
 ): Promise<string> {
   const {
-    commitment = 'confirmed',
+    commitment = "confirmed",
     maxRetries = 3,
-    skipPreflight = false
+    skipPreflight = false,
   } = options;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       // Get fresh blockhash
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+      const { blockhash, lastValidBlockHeight } =
+        await connection.getLatestBlockhash();
       transaction.recentBlockhash = blockhash;
       transaction.lastValidBlockHeight = lastValidBlockHeight;
 
       // Simulate transaction first
       const simulation = await connection.simulateTransaction(transaction);
       if (simulation.value.err) {
-        const logs = simulation.value.logs?.join('\n') || 'No logs available';
+        const logs = simulation.value.logs?.join("\n") || "No logs available";
         throw new Error(`Transaction simulation failed: ${logs}`);
       }
 
@@ -231,8 +244,8 @@ async function sendTransactionWithRetry(
         signers,
         {
           commitment,
-          skipPreflight
-        }
+          skipPreflight,
+        },
       );
 
       return signature;
@@ -242,11 +255,11 @@ async function sendTransactionWithRetry(
       }
 
       // Wait before retry with exponential backoff
-      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
     }
   }
 
-  throw new Error('Max retries reached');
+  throw new Error("Max retries reached");
 }
 
 /**
@@ -258,7 +271,7 @@ export async function createToken22TwoTx(
   connection: Connection,
   payer: Keypair,
   params: TokenCreationParams,
-  options: TransactionOptions = {}
+  options: TransactionOptions = {},
 ): Promise<TokenMintResult> {
   validateTokenParameters(params);
 
@@ -268,7 +281,8 @@ export async function createToken22TwoTx(
   // Transaction 1: Create mint account and initialize
   const extensions = [ExtensionType.MetadataPointer];
   const mintLen = getMintLen(extensions);
-  const rentExemption = await connection.getMinimumBalanceForRentExemption(mintLen);
+  const rentExemption =
+    await connection.getMinimumBalanceForRentExemption(mintLen);
 
   const setupTransaction = new Transaction();
   setupTransaction.feePayer = payer.publicKey;
@@ -280,8 +294,8 @@ export async function createToken22TwoTx(
       newAccountPubkey: mint,
       lamports: rentExemption,
       space: mintLen,
-      programId: TOKEN22_PROGRAM
-    })
+      programId: TOKEN22_PROGRAM,
+    }),
   );
 
   // Initialize metadata pointer
@@ -290,8 +304,8 @@ export async function createToken22TwoTx(
       mint,
       payer.publicKey,
       mint,
-      TOKEN22_PROGRAM
-    )
+      TOKEN22_PROGRAM,
+    ),
   );
 
   // Initialize mint
@@ -301,11 +315,11 @@ export async function createToken22TwoTx(
       params.decimals,
       payer.publicKey,
       payer.publicKey,
-      TOKEN22_PROGRAM
-    )
+      TOKEN22_PROGRAM,
+    ),
   );
 
-      // const _setupSignature = await sendTransactionWithRetry(
+  // const _setupSignature = await sendTransactionWithRetry(
   //   connection,
   //   setupTransaction,
   //   [payer, mintKeypair],
@@ -318,18 +332,23 @@ export async function createToken22TwoTx(
 
   // Initialize metadata if URI provided
   if (params.uri) {
-    const metadataSpace = calculateMetadataSpace(params.name, params.symbol, params.uri);
+    const metadataSpace = calculateMetadataSpace(
+      params.name,
+      params.symbol,
+      params.uri,
+    );
 
     // Get current account info to calculate additional rent
     const accountInfo = await connection.getAccountInfo(mint);
     if (!accountInfo) {
-      throw new Error('Mint account not found after setup');
+      throw new Error("Mint account not found after setup");
     }
 
     const currentSize = accountInfo.data.length;
     const newSize = currentSize + metadataSpace;
-    const additionalRent = await connection.getMinimumBalanceForRentExemption(newSize)
-      - accountInfo.lamports;
+    const additionalRent =
+      (await connection.getMinimumBalanceForRentExemption(newSize)) -
+      accountInfo.lamports;
 
     // Transfer additional rent if needed
     if (additionalRent > 0) {
@@ -337,8 +356,8 @@ export async function createToken22TwoTx(
         SystemProgram.transfer({
           fromPubkey: payer.publicKey,
           toPubkey: mint,
-          lamports: additionalRent
-        })
+          lamports: additionalRent,
+        }),
       );
     }
 
@@ -352,8 +371,8 @@ export async function createToken22TwoTx(
         mintAuthority: payer.publicKey,
         name: params.name,
         symbol: params.symbol,
-        uri: params.uri
-      })
+        uri: params.uri,
+      }),
     );
   }
 
@@ -363,7 +382,7 @@ export async function createToken22TwoTx(
     payer.publicKey,
     false,
     TOKEN22_PROGRAM,
-    ASSOCIATED_TOKEN_PROGRAM
+    ASSOCIATED_TOKEN_PROGRAM,
   );
 
   mintingTransaction.add(
@@ -373,8 +392,8 @@ export async function createToken22TwoTx(
       payer.publicKey,
       mint,
       TOKEN22_PROGRAM,
-      ASSOCIATED_TOKEN_PROGRAM
-    )
+      ASSOCIATED_TOKEN_PROGRAM,
+    ),
   );
 
   // Mint tokens
@@ -386,22 +405,22 @@ export async function createToken22TwoTx(
       payer.publicKey,
       mintAmount,
       [],
-      TOKEN22_PROGRAM
-    )
+      TOKEN22_PROGRAM,
+    ),
   );
 
   const mintingSignature = await sendTransactionWithRetry(
     connection,
     mintingTransaction,
     [payer],
-    options
+    options,
   );
 
   return {
     signature: mintingSignature,
     tokenAddress: mint.toString(),
     associatedTokenAddress: associatedToken.toString(),
-    transactionUrl: `https://explorer.gorbchain.xyz/tx/${mintingSignature}`
+    transactionUrl: `https://explorer.gorbchain.xyz/tx/${mintingSignature}`,
   };
 }
 
@@ -414,7 +433,7 @@ export async function createToken22SingleTx(
   connection: Connection,
   payer: Keypair,
   params: TokenCreationParams,
-  options: TransactionOptions = {}
+  options: TransactionOptions = {},
 ): Promise<TokenMintResult> {
   validateTokenParameters(params);
 
@@ -423,7 +442,8 @@ export async function createToken22SingleTx(
 
   const extensions = [ExtensionType.MetadataPointer];
   const mintLen = getMintLen(extensions);
-  const rentExemption = await connection.getMinimumBalanceForRentExemption(mintLen);
+  const rentExemption =
+    await connection.getMinimumBalanceForRentExemption(mintLen);
 
   const transaction = new Transaction();
   transaction.feePayer = payer.publicKey;
@@ -435,8 +455,8 @@ export async function createToken22SingleTx(
       newAccountPubkey: mint,
       lamports: rentExemption,
       space: mintLen,
-      programId: TOKEN22_PROGRAM
-    })
+      programId: TOKEN22_PROGRAM,
+    }),
   );
 
   // Initialize metadata pointer
@@ -445,8 +465,8 @@ export async function createToken22SingleTx(
       mint,
       payer.publicKey,
       mint,
-      TOKEN22_PROGRAM
-    )
+      TOKEN22_PROGRAM,
+    ),
   );
 
   // Initialize mint
@@ -456,8 +476,8 @@ export async function createToken22SingleTx(
       params.decimals,
       payer.publicKey,
       payer.publicKey,
-      TOKEN22_PROGRAM
-    )
+      TOKEN22_PROGRAM,
+    ),
   );
 
   // Initialize metadata if URI provided
@@ -471,8 +491,8 @@ export async function createToken22SingleTx(
         mintAuthority: payer.publicKey,
         name: params.name,
         symbol: params.symbol,
-        uri: params.uri
-      })
+        uri: params.uri,
+      }),
     );
   }
 
@@ -482,7 +502,7 @@ export async function createToken22SingleTx(
     payer.publicKey,
     false,
     TOKEN22_PROGRAM,
-    ASSOCIATED_TOKEN_PROGRAM
+    ASSOCIATED_TOKEN_PROGRAM,
   );
 
   transaction.add(
@@ -492,8 +512,8 @@ export async function createToken22SingleTx(
       payer.publicKey,
       mint,
       TOKEN22_PROGRAM,
-      ASSOCIATED_TOKEN_PROGRAM
-    )
+      ASSOCIATED_TOKEN_PROGRAM,
+    ),
   );
 
   // Mint tokens
@@ -505,22 +525,22 @@ export async function createToken22SingleTx(
       payer.publicKey,
       mintAmount,
       [],
-      TOKEN22_PROGRAM
-    )
+      TOKEN22_PROGRAM,
+    ),
   );
 
   const signature = await sendTransactionWithRetry(
     connection,
     transaction,
     [payer, mintKeypair],
-    options
+    options,
   );
 
   return {
     signature,
     tokenAddress: mint.toString(),
     associatedTokenAddress: associatedToken.toString(),
-    transactionUrl: `https://explorer.gorbchain.xyz/tx/${signature}`
+    transactionUrl: `https://explorer.gorbchain.xyz/tx/${signature}`,
   };
 }
 
@@ -531,7 +551,7 @@ export async function createNFT(
   connection: Connection,
   wallet: any, // Wallet adapter
   params: NFTCreationParams,
-  _options: TransactionOptions = {}
+  _options: TransactionOptions = {},
 ): Promise<NFTMintResult> {
   validateNFTParameters(params);
 
@@ -548,22 +568,24 @@ export async function createNFT(
     const result = await createV1(umi, {
       asset: assetSigner,
       name: params.name,
-      uri: params.uri
+      uri: params.uri,
     }).sendAndConfirm(umi);
 
     // Convert signature from Uint8Array to hex string
-    const signature = Array.from(result.signature, byte =>
-      byte.toString(16).padStart(2, '0')
-    ).join('');
+    const signature = Array.from(result.signature, (byte) =>
+      byte.toString(16).padStart(2, "0"),
+    ).join("");
 
     return {
       signature,
       assetAddress: assetSigner.publicKey.toString(),
-      transactionUrl: `https://explorer.gorbchain.xyz/tx/${signature}`
+      transactionUrl: `https://explorer.gorbchain.xyz/tx/${signature}`,
     };
   } catch (error) {
     // console.error('❌ NFT creation failed:', error);
-    throw new Error(`NFT creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(
+      `NFT creation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
   }
 }
 
@@ -573,7 +595,7 @@ export async function createNFT(
 export async function checkSufficientBalance(
   connection: Connection,
   payer: PublicKey,
-  estimatedCost: number
+  estimatedCost: number,
 ): Promise<{ sufficient: boolean; balance: number; required: number }> {
   const balance = await connection.getBalance(payer);
   const requiredBalance = estimatedCost + 5000000; // 0.005 SOL buffer
@@ -581,7 +603,7 @@ export async function checkSufficientBalance(
   return {
     sufficient: balance >= requiredBalance,
     balance,
-    required: requiredBalance
+    required: requiredBalance,
   };
 }
 
@@ -590,7 +612,7 @@ export async function checkSufficientBalance(
  */
 export async function estimateTokenCreationCost(
   connection: Connection,
-  params: TokenCreationParams
+  params: TokenCreationParams,
 ): Promise<number> {
   const extensions = [ExtensionType.MetadataPointer];
   const mintLen = getMintLen(extensions);
@@ -604,8 +626,13 @@ export async function estimateTokenCreationCost(
   // Metadata space if URI provided
   let metadataRent = 0;
   if (params.uri) {
-    const metadataSpace = calculateMetadataSpace(params.name, params.symbol, params.uri);
-    metadataRent = await connection.getMinimumBalanceForRentExemption(metadataSpace);
+    const metadataSpace = calculateMetadataSpace(
+      params.name,
+      params.symbol,
+      params.uri,
+    );
+    metadataRent =
+      await connection.getMinimumBalanceForRentExemption(metadataSpace);
   }
 
   return mintRent + ataRent + baseFees + metadataRent;
@@ -616,7 +643,7 @@ export async function estimateTokenCreationCost(
  */
 export async function estimateNFTCreationCost(
   connection: Connection,
-  params: NFTCreationParams
+  params: NFTCreationParams,
 ): Promise<number> {
   // Base NFT creation cost (estimated)
   const baseCost = 10000000; // 0.01 SOL
@@ -639,7 +666,7 @@ export async function estimateNFTCreationCost(
  */
 export async function getTokenInfo(
   connection: Connection,
-  mintAddress: string
+  mintAddress: string,
 ): Promise<{
   mint: string;
   supply: string;
@@ -656,7 +683,7 @@ export async function getTokenInfo(
   const accountInfo = await connection.getAccountInfo(mint);
 
   if (!accountInfo) {
-    throw new Error('Token mint not found');
+    throw new Error("Token mint not found");
   }
 
   // Parse mint data (simplified - you'd need proper deserialization)
@@ -664,11 +691,11 @@ export async function getTokenInfo(
 
   return {
     mint: mintAddress,
-    supply: '0', // Would need proper parsing
+    supply: "0", // Would need proper parsing
     decimals: data[44], // Decimal offset in mint data
     mintAuthority: null, // Would need proper parsing
     freezeAuthority: null, // Would need proper parsing
-    metadata: undefined // Would need metadata parsing
+    metadata: undefined, // Would need metadata parsing
   };
 }
 
@@ -681,5 +708,5 @@ export {
   calculateMintAccountSize,
   validateTokenParameters,
   validateNFTParameters,
-  sendTransactionWithRetry
+  sendTransactionWithRetry,
 };

@@ -1,6 +1,10 @@
-
-import { Link } from 'react-router-dom'
-import { RocketLaunchIcon, CodeBracketIcon, WifiIcon, ShieldCheckIcon } from '@heroicons/react/24/outline'
+import { Link } from "react-router-dom";
+import {
+  RocketLaunchIcon,
+  CodeBracketIcon,
+  WifiIcon,
+  ShieldCheckIcon,
+} from "@heroicons/react/24/outline";
 
 export default function Home() {
   return (
@@ -11,8 +15,9 @@ export default function Home() {
           GorbchainSDK V1.3.0 🚀
         </h1>
         <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-          Rich Solana operations for rapid application development. Specialized in wallet integration,
-          enhanced transaction analysis, and portfolio management. Build super apps within seconds.
+          Rich Solana operations for rapid application development. Specialized
+          in wallet integration, enhanced transaction analysis, and portfolio
+          management. Build super apps within seconds.
         </p>
         <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6">
           <Link
@@ -42,7 +47,7 @@ export default function Home() {
             Rich Transaction Analysis
           </h3>
           <p className="text-gray-600 mb-4">
-            Enhanced transaction decoding with token metadata, balance changes, 
+            Enhanced transaction decoding with token metadata, balance changes,
             and human-readable context for rapid dApp development.
           </p>
           <Link
@@ -61,8 +66,9 @@ export default function Home() {
             Portfolio Analysis
           </h3>
           <p className="text-gray-600 mb-4">
-            Rich token portfolio analysis with metadata resolution, 
-            NFT categorization, and portfolio insights for comprehensive asset tracking.
+            Rich token portfolio analysis with metadata resolution, NFT
+            categorization, and portfolio insights for comprehensive asset
+            tracking.
           </p>
           <Link
             to="/rpc-operations"
@@ -80,7 +86,7 @@ export default function Home() {
             Universal Wallet Integration
           </h3>
           <p className="text-gray-600 mb-4">
-            Connect to all Solana wallets universally with auto-discovery, 
+            Connect to all Solana wallets universally with auto-discovery,
             portfolio analysis, and event-driven wallet management.
           </p>
           <Link
@@ -94,19 +100,28 @@ export default function Home() {
 
       {/* Quick start section */}
       <div className="docs-card">
-        <h2 className="text-2xl font-bold text-docs-heading mb-6">Quick Start</h2>
+        <h2 className="text-2xl font-bold text-docs-heading mb-6">
+          Quick Start
+        </h2>
         <div className="space-y-6">
           <div>
-            <h3 className="text-lg font-semibold text-docs-heading mb-3">Installation</h3>
+            <h3 className="text-lg font-semibold text-docs-heading mb-3">
+              Installation
+            </h3>
             <div className="code-block">
-              <pre><code>{`npm install @gorbchain-xyz/chaindecode`}</code></pre>
+              <pre>
+                <code>{`npm install @gorbchain-xyz/chaindecode`}</code>
+              </pre>
             </div>
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold text-docs-heading mb-3">Basic Usage</h3>
+            <h3 className="text-lg font-semibold text-docs-heading mb-3">
+              Basic Usage
+            </h3>
             <div className="code-block">
-              <pre><code>{`import { GorbchainSDK } from '@gorbchain-xyz/chaindecode'
+              <pre>
+                <code>{`import { GorbchainSDK } from '@gorbchain-xyz/chaindecode'
 
 // Initialize the SDK
 const sdk = new GorbchainSDK({
@@ -128,7 +143,8 @@ const richTx = await sdk.getRichTransaction(signature, {
 
 // Universal wallet integration
 const walletManager = sdk.createWalletManager()
-const wallet = await walletManager.autoConnect()`}</code></pre>
+const wallet = await walletManager.autoConnect()`}</code>
+              </pre>
             </div>
           </div>
         </div>
@@ -167,24 +183,24 @@ const wallet = await walletManager.autoConnect()`}</code></pre>
           </h3>
           <ul className="space-y-3">
             <li>
-              <Link 
-                to="/getting-started" 
+              <Link
+                to="/getting-started"
                 className="flex items-center text-primary-600 hover:text-primary-700 font-medium"
               >
                 Getting Started Guide →
               </Link>
             </li>
             <li>
-              <Link 
-                to="/api-reference" 
+              <Link
+                to="/api-reference"
                 className="flex items-center text-primary-600 hover:text-primary-700 font-medium"
               >
                 Complete API Reference →
               </Link>
             </li>
             <li>
-              <Link 
-                to="/examples" 
+              <Link
+                to="/examples"
                 className="flex items-center text-primary-600 hover:text-primary-700 font-medium"
               >
                 Code Examples →
@@ -199,16 +215,16 @@ const wallet = await walletManager.autoConnect()`}</code></pre>
           </h3>
           <ul className="space-y-3">
             <li>
-              <Link 
-                to="/playground" 
+              <Link
+                to="/playground"
                 className="flex items-center text-primary-600 hover:text-primary-700 font-medium"
               >
                 Interactive Playground →
               </Link>
             </li>
             <li>
-              <a 
-                href="https://github.com/gorbchain-xyz/chaindecode" 
+              <a
+                href="https://github.com/gorbchain-xyz/chaindecode"
                 className="flex items-center text-primary-600 hover:text-primary-700 font-medium"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -217,8 +233,8 @@ const wallet = await walletManager.autoConnect()`}</code></pre>
               </a>
             </li>
             <li>
-              <a 
-                href="https://discord.gg/gorbchain" 
+              <a
+                href="https://discord.gg/gorbchain"
                 className="flex items-center text-primary-600 hover:text-primary-700 font-medium"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -230,5 +246,5 @@ const wallet = await walletManager.autoConnect()`}</code></pre>
         </div>
       </div>
     </div>
-  )
-} 
+  );
+}

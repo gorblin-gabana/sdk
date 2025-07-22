@@ -10,10 +10,11 @@
  */
 export function bytesToBase58(bytes: Uint8Array): string {
   try {
-    const alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+    const alphabet =
+      "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
     // Handle empty input
-    if (bytes.length === 0) return '';
+    if (bytes.length === 0) return "";
 
     // Convert to big integer for base58 encoding
     let num = BigInt(0);
@@ -22,7 +23,7 @@ export function bytesToBase58(bytes: Uint8Array): string {
     }
 
     // Convert to base58
-    let result = '';
+    let result = "";
     while (num > BigInt(0)) {
       const remainder = num % BigInt(58);
       result = alphabet[Number(remainder)] + result;
@@ -37,7 +38,7 @@ export function bytesToBase58(bytes: Uint8Array): string {
     return result;
   } catch (_error) {
     // console.warn('Failed to convert bytes to base58:', _error);
-    return 'invalid-address';
+    return "invalid-address";
   }
 }
 
@@ -61,7 +62,7 @@ export function base64ToUint8Array(base64: string): Uint8Array {
  * Convert various data formats to Uint8Array
  */
 export function normalizeDataToUint8Array(data: any): Uint8Array {
-  if (typeof data === 'string') {
+  if (typeof data === "string") {
     // Browser-compatible base64 decoding
     return base64ToUint8Array(data);
   } else if (Array.isArray(data)) {
@@ -79,10 +80,13 @@ export function normalizeDataToUint8Array(data: any): Uint8Array {
 /**
  * Read a 64-bit little-endian unsigned integer from buffer
  */
-export function readU64LE(buffer: Uint8Array | number[], offset: number): string {
+export function readU64LE(
+  buffer: Uint8Array | number[],
+  offset: number,
+): string {
   const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
   if (offset + 8 > bytes.length) {
-    throw new Error('Buffer too small for u64');
+    throw new Error("Buffer too small for u64");
   }
 
   const view = new DataView(bytes.buffer, bytes.byteOffset + offset, 8);
@@ -93,22 +97,25 @@ export function readU64LE(buffer: Uint8Array | number[], offset: number): string
 /**
  * Format lamports as SOL with appropriate decimal places
  */
-export function formatLamportsToSol(lamports: bigint | number | string): string {
-  const lamportsNum = typeof lamports === 'string' ? BigInt(lamports) : BigInt(lamports);
+export function formatLamportsToSol(
+  lamports: bigint | number | string,
+): string {
+  const lamportsNum =
+    typeof lamports === "string" ? BigInt(lamports) : BigInt(lamports);
   const sol = Number(lamportsNum) / 1e9;
-  return sol.toFixed(9).replace(/\.?0+$/, ''); // Remove trailing zeros
+  return sol.toFixed(9).replace(/\.?0+$/, ""); // Remove trailing zeros
 }
 
 /**
  * Format bytes as human-readable size
  */
 export function formatBytes(bytes: bigint | number): string {
-  const bytesNum = typeof bytes === 'bigint' ? Number(bytes) : bytes;
-  if (bytesNum === 0) return '0 Bytes';
+  const bytesNum = typeof bytes === "bigint" ? Number(bytes) : bytes;
+  if (bytesNum === 0) return "0 Bytes";
 
   const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const sizes = ["Bytes", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytesNum) / Math.log(k));
 
-  return `${parseFloat((bytesNum / Math.pow(k, i)).toFixed(2))  } ${  sizes[i]}`;
+  return `${parseFloat((bytesNum / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 }

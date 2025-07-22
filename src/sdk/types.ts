@@ -1,4 +1,4 @@
-import type { NetworkConfig } from '../config/networks.js';
+import type { NetworkConfig } from "../config/networks.js";
 
 /**
  * Configuration interface for the GorbchainSDK
@@ -61,7 +61,7 @@ export interface RichTransaction {
   slot: number;
   blockTime: number;
   fee: number;
-  status: 'success' | 'failed';
+  status: "success" | "failed";
 
   // Transaction summary
   summary: {
@@ -118,7 +118,7 @@ export interface TokenMetadata {
   mint: string;
   name: string;
   symbol: string;
-  type: 'Token' | 'NFT';
+  type: "Token" | "NFT";
   decimals?: number;
   supply?: string;
   uri?: string;
@@ -187,7 +187,15 @@ export interface RichInstruction {
  */
 export interface TokenOperation {
   index: number;
-  type: 'transfer' | 'mint' | 'burn' | 'approve' | 'revoke' | 'initialize' | 'close' | 'unknown';
+  type:
+    | "transfer"
+    | "mint"
+    | "burn"
+    | "approve"
+    | "revoke"
+    | "initialize"
+    | "close"
+    | "unknown";
   subtype?: string;
   amount: number | null;
   mint: string | null;
@@ -259,7 +267,12 @@ export interface TokenAccount {
  */
 export interface AccountDetail {
   address: string;
-  type: 'token-account' | 'mint-account' | 'system-account' | 'program-account' | 'unknown-account';
+  type:
+    | "token-account"
+    | "mint-account"
+    | "system-account"
+    | "program-account"
+    | "unknown-account";
   owner?: string;
   dataLength?: number;
   error?: string;
@@ -271,7 +284,7 @@ export interface AccountDetail {
  */
 export interface TokenAccountInfo {
   address: string;
-  type: 'token-account' | 'mint-account';
+  type: "token-account" | "mint-account";
   mint?: string;
   owner?: string;
   amount?: number;
@@ -286,7 +299,7 @@ export interface TokenAccountInfo {
  */
 export interface SystemAccountInfo {
   address: string;
-  type: 'system-account';
+  type: "system-account";
   owner: string;
   balance: number;
   dataLength: number;
@@ -299,7 +312,7 @@ export interface SystemAccountInfo {
  */
 export interface ProgramAccountInfo {
   address: string;
-  type: 'program-account';
+  type: "program-account";
   owner: string;
   dataLength: number;
   executable: boolean;
@@ -311,7 +324,7 @@ export interface ProgramAccountInfo {
  */
 export interface BalanceChange {
   address: string;
-  type: 'sol' | 'token';
+  type: "sol" | "token";
   mint?: string;
   preBalance: number;
   postBalance: number;
@@ -323,11 +336,11 @@ export interface BalanceChange {
  * Transaction category for filtering
  */
 export interface TransactionCategory {
-  primary: 'token' | 'system' | 'program' | 'mixed';
+  primary: "token" | "system" | "program" | "mixed";
   secondary: string[];
   tags: string[];
-  complexity: 'simple' | 'medium' | 'complex';
-  riskLevel: 'low' | 'medium' | 'high';
+  complexity: "simple" | "medium" | "complex";
+  riskLevel: "low" | "medium" | "high";
 }
 
 /**

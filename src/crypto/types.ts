@@ -7,13 +7,13 @@
  */
 export enum EncryptionMethod {
   /** Personal encryption using sender's private key */
-  PERSONAL = 'personal',
+  PERSONAL = "personal",
   /** Direct encryption to specific recipient */
-  DIRECT = 'direct',
+  DIRECT = "direct",
   /** Group encryption for multiple recipients */
-  GROUP = 'group',
+  GROUP = "group",
   /** Dynamic group with signature-based access */
-  SIGNATURE_GROUP = 'signature-group'
+  SIGNATURE_GROUP = "signature-group",
 }
 
 /**
@@ -123,13 +123,13 @@ export interface GroupMember {
  */
 export enum MemberRole {
   /** Group creator with full permissions */
-  OWNER = 'owner',
+  OWNER = "owner",
   /** Administrator who can add/remove members */
-  ADMIN = 'admin',
+  ADMIN = "admin",
   /** Regular member with read/write access */
-  MEMBER = 'member',
+  MEMBER = "member",
   /** Read-only access */
-  VIEWER = 'viewer'
+  VIEWER = "viewer",
 }
 
 /**

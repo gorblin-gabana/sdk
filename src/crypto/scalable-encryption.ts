@@ -3,29 +3,26 @@
  * Seamlessly transitions from single recipient to multi-recipient encryption
  */
 
-import { bytesToBase58 as encodeBase58, base58ToBytes as decodeBase58 } from '../utils/base58.js';
-import { Keypair } from '@solana/web3.js';
 import {
-  EncryptionMethod,
-  EncryptionResult,
-  EncryptionOptions
-} from './types.js';
+  bytesToBase58 as encodeBase58,
+  base58ToBytes as decodeBase58,
+} from "../utils/base58.js";
+import { Keypair } from "@solana/web3.js";
+import type { EncryptionResult, EncryptionOptions } from "./types.js";
+import { EncryptionMethod } from "./types.js";
+import type { SharePermissions } from "./shared-key-manager.js";
 import {
   SharedKeyManager,
   SharedEncryptionKey,
-  SharePermissions,
-  KeyTransitionRequest
-} from './shared-key-manager.js';
-import {
-  encryptDirect,
-  decryptDirect
-} from './direct.js';
+  KeyTransitionRequest,
+} from "./shared-key-manager.js";
+import { encryptDirect, decryptDirect } from "./direct.js";
 import {
   stringToBytes,
   bytesToString,
   getCurrentTimestamp,
-  isValidPublicKey
-} from './utils.js';
+  isValidPublicKey,
+} from "./utils.js";
 
 /**
  * Scalable encryption configuration
@@ -75,20 +72,20 @@ export class ScalableEncryptionManager {
 
   constructor(
     sharedKeyManager?: SharedKeyManager,
-    defaultConfig?: Partial<ScalableEncryptionConfig>
+    defaultConfig?: Partial<ScalableEncryptionConfig>,
   ) {
     this.sharedKeyManager = sharedKeyManager || new SharedKeyManager();
     this.defaultConfig = {
       autoTransitionThreshold: 3,
       defaultRecipientPermissions: {
         canDecrypt: true,
-        canEncrypt: true,  // Enable encryption for scalable contexts
+        canEncrypt: true, // Enable encryption for scalable contexts
         canShare: false,
-        canRevoke: false
+        canRevoke: false,
       },
       enableAutoKeyRotation: false,
       keyRotationInterval: 30 * 24 * 60 * 60, // 30 days
-      ...defaultConfig
+      ...defaultConfig,
     };
   }
 
@@ -100,15 +97,16 @@ export class ScalableEncryptionManager {
     purpose: string,
     initialRecipient: string,
     creatorPrivateKey: string | Uint8Array,
-    config?: Partial<ScalableEncryptionConfig>
+    config?: Partial<ScalableEncryptionConfig>,
   ): Promise<EncryptionContext> {
     if (!isValidPublicKey(initialRecipient)) {
-      throw new Error('Invalid initial recipient public key');
+      throw new Error("Invalid initial recipient public key");
     }
 
-    const creatorPrivKeyBytes = typeof creatorPrivateKey === 'string'
-      ? decodeBase58(creatorPrivateKey)
-      : creatorPrivateKey;
+    const creatorPrivKeyBytes =
+      typeof creatorPrivateKey === "string"
+        ? decodeBase58(creatorPrivateKey)
+        : creatorPrivateKey;
 
     const creatorKeypair = Keypair.fromSecretKey(creatorPrivKeyBytes);
     const creatorPublicKey = creatorKeypair.publicKey.toBase58();
@@ -124,12 +122,12 @@ export class ScalableEncryptionManager {
         purpose,
         creator: creatorPublicKey,
         createdAt: getCurrentTimestamp(),
-        lastUpdated: getCurrentTimestamp()
+        lastUpdated: getCurrentTimestamp(),
       },
       scalingConfig: {
         ...this.defaultConfig,
-        ...config
-      }
+        ...config,
+      },
     };
 
     this.contexts.set(contextId, context);
@@ -143,28 +141,40 @@ export class ScalableEncryptionManager {
     contextId: string,
     data: string | Uint8Array,
     senderPrivateKey: string | Uint8Array,
-    options?: EncryptionOptions
+    options?: EncryptionOptions,
   ): Promise<EncryptionResult> {
     const context = this.contexts.get(contextId);
     if (!context) {
-      throw new Error('Encryption context not found');
+      throw new Error("Encryption context not found");
     }
 
-    const senderPrivKeyBytes = typeof senderPrivateKey === 'string'
-      ? decodeBase58(senderPrivateKey)
-      : senderPrivateKey;
+    const senderPrivKeyBytes =
+      typeof senderPrivateKey === "string"
+        ? decodeBase58(senderPrivateKey)
+        : senderPrivateKey;
 
     const senderKeypair = Keypair.fromSecretKey(senderPrivKeyBytes);
     const senderPublicKey = senderKeypair.publicKey.toBase58();
 
     // Check if we need to transition to shared key encryption
-    if (context.method === EncryptionMethod.DIRECT && 
-        context.recipients.length >= context.scalingConfig.autoTransitionThreshold) {
-      
-      await this.transitionToSharedEncryption(contextId, senderPrivateKey, senderPublicKey);
+    if (
+      context.method === EncryptionMethod.DIRECT &&
+      context.recipients.length >= context.scalingConfig.autoTransitionThreshold
+    ) {
+      await this.transitionToSharedEncryption(
+        contextId,
+        senderPrivateKey,
+        senderPublicKey,
+      );
       // Refresh context after transition
       const updatedContext = this.contexts.get(contextId)!;
-      return this.encryptWithSharedKey(updatedContext, data, senderPrivateKey, senderPublicKey, options);
+      return this.encryptWithSharedKey(
+        updatedContext,
+        data,
+        senderPrivateKey,
+        senderPublicKey,
+        options,
+      );
     }
 
     // Use appropriate encryption method
@@ -174,11 +184,17 @@ export class ScalableEncryptionManager {
         data,
         context.recipients[0],
         senderPrivateKey,
-        options
+        options,
       );
     } else {
       // Shared key encryption
-      return this.encryptWithSharedKey(context, data, senderPrivateKey, senderPublicKey, options);
+      return this.encryptWithSharedKey(
+        context,
+        data,
+        senderPrivateKey,
+        senderPublicKey,
+        options,
+      );
     }
   }
 
@@ -189,16 +205,16 @@ export class ScalableEncryptionManager {
     contextId: string,
     encryptionResult: EncryptionResult,
     recipientPrivateKey: string | Uint8Array,
-    recipientPublicKey: string
+    recipientPublicKey: string,
   ): Promise<Uint8Array> {
     const context = this.contexts.get(contextId);
     if (!context) {
-      throw new Error('Encryption context not found');
+      throw new Error("Encryption context not found");
     }
 
     // Verify recipient is authorized
     if (!context.recipients.includes(recipientPublicKey)) {
-      throw new Error('Recipient not authorized for this context');
+      throw new Error("Recipient not authorized for this context");
     }
 
     // Use appropriate decryption method
@@ -208,10 +224,10 @@ export class ScalableEncryptionManager {
       return this.sharedKeyManager.decryptWithSharedKey(
         encryptionResult,
         recipientPrivateKey,
-        recipientPublicKey
+        recipientPublicKey,
       );
     } else {
-      throw new Error('Invalid encryption context state');
+      throw new Error("Invalid encryption context state");
     }
   }
 
@@ -223,16 +239,18 @@ export class ScalableEncryptionManager {
     newRecipients: string[],
     authorizerPrivateKey: string | Uint8Array,
     authorizerPublicKey: string,
-    permissions?: Partial<SharePermissions>
+    permissions?: Partial<SharePermissions>,
   ): Promise<EncryptionContext> {
     const context = this.contexts.get(contextId);
     if (!context) {
-      throw new Error('Encryption context not found');
+      throw new Error("Encryption context not found");
     }
 
     // Validate new recipients
-    const validRecipients = newRecipients.filter(recipient => {
-      return isValidPublicKey(recipient) && !context.recipients.includes(recipient);
+    const validRecipients = newRecipients.filter((recipient) => {
+      return (
+        isValidPublicKey(recipient) && !context.recipients.includes(recipient)
+      );
     });
 
     if (validRecipients.length === 0) {
@@ -241,17 +259,29 @@ export class ScalableEncryptionManager {
 
     // Check if we need to transition to shared encryption first
     const totalRecipients = context.recipients.length + validRecipients.length;
-    
-    if (context.method === EncryptionMethod.DIRECT && 
-        totalRecipients > context.scalingConfig.autoTransitionThreshold) {
-      
-      await this.transitionToSharedEncryption(contextId, authorizerPrivateKey, authorizerPublicKey);
+
+    if (
+      context.method === EncryptionMethod.DIRECT &&
+      totalRecipients > context.scalingConfig.autoTransitionThreshold
+    ) {
+      await this.transitionToSharedEncryption(
+        contextId,
+        authorizerPrivateKey,
+        authorizerPublicKey,
+      );
     }
 
     // Add recipients based on current method
-    if (context.method === EncryptionMethod.DIRECT && context.recipients.length === 1) {
+    if (
+      context.method === EncryptionMethod.DIRECT &&
+      context.recipients.length === 1
+    ) {
       // Still single recipient, but we're adding more - transition to shared
-      await this.transitionToSharedEncryption(contextId, authorizerPrivateKey, authorizerPublicKey);
+      await this.transitionToSharedEncryption(
+        contextId,
+        authorizerPrivateKey,
+        authorizerPublicKey,
+      );
     }
 
     // Refresh context after potential transition
@@ -261,19 +291,19 @@ export class ScalableEncryptionManager {
     if (updatedContext.sharedKeyId) {
       const recipientPermissions = {
         ...updatedContext.scalingConfig.defaultRecipientPermissions,
-        ...permissions
+        ...permissions,
       };
 
-      const recipientsWithPermissions = validRecipients.map(publicKey => ({
+      const recipientsWithPermissions = validRecipients.map((publicKey) => ({
         publicKey,
-        permissions: recipientPermissions
+        permissions: recipientPermissions,
       }));
 
       await this.sharedKeyManager.addRecipientsToSharedKey(
         updatedContext.sharedKeyId,
         recipientsWithPermissions,
         authorizerPrivateKey,
-        authorizerPublicKey
+        authorizerPublicKey,
       );
     }
 
@@ -283,8 +313,8 @@ export class ScalableEncryptionManager {
       recipients: [...updatedContext.recipients, ...validRecipients],
       metadata: {
         ...updatedContext.metadata,
-        lastUpdated: getCurrentTimestamp()
-      }
+        lastUpdated: getCurrentTimestamp(),
+      },
     };
 
     this.contexts.set(contextId, finalUpdatedContext);
@@ -299,16 +329,16 @@ export class ScalableEncryptionManager {
     recipientsToRemove: string[],
     authorizerPrivateKey: string | Uint8Array,
     authorizerPublicKey: string,
-    rotateKeys: boolean = true
+    rotateKeys: boolean = true,
   ): Promise<EncryptionContext> {
     const context = this.contexts.get(contextId);
     if (!context) {
-      throw new Error('Encryption context not found');
+      throw new Error("Encryption context not found");
     }
 
     // Validate recipients to remove
-    const validRecipientsToRemove = recipientsToRemove.filter(recipient => 
-      context.recipients.includes(recipient)
+    const validRecipientsToRemove = recipientsToRemove.filter((recipient) =>
+      context.recipients.includes(recipient),
     );
 
     if (validRecipientsToRemove.length === 0) {
@@ -317,7 +347,7 @@ export class ScalableEncryptionManager {
 
     // Don't allow removing all recipients
     if (validRecipientsToRemove.length >= context.recipients.length) {
-      throw new Error('Cannot remove all recipients from context');
+      throw new Error("Cannot remove all recipients from context");
     }
 
     // Remove from shared key if using shared encryption
@@ -327,13 +357,13 @@ export class ScalableEncryptionManager {
         validRecipientsToRemove,
         authorizerPrivateKey,
         authorizerPublicKey,
-        rotateKeys
+        rotateKeys,
       );
     }
 
     // Update context
     const updatedRecipients = context.recipients.filter(
-      recipient => !validRecipientsToRemove.includes(recipient)
+      (recipient) => !validRecipientsToRemove.includes(recipient),
     );
 
     const updatedContext: EncryptionContext = {
@@ -341,8 +371,8 @@ export class ScalableEncryptionManager {
       recipients: updatedRecipients,
       metadata: {
         ...context.metadata,
-        lastUpdated: getCurrentTimestamp()
-      }
+        lastUpdated: getCurrentTimestamp(),
+      },
     };
 
     this.contexts.set(contextId, updatedContext);
@@ -366,12 +396,12 @@ export class ScalableEncryptionManager {
     method: EncryptionMethod;
     createdAt: number;
   }> {
-    return Array.from(this.contexts.values()).map(context => ({
+    return Array.from(this.contexts.values()).map((context) => ({
       contextId: context.contextId,
       name: context.metadata.name,
       recipients: context.recipients.length,
       method: context.method,
-      createdAt: context.metadata.createdAt
+      createdAt: context.metadata.createdAt,
     }));
   }
 
@@ -380,7 +410,7 @@ export class ScalableEncryptionManager {
    */
   updateContextConfig(
     contextId: string,
-    newConfig: Partial<ScalableEncryptionConfig>
+    newConfig: Partial<ScalableEncryptionConfig>,
   ): boolean {
     const context = this.contexts.get(contextId);
     if (!context) {
@@ -391,12 +421,12 @@ export class ScalableEncryptionManager {
       ...context,
       scalingConfig: {
         ...context.scalingConfig,
-        ...newConfig
+        ...newConfig,
       },
       metadata: {
         ...context.metadata,
-        lastUpdated: getCurrentTimestamp()
-      }
+        lastUpdated: getCurrentTimestamp(),
+      },
     };
 
     this.contexts.set(contextId, updatedContext);
@@ -408,7 +438,7 @@ export class ScalableEncryptionManager {
   private async transitionToSharedEncryption(
     contextId: string,
     authorizerPrivateKey: string | Uint8Array,
-    authorizerPublicKey: string
+    authorizerPublicKey: string,
   ): Promise<void> {
     const context = this.contexts.get(contextId);
     if (!context || context.method !== EncryptionMethod.DIRECT) {
@@ -417,32 +447,34 @@ export class ScalableEncryptionManager {
 
     // Create shared key with current recipients
     // Give creator full permissions and recipients default permissions
-    const initialRecipients = context.recipients.map(publicKey => ({
+    const initialRecipients = context.recipients.map((publicKey) => ({
       publicKey,
-      permissions: context.scalingConfig.defaultRecipientPermissions
+      permissions: context.scalingConfig.defaultRecipientPermissions,
     }));
 
     // Add the creator with full permissions if not already included
     // This ensures the creator can always manage their contexts
-    if (!initialRecipients.some(r => r.publicKey === authorizerPublicKey)) {
+    if (!initialRecipients.some((r) => r.publicKey === authorizerPublicKey)) {
       initialRecipients.push({
         publicKey: authorizerPublicKey,
         permissions: {
           canDecrypt: true,
           canEncrypt: true,
           canShare: true,
-          canRevoke: true
-        }
+          canRevoke: true,
+        },
       });
     } else {
       // Ensure the creator has full permissions if they're already in recipients
-      const creatorRecipient = initialRecipients.find(r => r.publicKey === authorizerPublicKey);
+      const creatorRecipient = initialRecipients.find(
+        (r) => r.publicKey === authorizerPublicKey,
+      );
       if (creatorRecipient) {
         creatorRecipient.permissions = {
           canDecrypt: true,
           canEncrypt: true,
           canShare: true,
-          canRevoke: true
+          canRevoke: true,
         };
       }
     }
@@ -452,15 +484,15 @@ export class ScalableEncryptionManager {
         name: `Shared key for ${context.metadata.name}`,
         purpose: context.metadata.purpose,
         creator: authorizerPublicKey,
-        algorithm: 'AES-256-GCM',
-        derivationMethod: 'ECDH + PBKDF2',
+        algorithm: "AES-256-GCM",
+        derivationMethod: "ECDH + PBKDF2",
         properties: {
           contextId,
-          transitionedAt: getCurrentTimestamp()
-        }
+          transitionedAt: getCurrentTimestamp(),
+        },
       },
       initialRecipients,
-      authorizerPrivateKey
+      authorizerPrivateKey,
     );
 
     // Update context
@@ -470,8 +502,8 @@ export class ScalableEncryptionManager {
       sharedKeyId: sharedKey.keyId,
       metadata: {
         ...context.metadata,
-        lastUpdated: getCurrentTimestamp()
-      }
+        lastUpdated: getCurrentTimestamp(),
+      },
     };
 
     this.contexts.set(contextId, updatedContext);
@@ -482,17 +514,17 @@ export class ScalableEncryptionManager {
     data: string | Uint8Array,
     senderPrivateKey: string | Uint8Array,
     senderPublicKey: string,
-    options?: EncryptionOptions
+    options?: EncryptionOptions,
   ): Promise<EncryptionResult> {
     if (!context.sharedKeyId) {
-      throw new Error('No shared key ID in context');
+      throw new Error("No shared key ID in context");
     }
 
     return this.sharedKeyManager.encryptWithSharedKey(
       data,
       context.sharedKeyId,
       senderPrivateKey,
-      senderPublicKey
+      senderPublicKey,
     );
   }
 }
@@ -503,7 +535,7 @@ export async function createScalableEncryption(
   purpose: string,
   initialRecipient: string,
   creatorPrivateKey: string | Uint8Array,
-  config?: Partial<ScalableEncryptionConfig>
+  config?: Partial<ScalableEncryptionConfig>,
 ): Promise<{
   manager: ScalableEncryptionManager;
   context: EncryptionContext;
@@ -514,8 +546,8 @@ export async function createScalableEncryption(
     purpose,
     initialRecipient,
     creatorPrivateKey,
-    config
+    config,
   );
-  
+
   return { manager, context };
 }

@@ -1,17 +1,20 @@
 // RPC Client - Main connection and client management
-import { getGorbchainConfig } from '../utils/gorbchainConfig.js';
-import type { RpcResponse } from './accounts.js';
+import { getGorbchainConfig } from "../utils/gorbchainConfig.js";
+import type { RpcResponse } from "./accounts.js";
 import {
   RpcNetworkError,
   RpcTimeoutError,
   RpcServerError,
   RpcConnectionError,
-
   RpcRateLimitError,
   RpcMethodNotSupportedError,
-  type ErrorContext
-} from '../errors/index.js';
-import { RetryManager, type RetryOptions, type CircuitBreakerOptions } from '../errors/retry.js';
+  type ErrorContext,
+} from "../errors/index.js";
+import {
+  RetryManager,
+  type RetryOptions,
+  type CircuitBreakerOptions,
+} from "../errors/retry.js";
 
 export interface RpcClientOptions {
   rpcUrl?: string;
@@ -30,7 +33,8 @@ export class RpcClient {
 
   constructor(options: RpcClientOptions = {}) {
     const config = getGorbchainConfig();
-    this.rpcUrl = options.rpcUrl ?? config.rpcUrl ?? 'https://rpc.gorbchain.xyz';
+    this.rpcUrl =
+      options.rpcUrl ?? config.rpcUrl ?? "https://rpc.gorbchain.xyz";
     this.timeout = options.timeout ?? 30000; // 30 seconds
     this.retries = options.retries ?? 3;
 
@@ -41,13 +45,13 @@ export class RpcClient {
         initialDelay: 1000,
         maxDelay: 10000,
         backoffMultiplier: 2,
-        jitter: true
+        jitter: true,
       },
       options.circuitBreakerOptions ?? {
         failureThreshold: 5,
         resetTimeout: 30000,
-        successThreshold: 2
-      }
+        successThreshold: 2,
+      },
     );
   }
 
@@ -57,58 +61,58 @@ export class RpcClient {
   async request<T>(method: string, params: any[] = []): Promise<T> {
     const context: ErrorContext = {
       rpcEndpoint: this.rpcUrl,
-      metadata: { method, params }
+      metadata: { method, params },
     };
 
-    return this.retryManager.execute(
-      `rpc-${method}`,
-      async () => {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+    return this.retryManager.execute(`rpc-${method}`, async () => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
-        try {
-          const response = await fetch(this.rpcUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              jsonrpc: '2.0',
-              id: this.requestId++,
-              method,
-              params
-            }),
-            signal: controller.signal
-          });
+      try {
+        const response = await fetch(this.rpcUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: this.requestId++,
+            method,
+            params,
+          }),
+          signal: controller.signal,
+        });
 
-          clearTimeout(timeoutId);
+        clearTimeout(timeoutId);
 
-          // Handle HTTP errors
-          if (!response.ok) {
-            const responseText = await response.text();
-            this.handleHttpError(response.status, responseText, context);
-          }
-
-          const data: RpcResponse<T> = await response.json();
-
-          // Handle RPC errors
-          if (data.error) {
-            this.handleRpcError(data.error, method, context);
-          }
-
-          return data.result as T;
-
-        } catch (error) {
-          clearTimeout(timeoutId);
-          this.handleRequestError(error, method, context);
-          throw error; // Re-throw to maintain stack trace
+        // Handle HTTP errors
+        if (!response.ok) {
+          const responseText = await response.text();
+          this.handleHttpError(response.status, responseText, context);
         }
+
+        const data: RpcResponse<T> = await response.json();
+
+        // Handle RPC errors
+        if (data.error) {
+          this.handleRpcError(data.error, method, context);
+        }
+
+        return data.result as T;
+      } catch (error) {
+        clearTimeout(timeoutId);
+        this.handleRequestError(error, method, context);
+        throw error; // Re-throw to maintain stack trace
       }
-    );
+    });
   }
 
   /**
    * Handle HTTP errors and convert to appropriate error types
    */
-  private handleHttpError(status: number, responseText: string, context: ErrorContext): never {
+  private handleHttpError(
+    status: number,
+    responseText: string,
+    context: ErrorContext,
+  ): never {
     if (status === 429) {
       // Extract retry-after header if available
       const retryAfter = this.extractRetryAfter(responseText);
@@ -117,7 +121,7 @@ export class RpcClient {
 
     if (status === 404) {
       throw new RpcConnectionError(this.rpcUrl, context, {
-        cause: new Error(`HTTP ${status}: ${responseText}`)
+        cause: new Error(`HTTP ${status}: ${responseText}`),
       });
     }
 
@@ -135,7 +139,11 @@ export class RpcClient {
   /**
    * Handle RPC-specific errors
    */
-  private handleRpcError(error: { code: number; message: string }, method: string, context: ErrorContext): never {
+  private handleRpcError(
+    error: { code: number; message: string },
+    method: string,
+    context: ErrorContext,
+  ): never {
     const { code, message } = error;
 
     if (code === -32601) {
@@ -152,19 +160,23 @@ export class RpcClient {
   /**
    * Handle request-level errors (network, timeout, etc.)
    */
-  private handleRequestError(error: unknown, method: string, context: ErrorContext): never {
+  private handleRequestError(
+    error: unknown,
+    method: string,
+    context: ErrorContext,
+  ): never {
     if (error instanceof Error) {
-      if (error.name === 'AbortError') {
+      if (error.name === "AbortError") {
         throw new RpcTimeoutError(this.timeout, context);
       }
 
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      if (error.name === "TypeError" && error.message.includes("fetch")) {
         throw new RpcConnectionError(this.rpcUrl, context, { cause: error });
       }
     }
 
     throw new RpcNetworkError(`Request failed: ${error}`, context, {
-      cause: error instanceof Error ? error : new Error(String(error))
+      cause: error instanceof Error ? error : new Error(String(error)),
     });
   }
 
@@ -174,7 +186,7 @@ export class RpcClient {
   private extractRetryAfter(responseText: string): number | undefined {
     try {
       const parsed = JSON.parse(responseText);
-      return parsed.retryAfter ?? parsed['retry-after'];
+      return parsed.retryAfter ?? parsed["retry-after"];
     } catch {
       return undefined;
     }
@@ -198,7 +210,7 @@ export class RpcClient {
    * Get network information
    */
   async getHealth(): Promise<string> {
-    return this.request<string>('getHealth');
+    return this.request<string>("getHealth");
   }
 
   /**
@@ -206,7 +218,7 @@ export class RpcClient {
    */
   async getSlot(commitment?: string): Promise<number> {
     const params = commitment ? [{ commitment }] : [];
-    return this.request<number>('getSlot', params);
+    return this.request<number>("getSlot", params);
   }
 
   /**
@@ -214,14 +226,17 @@ export class RpcClient {
    */
   async getBlockHeight(commitment?: string): Promise<number> {
     const params = commitment ? [{ commitment }] : [];
-    return this.request<number>('getBlockHeight', params);
+    return this.request<number>("getBlockHeight", params);
   }
 
   /**
    * Get version information
    */
-  async getVersion(): Promise<{ 'solana-core': string; 'feature-set'?: number }> {
-    return this.request('getVersion');
+  async getVersion(): Promise<{
+    "solana-core": string;
+    "feature-set"?: number;
+  }> {
+    return this.request("getVersion");
   }
 
   /**
@@ -237,7 +252,7 @@ export class RpcClient {
         blockhash: string;
         lastValidBlockHeight: number;
       };
-    }>('getLatestBlockhash', params);
+    }>("getLatestBlockhash", params);
 
     // Handle both direct response and wrapped response
     return result.value ?? result;
@@ -246,14 +261,19 @@ export class RpcClient {
   /**
    * Get account information
    */
-  async getAccountInfo(address: string, commitment?: string): Promise<{
+  async getAccountInfo(
+    address: string,
+    commitment?: string,
+  ): Promise<{
     lamports: number;
     owner: string;
     executable: boolean;
     rentEpoch: number;
     data: [string, string];
   } | null> {
-    const config: { encoding: string; commitment?: string } = { encoding: 'base64' };
+    const config: { encoding: string; commitment?: string } = {
+      encoding: "base64",
+    };
     if (commitment) {
       config.commitment = commitment;
     }
@@ -268,7 +288,7 @@ export class RpcClient {
         rentEpoch: number;
         data: [string, string];
       } | null;
-    }>('getAccountInfo', params);
+    }>("getAccountInfo", params);
 
     return result.value;
   }
@@ -276,7 +296,10 @@ export class RpcClient {
   /**
    * Get token account information
    */
-  async getTokenAccountInfo(address: string, commitment?: string): Promise<{
+  async getTokenAccountInfo(
+    address: string,
+    commitment?: string,
+  ): Promise<{
     mint: string;
     owner: string;
     tokenAmount: {
@@ -286,7 +309,9 @@ export class RpcClient {
       uiAmountString: string;
     };
   } | null> {
-    const config: { encoding: string; commitment?: string } = { encoding: 'jsonParsed' };
+    const config: { encoding: string; commitment?: string } = {
+      encoding: "jsonParsed",
+    };
     if (commitment) {
       config.commitment = commitment;
     }
@@ -304,7 +329,7 @@ export class RpcClient {
           uiAmountString: string;
         };
       } | null;
-    }>('getTokenAccountInfo', params);
+    }>("getTokenAccountInfo", params);
 
     return result.value;
   }
@@ -312,7 +337,10 @@ export class RpcClient {
   /**
    * Get mint account information
    */
-  async getMintInfo(mintAddress: string, commitment?: string): Promise<{
+  async getMintInfo(
+    mintAddress: string,
+    commitment?: string,
+  ): Promise<{
     supply: string;
     decimals: number;
     isInitialized: boolean;
@@ -346,27 +374,38 @@ export class RpcClient {
 
     // Read mint authority (32 bytes at offset 4)
     const mintAuthorityFlag = view.getUint8(4);
-    const mintAuthority = mintAuthorityFlag === 1 ?
-      Array.from(data.subarray(5, 37)).map(b => b.toString(16).padStart(2, '0')).join('') : null;
+    const mintAuthority =
+      mintAuthorityFlag === 1
+        ? Array.from(data.subarray(5, 37))
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join("")
+        : null;
 
     // Read freeze authority (32 bytes at offset 46)
     const freezeAuthorityFlag = view.getUint8(46);
-    const freezeAuthority = freezeAuthorityFlag === 1 ?
-      Array.from(data.subarray(47, 79)).map(b => b.toString(16).padStart(2, '0')).join('') : null;
+    const freezeAuthority =
+      freezeAuthorityFlag === 1
+        ? Array.from(data.subarray(47, 79))
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join("")
+        : null;
 
     return {
       supply,
       decimals,
       isInitialized,
       mintAuthority,
-      freezeAuthority
+      freezeAuthority,
     };
   }
 
   /**
    * Get token metadata account for NFTs
    */
-  async getTokenMetadata(mintAddress: string, commitment?: string): Promise<{
+  async getTokenMetadata(
+    mintAddress: string,
+    commitment?: string,
+  ): Promise<{
     name: string;
     symbol: string;
     uri: string;
@@ -420,21 +459,21 @@ export class RpcClient {
       const nameLength = view.getUint32(offset, true); // true = little endian
       offset += 4;
       const nameBytes = data.subarray(offset, offset + nameLength);
-      const name = new TextDecoder().decode(nameBytes).replace(/\0/g, '');
+      const name = new TextDecoder().decode(nameBytes).replace(/\0/g, "");
       offset += nameLength;
 
       // Read symbol (first 4 bytes are length, then string)
       const symbolLength = view.getUint32(offset, true);
       offset += 4;
       const symbolBytes = data.subarray(offset, offset + symbolLength);
-      const symbol = new TextDecoder().decode(symbolBytes).replace(/\0/g, '');
+      const symbol = new TextDecoder().decode(symbolBytes).replace(/\0/g, "");
       offset += symbolLength;
 
       // Read URI (first 4 bytes are length, then string)
       const uriLength = view.getUint32(offset, true);
       offset += 4;
       const uriBytes = data.subarray(offset, offset + uriLength);
-      const uri = new TextDecoder().decode(uriBytes).replace(/\0/g, '');
+      const uri = new TextDecoder().decode(uriBytes).replace(/\0/g, "");
       offset += uriLength;
 
       // Read seller fee basis points (2 bytes)
@@ -453,7 +492,7 @@ export class RpcClient {
         symbol,
         uri,
         sellerFeeBasisPoints,
-        creators
+        creators,
       };
     } catch (error) {
       // Error decoding metadata
@@ -464,15 +503,13 @@ export class RpcClient {
   /**
    * Find metadata address for a given mint
    */
-  private async findMetadataAddress(mintAddress: string): Promise<string | null> {
+  private async findMetadataAddress(
+    mintAddress: string,
+  ): Promise<string | null> {
     // This is a simplified version - in production, use the official method
     // to calculate the PDA for metadata accounts
-    const metaplexProgramId = 'BvoSmPBF6mBRxBMY9FPguw1zUoUg3xrc5CaWf7y5ACkc';
-    const seeds = [
-      'metadata',
-      metaplexProgramId,
-      mintAddress
-    ];
+    const metaplexProgramId = "BvoSmPBF6mBRxBMY9FPguw1zUoUg3xrc5CaWf7y5ACkc";
+    const seeds = ["metadata", metaplexProgramId, mintAddress];
 
     // In a real implementation, you'd use the proper PDA calculation
     // For now, return null as we can't calculate PDAs without proper crypto libraries
@@ -482,14 +519,21 @@ export class RpcClient {
   /**
    * Get multiple account information in a single request
    */
-  async getMultipleAccounts(addresses: string[], commitment?: string): Promise<Array<{
-    lamports: number;
-    owner: string;
-    executable: boolean;
-    rentEpoch: number;
-    data: [string, string];
-  } | null>> {
-    const config: { encoding: string; commitment?: string } = { encoding: 'base64' };
+  async getMultipleAccounts(
+    addresses: string[],
+    commitment?: string,
+  ): Promise<
+    Array<{
+      lamports: number;
+      owner: string;
+      executable: boolean;
+      rentEpoch: number;
+      data: [string, string];
+    } | null>
+  > {
+    const config: { encoding: string; commitment?: string } = {
+      encoding: "base64",
+    };
     if (commitment) {
       config.commitment = commitment;
     }
@@ -504,7 +548,7 @@ export class RpcClient {
         rentEpoch: number;
         data: [string, string];
       } | null>;
-    }>('getMultipleAccounts', params);
+    }>("getMultipleAccounts", params);
 
     return result.value;
   }
@@ -515,19 +559,25 @@ export class RpcClient {
   async getTokenAccountsByOwner(
     ownerAddress: string,
     filter: { mint?: string; programId?: string },
-    commitment?: string
-  ): Promise<Array<{
-    pubkey: string;
-    account: {
-      lamports: number;
-      owner: string;
-      executable: boolean;
-      rentEpoch: number;
-      data: [string, string];
+    commitment?: string,
+  ): Promise<
+    Array<{
+      pubkey: string;
+      account: {
+        lamports: number;
+        owner: string;
+        executable: boolean;
+        rentEpoch: number;
+        data: [string, string];
+      };
+    }>
+  > {
+    const filterParam = filter.mint
+      ? { mint: filter.mint }
+      : { programId: filter.programId };
+    const config: { encoding: string; commitment?: string } = {
+      encoding: "base64",
     };
-  }>> {
-    const filterParam = filter.mint ? { mint: filter.mint } : { programId: filter.programId };
-    const config: { encoding: string; commitment?: string } = { encoding: 'base64' };
     if (commitment) {
       config.commitment = commitment;
     }
@@ -545,7 +595,7 @@ export class RpcClient {
           data: [string, string];
         };
       }>;
-    }>('getTokenAccountsByOwner', params);
+    }>("getTokenAccountsByOwner", params);
 
     return result.value;
   }
@@ -562,7 +612,7 @@ export class RpcClient {
 
     // NFT characteristics: supply of 1, 0 decimals, no mint authority
     return (
-      mintInfo.supply === '1' &&
+      mintInfo.supply === "1" &&
       mintInfo.decimals === 0 &&
       mintInfo.mintAuthority === null
     );
@@ -581,7 +631,7 @@ export class RpcClient {
 
       // Since we know NNFT symbol extraction works, find that first and work backwards
       const dataStr = textDecoder.decode(data);
-      const nnftIndex = dataStr.indexOf('NNFT');
+      const nnftIndex = dataStr.indexOf("NNFT");
 
       if (nnftIndex !== -1) {
         // Found NNFT, now work backwards to find the name
@@ -591,20 +641,28 @@ export class RpcClient {
         const nnftLengthOffset = nnftIndex - 4;
         if (nnftLengthOffset >= 4) {
           const symbolLength = view.getUint32(nnftLengthOffset, true);
-          if (symbolLength === 4) { // Confirms this is the length for "NNFT"
+          if (symbolLength === 4) {
+            // Confirms this is the length for "NNFT"
             // Now work backwards to find the name
             // Format: [name_length][name][symbol_length][symbol][uri_length][uri]
             const nameEndOffset = nnftLengthOffset;
 
             // Look backwards for the name - try different possible name lengths
-            for (let possibleNameLength = 7; possibleNameLength <= 20; possibleNameLength++) {
+            for (
+              let possibleNameLength = 7;
+              possibleNameLength <= 20;
+              possibleNameLength++
+            ) {
               const nameStartOffset = nameEndOffset - 4 - possibleNameLength;
               if (nameStartOffset >= 0) {
                 const nameLengthOffset = nameStartOffset;
                 const nameLength = view.getUint32(nameLengthOffset, true);
 
                 if (nameLength === possibleNameLength) {
-                  const nameBytes = data.subarray(nameLengthOffset + 4, nameLengthOffset + 4 + nameLength);
+                  const nameBytes = data.subarray(
+                    nameLengthOffset + 4,
+                    nameLengthOffset + 4 + nameLength,
+                  );
                   const name = textDecoder.decode(nameBytes).trim();
 
                   // Check if this looks like a reasonable name
@@ -613,11 +671,18 @@ export class RpcClient {
                     const uriLengthOffset = nnftIndex + 4; // After "NNFT"
                     if (uriLengthOffset + 4 < data.length) {
                       const uriLength = view.getUint32(uriLengthOffset, true);
-                      if (uriLength > 0 && uriLength < 201 && uriLengthOffset + 4 + uriLength <= data.length) {
-                        const uriBytes = data.subarray(uriLengthOffset + 4, uriLengthOffset + 4 + uriLength);
+                      if (
+                        uriLength > 0 &&
+                        uriLength < 201 &&
+                        uriLengthOffset + 4 + uriLength <= data.length
+                      ) {
+                        const uriBytes = data.subarray(
+                          uriLengthOffset + 4,
+                          uriLengthOffset + 4 + uriLength,
+                        );
                         const uri = textDecoder.decode(uriBytes).trim();
 
-                        return { name, symbol: 'NNFT', uri };
+                        return { name, symbol: "NNFT", uri };
                       }
                     }
                   }
@@ -631,20 +696,20 @@ export class RpcClient {
       // Generic fallback: extract any readable strings if the structured parsing failed
       // Look for common metadata patterns in the decoded string
       const potentialStrings = [];
-      let currentString = '';
+      let currentString = "";
 
       for (let i = 0; i < dataStr.length; i++) {
         const char = dataStr[i];
         const code = char.charCodeAt(0);
 
         // Collect printable ASCII characters (letters, numbers, spaces, common symbols)
-        if ((code >= 32 && code <= 126) && char !== '\x00') {
+        if (code >= 32 && code <= 126 && char !== "\x00") {
           currentString += char;
         } else {
           if (currentString.length >= 2) {
             potentialStrings.push(currentString.trim());
           }
-          currentString = '';
+          currentString = "";
         }
       }
 
@@ -654,26 +719,28 @@ export class RpcClient {
       }
 
       // Filter to reasonable metadata strings (not too long, not too short)
-      const validStrings = potentialStrings.filter(str =>
-        str.length >= 2 && str.length <= 64 &&
-        /^[a-zA-Z0-9\s\-_./:]+$/.test(str)
+      const validStrings = potentialStrings.filter(
+        (str) =>
+          str.length >= 2 &&
+          str.length <= 64 &&
+          /^[a-zA-Z0-9\s\-_./:]+$/.test(str),
       );
 
       if (validStrings.length >= 2) {
         // Try to identify name, symbol, and URI from the valid strings
         const name = validStrings[0];
         let symbol = validStrings[1];
-        let uri = validStrings.find(str => str.includes('http')) ?? '';
+        let uri = validStrings.find((str) => str.includes("http")) ?? "";
 
         // If symbol looks too long, it might be the URI
-        if (symbol.length > 10 && symbol.includes('http')) {
+        if (symbol.length > 10 && symbol.includes("http")) {
           uri = symbol;
-          symbol = validStrings[2] ?? '';
+          symbol = validStrings[2] ?? "";
         }
 
         // Validate symbol format (should be short and uppercase-ish)
         if (symbol.length > 10 || !/^[A-Z0-9]+$/i.test(symbol)) {
-          symbol = '';
+          symbol = "";
         }
 
         if (name && (symbol ?? uri)) {
@@ -690,7 +757,10 @@ export class RpcClient {
   /**
    * Get enhanced token information including NFT detection
    */
-  async getTokenInfo(mintAddress: string, commitment?: string): Promise<{
+  async getTokenInfo(
+    mintAddress: string,
+    commitment?: string,
+  ): Promise<{
     mint: string;
     supply: string;
     decimals: number;
@@ -716,10 +786,7 @@ export class RpcClient {
       return null;
     }
 
-    const isNFT = (
-      mintInfo.supply === '1' &&
-      mintInfo.decimals === 0
-    );
+    const isNFT = mintInfo.supply === "1" && mintInfo.decimals === 0;
 
     let metadata;
     if (isNFT) {
@@ -737,7 +804,10 @@ export class RpcClient {
           let finalName = token2022Metadata.name;
 
           // If we have a URI, try to fetch the external metadata for the name
-          if (token2022Metadata.uri && token2022Metadata.uri.startsWith('http')) {
+          if (
+            token2022Metadata.uri &&
+            token2022Metadata.uri.startsWith("http")
+          ) {
             try {
               const response = await fetch(token2022Metadata.uri);
               if (response.ok) {
@@ -756,7 +826,7 @@ export class RpcClient {
             symbol: token2022Metadata.symbol,
             uri: token2022Metadata.uri,
             sellerFeeBasisPoints: 0,
-            creators: []
+            creators: [],
           };
         }
       }
@@ -771,27 +841,31 @@ export class RpcClient {
       mint: mintAddress,
       ...mintInfo,
       isNFT,
-      metadata: metadata ?? undefined
+      metadata: metadata ?? undefined,
     };
   }
 
   /**
    * Get transaction details by signature
    */
-  async getTransaction(signature: string, options?: {
-    encoding?: string;
-    commitment?: string;
-    maxSupportedTransactionVersion?: number;
-  }): Promise<any> {
+  async getTransaction(
+    signature: string,
+    options?: {
+      encoding?: string;
+      commitment?: string;
+      maxSupportedTransactionVersion?: number;
+    },
+  ): Promise<any> {
     const config: any = {
-      encoding: options?.encoding || 'json',
-      commitment: options?.commitment || 'finalized'
+      encoding: options?.encoding || "json",
+      commitment: options?.commitment || "finalized",
     };
-    
+
     if (options?.maxSupportedTransactionVersion !== undefined) {
-      config.maxSupportedTransactionVersion = options.maxSupportedTransactionVersion;
+      config.maxSupportedTransactionVersion =
+        options.maxSupportedTransactionVersion;
     }
 
-    return this.request('getTransaction', [signature, config]);
+    return this.request("getTransaction", [signature, config]);
   }
 }

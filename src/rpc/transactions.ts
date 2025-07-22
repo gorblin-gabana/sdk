@@ -1,5 +1,5 @@
 // RPC Transaction Methods - Our own implementation based on Solana RPC specs
-import type { RpcClient } from './client.js';
+import type { RpcClient } from "./client.js";
 
 export interface TransactionSignature {
   signature: string;
@@ -44,15 +44,15 @@ export async function sendTransaction(
     skipPreflight?: boolean;
     preflightCommitment?: string;
     encoding?: string;
-  }
+  },
 ): Promise<string> {
-  return client.request<string>('sendTransaction', [
+  return client.request<string>("sendTransaction", [
     transaction,
     {
       skipPreflight: options?.skipPreflight ?? false,
-      preflightCommitment: options?.preflightCommitment ?? 'finalized',
-      encoding: options?.encoding ?? 'base64'
-    }
+      preflightCommitment: options?.preflightCommitment ?? "finalized",
+      encoding: options?.encoding ?? "base64",
+    },
   ]);
 }
 
@@ -66,15 +66,16 @@ export async function getTransaction(
     encoding?: string;
     commitment?: string;
     maxSupportedTransactionVersion?: number;
-  }
+  },
 ): Promise<TransactionDetails | null> {
-  return client.request<TransactionDetails | null>('getTransaction', [
+  return client.request<TransactionDetails | null>("getTransaction", [
     signature,
     {
-      encoding: options?.encoding || 'json',
-      commitment: options?.commitment ?? 'finalized',
-      maxSupportedTransactionVersion: options?.maxSupportedTransactionVersion ?? 0
-    }
+      encoding: options?.encoding || "json",
+      commitment: options?.commitment ?? "finalized",
+      maxSupportedTransactionVersion:
+        options?.maxSupportedTransactionVersion ?? 0,
+    },
   ]);
 }
 
@@ -83,7 +84,7 @@ export async function getTransaction(
  */
 export async function getSignatureStatus(
   client: RpcClient,
-  signature: string
+  signature: string,
 ): Promise<{
   slot: number;
   confirmations: number | null;
@@ -97,9 +98,9 @@ export async function getSignatureStatus(
       err: any;
       confirmationStatus?: string;
     } | null>;
-  }>('getSignatureStatuses', [[signature]]);
+  }>("getSignatureStatuses", [[signature]]);
 
   return result.value[0];
 }
 
-export * from './fetchTransactionBySignature.js';
+export * from "./fetchTransactionBySignature.js";

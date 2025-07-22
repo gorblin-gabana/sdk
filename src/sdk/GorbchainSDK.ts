@@ -1,47 +1,51 @@
 /**
  * GorbchainSDK V1 - Main SDK Class
- * 
+ *
  * Specialized in rich Solana operations for rapid application development.
  * Focuses on wallet integration, enhanced transaction analysis, and portfolio management.
- * 
+ *
  * @example
  * ```typescript
  * const sdk = new GorbchainSDK({
  *   rpcEndpoint: 'https://rpc.gorbchain.xyz',
  *   network: 'gorbchain'
  * });
- * 
+ *
  * // Rich token portfolio analysis
  * const portfolio = await sdk.getRichTokenAccounts(address);
- * 
+ *
  * // Enhanced transaction analysis
  * const transaction = await sdk.getRichTransaction(signature);
- * 
+ *
  * // Universal wallet integration
  * const walletManager = sdk.createWalletManager();
  * ```
- * 
+ *
  * @version 1.0.0
  * @author Gorbchain Team
  */
 
-import { RpcClient } from '../rpc/client.js';
-import { EnhancedRpcClient } from '../rpc/enhancedClient.js';
-import { AdvancedTokenHoldings } from '../tokens/advancedHoldings.js';
-import { NetworkConfig, getNetworkConfig, detectNetworkFromEndpoint, createCustomNetworkConfig } from '../config/networks.js';
-import { DecoderRegistry } from '../decoders/registry.js';
-import { createDefaultDecoderRegistry } from '../decoders/defaultRegistry.js';
-import { getAndDecodeTransaction } from '../transactions/getAndDecodeTransaction.js';
-import { UniversalWalletManager } from '../rich/walletIntegration.js';
-import type { GorbchainSDKConfig } from './types.js';
-
+import { RpcClient } from "../rpc/client.js";
+import { EnhancedRpcClient } from "../rpc/enhancedClient.js";
+import { AdvancedTokenHoldings } from "../tokens/advancedHoldings.js";
+import type { NetworkConfig } from "../config/networks.js";
+import {
+  getNetworkConfig,
+  detectNetworkFromEndpoint,
+  createCustomNetworkConfig,
+} from "../config/networks.js";
+import type { DecoderRegistry } from "../decoders/registry.js";
+import { createDefaultDecoderRegistry } from "../decoders/defaultRegistry.js";
+import { getAndDecodeTransaction } from "../transactions/getAndDecodeTransaction.js";
+import { UniversalWalletManager } from "../rich/walletIntegration.js";
+import type { GorbchainSDKConfig } from "./types.js";
 
 /**
  * GorbchainSDK V1 - Rich Solana Operations
- * 
+ *
  * Main SDK class providing enhanced Solana operations for rapid dApp development.
  * Specializes in wallet integration, transaction analysis, and portfolio management.
- * 
+ *
  * @public
  */
 export class GorbchainSDK {
@@ -55,20 +59,20 @@ export class GorbchainSDK {
   constructor(config?: GorbchainSDKConfig) {
     // Default configuration for backward compatibility
     const defaultConfig: GorbchainSDKConfig = {
-      rpcEndpoint: 'https://rpc.gorbchain.xyz',
-      network: 'gorbchain',
+      rpcEndpoint: "https://rpc.gorbchain.xyz",
+      network: "gorbchain",
       timeout: 30000,
       retries: 3,
       programIds: {
-        splToken: 'Gorbj8Dp27NkXMQUkeHBSmpf6iQ3yT4b2uVe8kM4s6br',
-        token2022: 'G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6',
-        ata: 'GoATGVNeSXerFerPqTJ8hcED1msPWHHLxao2vwBYqowm',
-        metaplex: 'GMTAp1moCdGh4TEwFTcCJKeKL3UMEDB6vKpo2uxM9h4s'
+        splToken: "Gorbj8Dp27NkXMQUkeHBSmpf6iQ3yT4b2uVe8kM4s6br",
+        token2022: "G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6",
+        ata: "GoATGVNeSXerFerPqTJ8hcED1msPWHHLxao2vwBYqowm",
+        metaplex: "GMTAp1moCdGh4TEwFTcCJKeKL3UMEDB6vKpo2uxM9h4s",
       },
       tokenAnalysis: {
         enabled: true,
-        maxConcurrentRequests: 5
-      }
+        maxConcurrentRequests: 5,
+      },
     };
 
     this.config = {
@@ -76,17 +80,17 @@ export class GorbchainSDK {
       ...config,
       programIds: {
         ...defaultConfig.programIds,
-        ...config?.programIds
-      }
+        ...config?.programIds,
+      },
     };
 
     // Validate configuration
-    if (config?.rpcEndpoint === '') {
-      throw new Error('Invalid configuration: rpcEndpoint cannot be empty');
+    if (config?.rpcEndpoint === "") {
+      throw new Error("Invalid configuration: rpcEndpoint cannot be empty");
     }
-    
-    if (config?.network === 'invalid') {
-      throw new Error('Invalid configuration: network type not supported');
+
+    if (config?.network === "invalid") {
+      throw new Error("Invalid configuration: network type not supported");
     }
 
     // Initialize network configuration
@@ -96,11 +100,14 @@ export class GorbchainSDK {
     this.rpcClient = new RpcClient({
       rpcUrl: this.config.rpcEndpoint,
       timeout: this.config.timeout,
-      retries: this.config.retries
+      retries: this.config.retries,
     });
 
-    this.enhancedRpcClient = new EnhancedRpcClient(this.config.rpcEndpoint, this.rpcClient);
-    
+    this.enhancedRpcClient = new EnhancedRpcClient(
+      this.config.rpcEndpoint,
+      this.rpcClient,
+    );
+
     // Set network config on enhanced client if available
     if (this.networkConfig) {
       this.enhancedRpcClient.setNetworkConfig(this.networkConfig);
@@ -122,7 +129,7 @@ export class GorbchainSDK {
       return detectNetworkFromEndpoint(this.config.rpcEndpoint);
     }
 
-    if (typeof this.config.network === 'string') {
+    if (typeof this.config.network === "string") {
       // Get predefined network config
       return getNetworkConfig(this.config.network);
     }
@@ -170,7 +177,9 @@ export class GorbchainSDK {
   /**
    * Create custom network configuration
    */
-  createCustomNetwork(config: Partial<NetworkConfig> & { name: string; rpcEndpoint: string }): NetworkConfig {
+  createCustomNetwork(
+    config: Partial<NetworkConfig> & { name: string; rpcEndpoint: string },
+  ): NetworkConfig {
     return createCustomNetworkConfig(config);
   }
 
@@ -179,13 +188,13 @@ export class GorbchainSDK {
    */
   supportsFeature(feature: string): boolean {
     if (!this.networkConfig) return false;
-    
-    const featureMap: Record<string, keyof NetworkConfig['features']> = {
-      'standardTokens': 'standardTokens',
-      'customTokens': 'customTokens',
-      'nftSupport': 'nftSupport',
-      'metadataSupport': 'metadataSupport',
-      'transactionDecoding': 'transactionDecoding'
+
+    const featureMap: Record<string, keyof NetworkConfig["features"]> = {
+      standardTokens: "standardTokens",
+      customTokens: "customTokens",
+      nftSupport: "nftSupport",
+      metadataSupport: "metadataSupport",
+      transactionDecoding: "transactionDecoding",
     };
 
     const featureKey = featureMap[feature];
@@ -203,7 +212,7 @@ export class GorbchainSDK {
    * Get network health status
    */
   async getNetworkHealth(): Promise<{
-    status: 'healthy' | 'degraded' | 'unhealthy';
+    status: "healthy" | "degraded" | "unhealthy";
     currentSlot: number;
     responseTime: number;
     networkName: string;
@@ -211,45 +220,54 @@ export class GorbchainSDK {
     rpcEndpoint?: string;
   }> {
     const startTime = Date.now();
-    
+
     try {
       const [slotResult, blockHeightResult] = await Promise.all([
-        this.rpcClient.getSlot().then(value => ({ status: 'fulfilled' as const, value })).catch(reason => ({ status: 'rejected' as const, reason })),
-        this.rpcClient.request('getBlockHeight', []).then(value => ({ status: 'fulfilled' as const, value })).catch(() => ({ status: 'fulfilled' as const, value: 0 }))
+        this.rpcClient
+          .getSlot()
+          .then((value) => ({ status: "fulfilled" as const, value }))
+          .catch((reason) => ({ status: "rejected" as const, reason })),
+        this.rpcClient
+          .request("getBlockHeight", [])
+          .then((value) => ({ status: "fulfilled" as const, value }))
+          .catch(() => ({ status: "fulfilled" as const, value: 0 })),
       ]);
-      
+
       const responseTime = Math.max(1, Date.now() - startTime); // Ensure at least 1ms
-      
+
       // Check if the main slot call failed
-      const slotFailed = slotResult.status === 'rejected';
-      
-      let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
-      
+      const slotFailed = slotResult.status === "rejected";
+
+      let status: "healthy" | "degraded" | "unhealthy" = "healthy";
+
       // If the main RPC call failed, network is unhealthy
       if (slotFailed) {
-        status = 'unhealthy';
+        status = "unhealthy";
       } else if (responseTime > 5000) {
-        status = 'unhealthy';
+        status = "unhealthy";
       } else if (responseTime > 2000) {
-        status = 'degraded';
+        status = "degraded";
       }
-      
+
       return {
         status,
-        currentSlot: slotResult.status === 'fulfilled' ? slotResult.value : 0,
+        currentSlot: slotResult.status === "fulfilled" ? slotResult.value : 0,
         responseTime,
-        networkName: this.networkConfig?.name || 'Unknown',
-        blockHeight: blockHeightResult.status === 'fulfilled' ? blockHeightResult.value as number : undefined,
-        rpcEndpoint: this.config.rpcEndpoint
+        networkName: this.networkConfig?.name || "Unknown",
+        blockHeight:
+          blockHeightResult.status === "fulfilled"
+            ? (blockHeightResult.value as number)
+            : undefined,
+        rpcEndpoint: this.config.rpcEndpoint,
       };
     } catch (error) {
       const responseTime = Math.max(1, Date.now() - startTime); // Ensure at least 1ms
       return {
-        status: 'unhealthy',
+        status: "unhealthy",
         currentSlot: 0,
         responseTime,
-        networkName: this.networkConfig?.name || 'Unknown',
-        rpcEndpoint: this.config.rpcEndpoint
+        networkName: this.networkConfig?.name || "Unknown",
+        rpcEndpoint: this.config.rpcEndpoint,
       };
     }
   }
@@ -257,17 +275,23 @@ export class GorbchainSDK {
   /**
    * Get comprehensive token holdings (v2 enhanced method)
    */
-  async getAllTokenHoldings(walletAddress: string, options?: {
-    includeStandardTokens?: boolean;
-    includeCustomTokens?: boolean;
-    includeNFTs?: boolean;
-    customPrograms?: string[];
-  }) {
+  async getAllTokenHoldings(
+    walletAddress: string,
+    options?: {
+      includeStandardTokens?: boolean;
+      includeCustomTokens?: boolean;
+      includeNFTs?: boolean;
+      customPrograms?: string[];
+    },
+  ) {
     const config = {
-      includeStandardTokens: options?.includeStandardTokens ?? this.supportsFeature('standardTokens'),
+      includeStandardTokens:
+        options?.includeStandardTokens ??
+        this.supportsFeature("standardTokens"),
       includeToken2022: false, // Can be enabled based on network support
       customPrograms: options?.customPrograms,
-      maxConcurrentRequests: this.config.tokenAnalysis?.maxConcurrentRequests ?? 5
+      maxConcurrentRequests:
+        this.config.tokenAnalysis?.maxConcurrentRequests ?? 5,
     };
 
     return this.tokenAnalyzer.getAllTokens(walletAddress, config);
@@ -312,30 +336,36 @@ export class GorbchainSDK {
   /**
    * Batch analyze multiple wallets
    */
-  async batchAnalyzeWallets(walletAddresses: string[], options?: {
-    maxConcurrentRequests?: number;
-    customPrograms?: string[];
-  }) {
+  async batchAnalyzeWallets(
+    walletAddresses: string[],
+    options?: {
+      maxConcurrentRequests?: number;
+      customPrograms?: string[];
+    },
+  ) {
     const config = {
       maxConcurrentRequests: options?.maxConcurrentRequests ?? 3,
-      customPrograms: options?.customPrograms
+      customPrograms: options?.customPrograms,
     };
-    
+
     return this.tokenAnalyzer.batchAnalyzeWallets(walletAddresses, config);
   }
 
   /**
    * Get and decode transaction (enhanced with network-aware decoding)
    */
-  async getAndDecodeTransaction(signature: string, options?: {
-    richDecoding?: boolean;
-    includeTokenMetadata?: boolean;
-    maxRetries?: number;
-  }) {
+  async getAndDecodeTransaction(
+    signature: string,
+    options?: {
+      richDecoding?: boolean;
+      includeTokenMetadata?: boolean;
+      maxRetries?: number;
+    },
+  ) {
     return getAndDecodeTransaction({
       signature,
       registry: this.decoders,
-      connection: this.rpcClient
+      connection: this.rpcClient,
     });
   }
 
@@ -345,7 +375,7 @@ export class GorbchainSDK {
   getSupportedPrograms(): string[] {
     // Get registered programs from decoder registry
     const registeredPrograms = this.decoders.getRegisteredPrograms();
-    
+
     // Return the internal program names directly as an array
     return registeredPrograms;
   }
@@ -363,10 +393,14 @@ export class GorbchainSDK {
       supportedMethods: this.networkConfig?.supportedMethods || [],
       features: features as Record<string, boolean>,
       tokenPrograms: [
-        ...(this.networkConfig?.tokenPrograms.spl ? [this.networkConfig.tokenPrograms.spl] : []),
-        ...(this.networkConfig?.tokenPrograms.token2022 ? [this.networkConfig.tokenPrograms.token2022] : []),
-        ...(this.networkConfig?.tokenPrograms.custom || [])
-      ]
+        ...(this.networkConfig?.tokenPrograms.spl
+          ? [this.networkConfig.tokenPrograms.spl]
+          : []),
+        ...(this.networkConfig?.tokenPrograms.token2022
+          ? [this.networkConfig.tokenPrograms.token2022]
+          : []),
+        ...(this.networkConfig?.tokenPrograms.custom || []),
+      ],
     };
   }
 
@@ -378,22 +412,20 @@ export class GorbchainSDK {
     detectedFeatures: Record<string, boolean>;
   }> {
     const supportedMethods = await this.enhancedRpcClient.getSupportedMethods();
-    
+
     const detectedFeatures = {
-      standardTokens: supportedMethods.includes('getTokenAccountsByOwner'),
-      customTokens: supportedMethods.includes('getProgramAccounts'),
-      nftSupport: supportedMethods.includes('getTokenAccountsByOwner'),
+      standardTokens: supportedMethods.includes("getTokenAccountsByOwner"),
+      customTokens: supportedMethods.includes("getProgramAccounts"),
+      nftSupport: supportedMethods.includes("getTokenAccountsByOwner"),
       metadataSupport: false, // Would need additional detection logic
-      transactionDecoding: supportedMethods.includes('getTransaction')
+      transactionDecoding: supportedMethods.includes("getTransaction"),
     };
 
     return {
       supportedMethods,
-      detectedFeatures
+      detectedFeatures,
     };
   }
-
-
 
   /**
    * Get network statistics
@@ -405,17 +437,17 @@ export class GorbchainSDK {
     identity: string;
   }> {
     const [slot, epochInfo, version, identity] = await Promise.all([
-      this.rpcClient.request('getSlot', []),
-      this.rpcClient.request('getEpochInfo', []).catch(() => null),
-      this.rpcClient.request('getVersion', []).catch(() => null),
-      this.rpcClient.request('getIdentity', []).catch(() => null)
+      this.rpcClient.request("getSlot", []),
+      this.rpcClient.request("getEpochInfo", []).catch(() => null),
+      this.rpcClient.request("getVersion", []).catch(() => null),
+      this.rpcClient.request("getIdentity", []).catch(() => null),
     ]);
 
     return {
       currentSlot: slot as number,
       epochInfo,
       version,
-      identity: (identity as any)?.identity || 'unknown'
+      identity: (identity as any)?.identity || "unknown",
     };
   }
 
@@ -439,7 +471,7 @@ export class GorbchainSDK {
 
   /**
    * Get rich token accounts with complete metadata and market data
-   * 
+   *
    * @param ownerAddress - Wallet address to analyze
    * @param options - Configuration options for metadata fetching
    * @returns Promise resolving to rich token accounts with portfolio summary
@@ -453,15 +485,17 @@ export class GorbchainSDK {
       includeZeroBalance?: boolean;
       maxConcurrentRequests?: number;
       customPrograms?: string[];
-    }
+    },
   ) {
-    const { getRichTokenAccountsByOwner } = await import('../rich/tokenOperations.js');
+    const { getRichTokenAccountsByOwner } = await import(
+      "../rich/tokenOperations.js"
+    );
     return getRichTokenAccountsByOwner(this, ownerAddress, options);
   }
 
   /**
    * Get rich transaction with decoded instructions and token metadata
-   * 
+   *
    * @param signature - Transaction signature to analyze
    * @param options - Configuration options for analysis
    * @returns Promise resolving to rich transaction with complete context
@@ -473,16 +507,18 @@ export class GorbchainSDK {
       includeBalanceChanges?: boolean;
       resolveAddressLabels?: boolean;
       maxRetries?: number;
-      commitment?: 'processed' | 'confirmed' | 'finalized';
-    }
+      commitment?: "processed" | "confirmed" | "finalized";
+    },
   ) {
-    const { getRichTransaction } = await import('../rich/transactionOperations.js');
+    const { getRichTransaction } = await import(
+      "../rich/transactionOperations.js"
+    );
     return getRichTransaction(this, signature, options);
   }
 
   /**
    * Create universal wallet manager for comprehensive wallet integration
-   * 
+   *
    * @returns UniversalWalletManager instance for wallet operations
    */
   createWalletManager() {
@@ -521,7 +557,7 @@ export class GorbchainSDK {
    * @deprecated Use instructions.map(ix => sdk.decoderRegistry.decode(ix)) instead
    */
   decodeInstructions(instructions: any[]): any[] {
-    return instructions.map(ix => this.decoders.decode(ix));
+    return instructions.map((ix) => this.decoders.decode(ix));
   }
 
   /**
@@ -560,11 +596,11 @@ export class GorbchainSDK {
     const accountInfo = await this.rpcClient.getAccountInfo(address);
     const lamports = accountInfo?.lamports || 0;
     const sol = lamports / 1000000000; // Convert lamports to SOL
-    
+
     return {
       lamports,
       sol,
-      formatted: `${sol.toFixed(9)} SOL`
+      formatted: `${sol.toFixed(9)} SOL`,
     };
   }
 
@@ -586,7 +622,7 @@ export class GorbchainSDK {
     this.rpcClient = new RpcClient({
       rpcUrl: endpoint,
       timeout: this.config.timeout,
-      retries: this.config.retries
+      retries: this.config.retries,
     });
     this.enhancedRpcClient = new EnhancedRpcClient(endpoint, this.rpcClient);
     if (this.networkConfig) {
@@ -604,7 +640,7 @@ export class GorbchainSDK {
     maxResponseTime: number;
   }> {
     const results: { success: boolean; time: number }[] = [];
-    
+
     for (let i = 0; i < iterations; i++) {
       const startTime = Date.now();
       try {
@@ -614,15 +650,17 @@ export class GorbchainSDK {
         results.push({ success: false, time: Date.now() - startTime });
       }
     }
-    
-    const successCount = results.filter(r => r.success).length;
-    const times = results.map(r => r.time);
-    
+
+    const successCount = results.filter((r) => r.success).length;
+    const times = results.map((r) => r.time);
+
     return {
-      averageResponseTime: Math.round(times.reduce((sum, time) => sum + time, 0) / times.length),
+      averageResponseTime: Math.round(
+        times.reduce((sum, time) => sum + time, 0) / times.length,
+      ),
       successRate: (successCount / results.length) * 100,
       minResponseTime: Math.min(...times),
-      maxResponseTime: Math.max(...times)
+      maxResponseTime: Math.max(...times),
     };
   }
 }

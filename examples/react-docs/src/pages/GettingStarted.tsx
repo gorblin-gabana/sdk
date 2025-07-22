@@ -1,25 +1,25 @@
-import { useState } from 'react'
-import CodeBlock from '../components/CodeBlock'
-import { 
+import { useState } from "react";
+import CodeBlock from "../components/CodeBlock";
+import {
   CheckCircleIcon,
   CubeIcon,
   WifiIcon,
   ShieldCheckIcon,
-  ClockIcon
-} from '@heroicons/react/24/outline'
+  ClockIcon,
+} from "@heroicons/react/24/outline";
 
 export default function GettingStarted() {
-  const [copied, setCopied] = useState<{ [key: string]: boolean }>({})
+  const [copied, setCopied] = useState<{ [key: string]: boolean }>({});
 
   const copyToClipboard = (code: string, id: string) => {
-    navigator.clipboard.writeText(code)
-    setCopied(prev => ({ ...prev, [id]: true }))
+    navigator.clipboard.writeText(code);
+    setCopied((prev) => ({ ...prev, [id]: true }));
     setTimeout(() => {
-      setCopied(prev => ({ ...prev, [id]: false }))
-    }, 2000)
-  }
+      setCopied((prev) => ({ ...prev, [id]: false }));
+    }, 2000);
+  };
 
-  const installCode = `npm install @gorbchain-xyz/chaindecode`
+  const installCode = `npm install @gorbchain-xyz/chaindecode`;
 
   const basicUsageCode = `import { GorbchainSDK } from '@gorbchain-xyz/chaindecode'
 
@@ -34,7 +34,7 @@ const sdk = new GorbchainSDK({
 const health = await sdk.getNetworkHealth()
 console.log('Network Status:', health.status) // 'healthy' | 'degraded' | 'unhealthy'
 console.log('Current Slot:', health.currentSlot)
-console.log('Response Time:', health.responseTime, 'ms')`
+console.log('Response Time:', health.responseTime, 'ms')`;
 
   const quickExampleCode = `// GorbchainSDK V1.3.0 Rich Functions Examples
 
@@ -66,7 +66,7 @@ console.log('Available Wallets:', availableWallets.browserExtensions.length)
 // Example 4: Portfolio Comparison
 const comparison = await sdk.comparePortfolios(wallet1, wallet2)
 console.log('Similarity Score:', comparison.similarityScore)
-console.log('Common Holdings:', comparison.commonHoldings.length)`
+console.log('Common Holdings:', comparison.commonHoldings.length)`;
 
   const errorHandlingCode = `// Import specific error types
 import { 
@@ -86,16 +86,19 @@ try {
   } else if (error instanceof DecoderNotFoundError) {
     console.log('No decoder found - raw data available')
   }
-}`
+}`;
 
   return (
     <div className="space-y-8">
       {/* Introduction */}
       <div>
-        <h1 className="text-3xl font-bold text-docs-heading mb-4">Getting Started with GorbchainSDK V1.3.0</h1>
+        <h1 className="text-3xl font-bold text-docs-heading mb-4">
+          Getting Started with GorbchainSDK V1.3.0
+        </h1>
         <p className="text-lg text-gray-600 mb-6">
-          Get up and running with GorbchainSDK V1.3.0 in minutes. This guide covers installation, 
-          basic setup, and your first rich function calls for enhanced Solana operations.
+          Get up and running with GorbchainSDK V1.3.0 in minutes. This guide
+          covers installation, basic setup, and your first rich function calls
+          for enhanced Solana operations.
         </p>
       </div>
 
@@ -105,14 +108,18 @@ try {
           <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
             <span className="text-2xl font-bold text-blue-600">1</span>
           </div>
-          <h3 className="text-lg font-semibold text-docs-heading mb-2">Install</h3>
+          <h3 className="text-lg font-semibold text-docs-heading mb-2">
+            Install
+          </h3>
           <p className="text-sm text-gray-600">Install the SDK via npm</p>
         </div>
         <div className="docs-card text-center">
           <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
             <span className="text-2xl font-bold text-green-600">2</span>
           </div>
-          <h3 className="text-lg font-semibold text-docs-heading mb-2">Initialize</h3>
+          <h3 className="text-lg font-semibold text-docs-heading mb-2">
+            Initialize
+          </h3>
           <p className="text-sm text-gray-600">Configure your SDK instance</p>
         </div>
         <div className="docs-card text-center">
@@ -126,7 +133,9 @@ try {
 
       {/* Prerequisites */}
       <div className="docs-card">
-        <h2 className="text-xl font-semibold text-docs-heading mb-4">Prerequisites</h2>
+        <h2 className="text-xl font-semibold text-docs-heading mb-4">
+          Prerequisites
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <div className="flex items-center">
@@ -135,17 +144,23 @@ try {
             </div>
             <div className="flex items-center">
               <CheckCircleIcon className="w-5 h-5 text-green-500 mr-2" />
-              <span className="text-gray-700">TypeScript knowledge (recommended)</span>
+              <span className="text-gray-700">
+                TypeScript knowledge (recommended)
+              </span>
             </div>
           </div>
           <div className="space-y-2">
             <div className="flex items-center">
               <CheckCircleIcon className="w-5 h-5 text-green-500 mr-2" />
-              <span className="text-gray-700">Gorbchain RPC endpoint access</span>
+              <span className="text-gray-700">
+                Gorbchain RPC endpoint access
+              </span>
             </div>
             <div className="flex items-center">
               <CheckCircleIcon className="w-5 h-5 text-green-500 mr-2" />
-              <span className="text-gray-700">Basic blockchain understanding</span>
+              <span className="text-gray-700">
+                Basic blockchain understanding
+              </span>
             </div>
           </div>
         </div>
@@ -164,13 +179,13 @@ try {
         <p className="text-gray-600 mb-4">
           Install the SDK using your preferred package manager:
         </p>
-        <CodeBlock 
+        <CodeBlock
           code={installCode}
           id="install"
           title="Terminal"
           language="bash"
-          onCopy={() => copyToClipboard(installCode, 'install')}
-          copied={copied['install'] || false}
+          onCopy={() => copyToClipboard(installCode, "install")}
+          copied={copied["install"] || false}
         />
       </div>
 
@@ -187,15 +202,15 @@ try {
         <p className="text-gray-600 mb-4">
           Configure the SDK with your Gorbchain network settings:
         </p>
-        <CodeBlock 
+        <CodeBlock
           code={basicUsageCode}
           id="init"
           title="Initialize SDK"
           language="typescript"
-          onCopy={() => copyToClipboard(basicUsageCode, 'init')}
-          copied={copied['init'] || false}
+          onCopy={() => copyToClipboard(basicUsageCode, "init")}
+          copied={copied["init"] || false}
         />
-        
+
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <h4 className="font-medium text-blue-900 mb-2">
@@ -203,9 +218,15 @@ try {
               Core Configuration
             </h4>
             <ul className="text-sm text-blue-800 space-y-1">
-              <li><strong>rpcEndpoint:</strong> Your Gorbchain RPC URL</li>
-              <li><strong>network:</strong> 'mainnet' | 'testnet' | 'custom'</li>
-              <li><strong>timeout:</strong> Request timeout (default: 30s)</li>
+              <li>
+                <strong>rpcEndpoint:</strong> Your Gorbchain RPC URL
+              </li>
+              <li>
+                <strong>network:</strong> 'mainnet' | 'testnet' | 'custom'
+              </li>
+              <li>
+                <strong>timeout:</strong> Request timeout (default: 30s)
+              </li>
             </ul>
           </div>
           <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -214,9 +235,15 @@ try {
               Optional Settings
             </h4>
             <ul className="text-sm text-green-800 space-y-1">
-              <li><strong>retries:</strong> Auto-retry attempts (default: 3)</li>
-              <li><strong>programIds:</strong> Custom program addresses</li>
-              <li><strong>fallbackEndpoints:</strong> Backup RPC URLs</li>
+              <li>
+                <strong>retries:</strong> Auto-retry attempts (default: 3)
+              </li>
+              <li>
+                <strong>programIds:</strong> Custom program addresses
+              </li>
+              <li>
+                <strong>fallbackEndpoints:</strong> Backup RPC URLs
+              </li>
             </ul>
           </div>
         </div>
@@ -235,18 +262,20 @@ try {
         <p className="text-gray-600 mb-4">
           Try these common operations (SDK assumed to be initialized):
         </p>
-        <CodeBlock 
+        <CodeBlock
           code={quickExampleCode}
           id="examples"
           title="Common Operations"
           language="typescript"
-          onCopy={() => copyToClipboard(quickExampleCode, 'examples')}
-          copied={copied['examples'] || false}
+          onCopy={() => copyToClipboard(quickExampleCode, "examples")}
+          copied={copied["examples"] || false}
         />
-        
+
         <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-            <h4 className="font-medium text-gray-900 mb-2">Transaction Decoding</h4>
+            <h4 className="font-medium text-gray-900 mb-2">
+              Transaction Decoding
+            </h4>
             <p className="text-sm text-gray-600">
               Decode any transaction with rich metadata and instruction analysis
             </p>
@@ -273,32 +302,36 @@ try {
           Error Handling
         </h2>
         <p className="text-gray-600 mb-4">
-          The SDK provides comprehensive error handling with specific error types:
+          The SDK provides comprehensive error handling with specific error
+          types:
         </p>
-        <CodeBlock 
+        <CodeBlock
           code={errorHandlingCode}
           id="errors"
           title="Error Handling"
           language="typescript"
-          onCopy={() => copyToClipboard(errorHandlingCode, 'errors')}
-          copied={copied['errors'] || false}
+          onCopy={() => copyToClipboard(errorHandlingCode, "errors")}
+          copied={copied["errors"] || false}
         />
-        
+
         <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
           <h4 className="font-medium text-yellow-900 mb-2">
             <ClockIcon className="w-5 h-5 inline mr-2" />
             Automatic Recovery
           </h4>
           <p className="text-sm text-yellow-800">
-            The SDK automatically retries network errors and handles circuit breaker patterns. 
-            Only catch errors that require application-specific handling.
+            The SDK automatically retries network errors and handles circuit
+            breaker patterns. Only catch errors that require
+            application-specific handling.
           </p>
         </div>
       </div>
 
       {/* Key Features */}
       <div className="docs-card">
-        <h2 className="text-xl font-semibold text-docs-heading mb-4">Key Features</h2>
+        <h2 className="text-xl font-semibold text-docs-heading mb-4">
+          Key Features
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
             <div className="flex items-start space-x-3">
@@ -306,7 +339,9 @@ try {
                 <CubeIcon className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <h4 className="font-semibold text-docs-heading">Rich Transaction Decoding</h4>
+                <h4 className="font-semibold text-docs-heading">
+                  Rich Transaction Decoding
+                </h4>
                 <p className="text-sm text-gray-600">
                   Decode instructions from 12+ programs with metadata enrichment
                 </p>
@@ -317,7 +352,9 @@ try {
                 <WifiIcon className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <h4 className="font-semibold text-docs-heading">Production-Ready RPC</h4>
+                <h4 className="font-semibold text-docs-heading">
+                  Production-Ready RPC
+                </h4>
                 <p className="text-sm text-gray-600">
                   Circuit breaker, retry logic, and connection pooling
                 </p>
@@ -330,7 +367,9 @@ try {
                 <ShieldCheckIcon className="w-5 h-5 text-purple-600" />
               </div>
               <div>
-                <h4 className="font-semibold text-docs-heading">Comprehensive Errors</h4>
+                <h4 className="font-semibold text-docs-heading">
+                  Comprehensive Errors
+                </h4>
                 <p className="text-sm text-gray-600">
                   7 error categories with specific recovery strategies
                 </p>
@@ -341,7 +380,9 @@ try {
                 <ClockIcon className="w-5 h-5 text-orange-600" />
               </div>
               <div>
-                <h4 className="font-semibold text-docs-heading">Token & NFT Creation</h4>
+                <h4 className="font-semibold text-docs-heading">
+                  Token & NFT Creation
+                </h4>
                 <p className="text-sm text-gray-600">
                   Create tokens and NFTs with cost estimation and validation
                 </p>
@@ -357,32 +398,45 @@ try {
           🚀 You're Ready to Build!
         </h2>
         <p className="text-gray-600 text-center mb-6">
-          Now that you have the SDK set up, explore these resources to build your application:
+          Now that you have the SDK set up, explore these resources to build
+          your application:
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <a 
-            href="/api-reference" 
+          <a
+            href="/api-reference"
             className="block p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200"
           >
-            <h3 className="font-semibold text-docs-heading mb-2">📚 API Reference</h3>
-            <p className="text-sm text-gray-600">Complete function documentation with examples</p>
+            <h3 className="font-semibold text-docs-heading mb-2">
+              📚 API Reference
+            </h3>
+            <p className="text-sm text-gray-600">
+              Complete function documentation with examples
+            </p>
           </a>
-          <a 
-            href="/playground" 
+          <a
+            href="/playground"
             className="block p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200"
           >
-            <h3 className="font-semibold text-docs-heading mb-2">🎮 Interactive Playground</h3>
-            <p className="text-sm text-gray-600">Test SDK methods live with real examples</p>
+            <h3 className="font-semibold text-docs-heading mb-2">
+              🎮 Interactive Playground
+            </h3>
+            <p className="text-sm text-gray-600">
+              Test SDK methods live with real examples
+            </p>
           </a>
-          <a 
-            href="/examples" 
+          <a
+            href="/examples"
             className="block p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200"
           >
-            <h3 className="font-semibold text-docs-heading mb-2">💡 Code Examples</h3>
-            <p className="text-sm text-gray-600">Real-world patterns and use cases</p>
+            <h3 className="font-semibold text-docs-heading mb-2">
+              💡 Code Examples
+            </h3>
+            <p className="text-sm text-gray-600">
+              Real-world patterns and use cases
+            </p>
           </a>
         </div>
       </div>
     </div>
-  )
-} 
+  );
+}

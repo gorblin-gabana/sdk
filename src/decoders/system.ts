@@ -17,7 +17,7 @@ export enum SystemInstructionType {
   AllocateWithSeed = 9,
   AssignWithSeed = 10,
   TransferWithSeed = 11,
-  UpgradeNonceAccount = 12
+  UpgradeNonceAccount = 12,
 }
 
 /**
@@ -49,7 +49,9 @@ class ByteReader {
    */
   readUint32(): number {
     if (this.offset + 4 > this.data.length) {
-      throw new Error(`Cannot read uint32 at offset ${this.offset}, data length: ${this.data.length}`);
+      throw new Error(
+        `Cannot read uint32 at offset ${this.offset}, data length: ${this.data.length}`,
+      );
     }
 
     const byte0 = this.data[this.offset];
@@ -68,18 +70,22 @@ class ByteReader {
    */
   readBigUint64(): bigint {
     if (this.offset + 8 > this.data.length) {
-      throw new Error(`Cannot read uint64 at offset ${this.offset}, data length: ${this.data.length}`);
+      throw new Error(
+        `Cannot read uint64 at offset ${this.offset}, data length: ${this.data.length}`,
+      );
     }
 
-    const low = this.data[this.offset] |
-                (this.data[this.offset + 1] << 8) |
-                (this.data[this.offset + 2] << 16) |
-                (this.data[this.offset + 3] << 24);
+    const low =
+      this.data[this.offset] |
+      (this.data[this.offset + 1] << 8) |
+      (this.data[this.offset + 2] << 16) |
+      (this.data[this.offset + 3] << 24);
 
-    const high = this.data[this.offset + 4] |
-                 (this.data[this.offset + 5] << 8) |
-                 (this.data[this.offset + 6] << 16) |
-                 (this.data[this.offset + 7] << 24);
+    const high =
+      this.data[this.offset + 4] |
+      (this.data[this.offset + 5] << 8) |
+      (this.data[this.offset + 6] << 16) |
+      (this.data[this.offset + 7] << 24);
 
     this.offset += 8;
     return BigInt(low >>> 0) | (BigInt(high >>> 0) << BigInt(32));
@@ -104,22 +110,24 @@ class ByteReader {
 /**
  * Decode system program instruction from raw data
  */
-export function decodeSystemInstruction(data: Uint8Array): DecodedSystemInstruction {
+export function decodeSystemInstruction(
+  data: Uint8Array,
+): DecodedSystemInstruction {
   if (data.length === 0) {
     return {
-      type: 'system-unknown',
-      instruction: 'Unknown system instruction',
-      programId: '11111111111111111111111111111111',
-      accounts: []
+      type: "system-unknown",
+      instruction: "Unknown system instruction",
+      programId: "11111111111111111111111111111111",
+      accounts: [],
     };
   }
 
   if (data.length < 4) {
     return {
-      type: 'system-unknown',
-      instruction: 'Invalid system instruction - too short',
-      programId: '11111111111111111111111111111111',
-      accounts: []
+      type: "system-unknown",
+      instruction: "Invalid system instruction - too short",
+      programId: "11111111111111111111111111111111",
+      accounts: [],
     };
   }
 
@@ -132,164 +140,165 @@ export function decodeSystemInstruction(data: Uint8Array): DecodedSystemInstruct
         if (reader.canRead(8)) {
           const lamports = reader.readBigUint64();
           return {
-            type: 'system-transfer',
+            type: "system-transfer",
             instruction: `Transfer ${Number(lamports) / 1e9} SOL`,
             lamports,
-            programId: '11111111111111111111111111111111',
-            accounts: []
+            programId: "11111111111111111111111111111111",
+            accounts: [],
           };
         }
         return {
-          type: 'system-transfer-incomplete',
-          instruction: 'Transfer instruction (incomplete data)',
-          programId: '11111111111111111111111111111111',
-          accounts: []
+          type: "system-transfer-incomplete",
+          instruction: "Transfer instruction (incomplete data)",
+          programId: "11111111111111111111111111111111",
+          accounts: [],
         };
 
       case SystemInstructionType.CreateAccount as number:
-        if (reader.canRead(16)) { // 8 bytes lamports + 8 bytes space
+        if (reader.canRead(16)) {
+          // 8 bytes lamports + 8 bytes space
           const lamports = reader.readBigUint64();
           const space = reader.readBigUint64();
           return {
-            type: 'system-create-account',
+            type: "system-create-account",
             instruction: `Create account with ${Number(lamports) / 1e9} SOL and ${space} bytes`,
             lamports,
             space,
-            programId: '11111111111111111111111111111111',
-            accounts: []
+            programId: "11111111111111111111111111111111",
+            accounts: [],
           };
         }
         return {
-          type: 'system-create-account-incomplete',
-          instruction: 'Create account instruction (incomplete data)',
-          programId: '11111111111111111111111111111111',
-          accounts: []
+          type: "system-create-account-incomplete",
+          instruction: "Create account instruction (incomplete data)",
+          programId: "11111111111111111111111111111111",
+          accounts: [],
         };
 
       case SystemInstructionType.Assign as number:
         return {
-          type: 'system-assign',
-          instruction: 'Assign account to program',
-          programId: '11111111111111111111111111111111',
-          accounts: []
+          type: "system-assign",
+          instruction: "Assign account to program",
+          programId: "11111111111111111111111111111111",
+          accounts: [],
         };
 
       case SystemInstructionType.Allocate as number:
         if (reader.canRead(8)) {
           const space = reader.readBigUint64();
           return {
-            type: 'system-allocate',
+            type: "system-allocate",
             instruction: `Allocate ${space} bytes`,
             space,
-            programId: '11111111111111111111111111111111',
-            accounts: []
+            programId: "11111111111111111111111111111111",
+            accounts: [],
           };
         }
         return {
-          type: 'system-allocate-incomplete',
-          instruction: 'Allocate instruction (incomplete data)',
-          programId: '11111111111111111111111111111111',
-          accounts: []
+          type: "system-allocate-incomplete",
+          instruction: "Allocate instruction (incomplete data)",
+          programId: "11111111111111111111111111111111",
+          accounts: [],
         };
 
       case SystemInstructionType.CreateAccountWithSeed as number:
         return {
-          type: 'system-create-account-with-seed',
-          instruction: 'Create account with seed',
-          programId: '11111111111111111111111111111111',
-          accounts: []
+          type: "system-create-account-with-seed",
+          instruction: "Create account with seed",
+          programId: "11111111111111111111111111111111",
+          accounts: [],
         };
 
       case SystemInstructionType.TransferWithSeed as number:
         if (reader.canRead(8)) {
           const lamports = reader.readBigUint64();
           return {
-            type: 'system-transfer-with-seed',
+            type: "system-transfer-with-seed",
             instruction: `Transfer ${Number(lamports) / 1e9} SOL with seed`,
             lamports,
-            programId: '11111111111111111111111111111111',
-            accounts: []
+            programId: "11111111111111111111111111111111",
+            accounts: [],
           };
         }
         return {
-          type: 'system-transfer-with-seed-incomplete',
-          instruction: 'Transfer with seed instruction (incomplete data)',
-          programId: '11111111111111111111111111111111',
-          accounts: []
+          type: "system-transfer-with-seed-incomplete",
+          instruction: "Transfer with seed instruction (incomplete data)",
+          programId: "11111111111111111111111111111111",
+          accounts: [],
         };
 
       case SystemInstructionType.InitializeNonceAccount as number:
         return {
-          type: 'system-initialize-nonce',
-          instruction: 'Initialize nonce account',
-          programId: '11111111111111111111111111111111',
-          accounts: []
+          type: "system-initialize-nonce",
+          instruction: "Initialize nonce account",
+          programId: "11111111111111111111111111111111",
+          accounts: [],
         };
 
       case SystemInstructionType.AdvanceNonceAccount as number:
         return {
-          type: 'system-advance-nonce',
-          instruction: 'Advance nonce account',
-          programId: '11111111111111111111111111111111',
-          accounts: []
+          type: "system-advance-nonce",
+          instruction: "Advance nonce account",
+          programId: "11111111111111111111111111111111",
+          accounts: [],
         };
 
       case SystemInstructionType.WithdrawNonceAccount as number:
         if (reader.canRead(8)) {
           const lamports = reader.readBigUint64();
           return {
-            type: 'system-withdraw-nonce',
+            type: "system-withdraw-nonce",
             instruction: `Withdraw ${Number(lamports) / 1e9} SOL from nonce account`,
             lamports,
-            programId: '11111111111111111111111111111111',
-            accounts: []
+            programId: "11111111111111111111111111111111",
+            accounts: [],
           };
         }
         return {
-          type: 'system-withdraw-nonce-incomplete',
-          instruction: 'Withdraw nonce instruction (incomplete data)',
-          programId: '11111111111111111111111111111111',
-          accounts: []
+          type: "system-withdraw-nonce-incomplete",
+          instruction: "Withdraw nonce instruction (incomplete data)",
+          programId: "11111111111111111111111111111111",
+          accounts: [],
         };
 
       case SystemInstructionType.AuthorizeNonceAccount as number:
         return {
-          type: 'system-authorize-nonce',
-          instruction: 'Authorize nonce account',
-          programId: '11111111111111111111111111111111',
-          accounts: []
+          type: "system-authorize-nonce",
+          instruction: "Authorize nonce account",
+          programId: "11111111111111111111111111111111",
+          accounts: [],
         };
 
       case SystemInstructionType.UpgradeNonceAccount as number:
         return {
-          type: 'system-upgrade-nonce',
-          instruction: 'Upgrade nonce account',
-          programId: '11111111111111111111111111111111',
-          accounts: []
+          type: "system-upgrade-nonce",
+          instruction: "Upgrade nonce account",
+          programId: "11111111111111111111111111111111",
+          accounts: [],
         };
 
       default:
         return {
-          type: 'system-unknown',
+          type: "system-unknown",
           instruction: `Unknown system instruction (type: ${instructionType})`,
-          programId: '11111111111111111111111111111111',
-          accounts: []
+          programId: "11111111111111111111111111111111",
+          accounts: [],
         };
     }
   } catch (error) {
     return {
-      type: 'system-error',
-      instruction: `Error decoding system instruction: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      programId: '11111111111111111111111111111111',
-      accounts: []
+      type: "system-error",
+      instruction: `Error decoding system instruction: ${error instanceof Error ? error.message : "Unknown error"}`,
+      programId: "11111111111111111111111111111111",
+      accounts: [],
     };
   }
 
   return {
-    type: 'system-unknown',
-    instruction: 'Unknown system instruction',
-    programId: '11111111111111111111111111111111',
-    accounts: []
+    type: "system-unknown",
+    instruction: "Unknown system instruction",
+    programId: "11111111111111111111111111111111",
+    accounts: [],
   };
 }
 

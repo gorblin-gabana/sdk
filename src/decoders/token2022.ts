@@ -1,11 +1,14 @@
 // Token-2022 Program Decoders - Enhanced token standard with additional features
-import type { DecodedInstruction } from './registry.js';
-import { getGorbchainConfig } from '../utils/gorbchainConfig.js';
+import type { DecodedInstruction } from "./registry.js";
+import { getGorbchainConfig } from "../utils/gorbchainConfig.js";
 
 // Get Token-2022 program ID from config
 function getToken2022ProgramId(): string {
   const config = getGorbchainConfig();
-  return config.programIds?.token2022 ?? 'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn';
+  return (
+    config.programIds?.token2022 ??
+    "FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn"
+  );
 }
 
 interface Token2022InstructionData {
@@ -84,18 +87,20 @@ export enum AuthorityType {
 /**
  * Main Token-2022 decoder function
  */
-export function decodeToken2022Instruction(instruction: Token2022InstructionData): DecodedInstruction {
+export function decodeToken2022Instruction(
+  instruction: Token2022InstructionData,
+): DecodedInstruction {
   const data = instruction.data;
   if (!data || data.length === 0) {
     return {
-      type: 'token2022-generic',
+      type: "token2022-generic",
       programId: getToken2022ProgramId(),
       accounts: instruction.accounts,
       data: {
-        type: 'token2022-generic',
-        description: 'Token-2022 operation (no instruction data)',
-        error: 'No instruction data available'
-      }
+        type: "token2022-generic",
+        description: "Token-2022 operation (no instruction data)",
+        error: "No instruction data available",
+      },
     };
   }
 
@@ -103,12 +108,14 @@ export function decodeToken2022Instruction(instruction: Token2022InstructionData
 
   if (data instanceof Uint8Array) {
     instructionType = data[0];
-  } else if (typeof data === 'string') {
-    throw new Error('Invalid Token-2022 instruction: data is string, expected Uint8Array');
+  } else if (typeof data === "string") {
+    throw new Error(
+      "Invalid Token-2022 instruction: data is string, expected Uint8Array",
+    );
   } else if (Array.isArray(data)) {
     instructionType = data[0];
   } else {
-    throw new Error('Invalid Token-2022 instruction: unknown data type');
+    throw new Error("Invalid Token-2022 instruction: unknown data type");
   }
 
   const programId = getToken2022ProgramId();
@@ -182,45 +189,45 @@ export function decodeToken2022Instruction(instruction: Token2022InstructionData
     // Extended Token-2022 instructions (beyond standard range)
     case 219:
       return {
-        type: 'token2022-extension-219',
+        type: "token2022-extension-219",
         programId,
         data: {
           instructionType: 219,
-          name: 'TokenExtension219',
-          description: 'Token-2022 extension operation (type 219)',
-          rawData: Array.from(instruction.data ?? [])
+          name: "TokenExtension219",
+          description: "Token-2022 extension operation (type 219)",
+          rawData: Array.from(instruction.data ?? []),
         },
         accounts: instruction.accounts,
-        raw: instruction as unknown as Record<string, unknown>
+        raw: instruction as unknown as Record<string, unknown>,
       };
 
     case 232:
       return {
-        type: 'token2022-extension-232',
+        type: "token2022-extension-232",
         programId,
         data: {
           instructionType: 232,
-          name: 'TokenExtension232',
-          description: 'Token-2022 extension operation (type 232)',
-          rawData: Array.from(instruction.data)
+          name: "TokenExtension232",
+          description: "Token-2022 extension operation (type 232)",
+          rawData: Array.from(instruction.data),
         },
         accounts: instruction.accounts,
-        raw: instruction as unknown as Record<string, unknown>
+        raw: instruction as unknown as Record<string, unknown>,
       };
 
     default:
       return {
-        type: 'token2022-unknown',
+        type: "token2022-unknown",
         programId,
         data: {
           instructionType,
           name: `UnknownToken2022Instruction${instructionType}`,
           description: `Unknown Token-2022 instruction type: ${instructionType}`,
           error: `Unknown Token-2022 instruction type: ${instructionType}`,
-          rawData: Array.from(instruction.data ?? [])
+          rawData: Array.from(instruction.data ?? []),
         },
         accounts: instruction.accounts ?? [],
-        raw: instruction as unknown as Record<string, unknown>
+        raw: instruction as unknown as Record<string, unknown>,
       };
   }
 }
@@ -238,9 +245,9 @@ export function decodeToken2022InstructionWithDetails(data: Uint8Array): {
 } {
   if (data.length === 0) {
     return {
-      type: 'token2022-unknown',
-      instruction: 'Unknown Token-2022 instruction',
-      accounts: []
+      type: "token2022-unknown",
+      instruction: "Unknown Token-2022 instruction",
+      accounts: [],
     };
   }
 
@@ -249,320 +256,367 @@ export function decodeToken2022InstructionWithDetails(data: Uint8Array): {
   switch (instructionType) {
     case 3: // Transfer
       if (data.length >= 9) {
-        const amount = new DataView(data.buffer, data.byteOffset + 1, 8).getBigUint64(0, true);
+        const amount = new DataView(
+          data.buffer,
+          data.byteOffset + 1,
+          8,
+        ).getBigUint64(0, true);
         return {
-          type: 'token2022-transfer',
-          instruction: 'Transfer tokens',
+          type: "token2022-transfer",
+          instruction: "Transfer tokens",
           amount,
-          accounts: []
+          accounts: [],
         };
       }
       break;
 
     case 7: // MintTo
       if (data.length >= 9) {
-        const amount = new DataView(data.buffer, data.byteOffset + 1, 8).getBigUint64(0, true);
+        const amount = new DataView(
+          data.buffer,
+          data.byteOffset + 1,
+          8,
+        ).getBigUint64(0, true);
         return {
-          type: 'token2022-mint-to',
-          instruction: 'Mint tokens',
+          type: "token2022-mint-to",
+          instruction: "Mint tokens",
           amount,
-          accounts: []
+          accounts: [],
         };
       }
       break;
 
     case 8: // Burn
       if (data.length >= 9) {
-        const amount = new DataView(data.buffer, data.byteOffset + 1, 8).getBigUint64(0, true);
+        const amount = new DataView(
+          data.buffer,
+          data.byteOffset + 1,
+          8,
+        ).getBigUint64(0, true);
         return {
-          type: 'token2022-burn',
-          instruction: 'Burn tokens',
+          type: "token2022-burn",
+          instruction: "Burn tokens",
           amount,
-          accounts: []
+          accounts: [],
         };
       }
       break;
 
     case 4: // Approve
       if (data.length >= 9) {
-        const amount = new DataView(data.buffer, data.byteOffset + 1, 8).getBigUint64(0, true);
+        const amount = new DataView(
+          data.buffer,
+          data.byteOffset + 1,
+          8,
+        ).getBigUint64(0, true);
         return {
-          type: 'token2022-approve',
-          instruction: 'Approve token spending',
+          type: "token2022-approve",
+          instruction: "Approve token spending",
           amount,
-          accounts: []
+          accounts: [],
         };
       }
       break;
 
     case 0: // InitializeMint
       return {
-        type: 'token2022-initialize-mint',
-        instruction: 'Initialize token mint',
-        accounts: []
+        type: "token2022-initialize-mint",
+        instruction: "Initialize token mint",
+        accounts: [],
       };
 
     case 1: // InitializeAccount
       return {
-        type: 'token2022-initialize-account',
-        instruction: 'Initialize token account',
-        accounts: []
+        type: "token2022-initialize-account",
+        instruction: "Initialize token account",
+        accounts: [],
       };
 
     case 22: // InitializeImmutableOwner
       return {
-        type: 'token2022-initialize-immutable-owner',
-        instruction: 'Initialize immutable owner',
+        type: "token2022-initialize-immutable-owner",
+        instruction: "Initialize immutable owner",
         accounts: [],
-        extensions: ['ImmutableOwner']
+        extensions: ["ImmutableOwner"],
       };
 
     case 25: // InitializeMintCloseAuthority
       return {
-        type: 'token2022-initialize-mint-close-authority',
-        instruction: 'Initialize mint close authority',
+        type: "token2022-initialize-mint-close-authority",
+        instruction: "Initialize mint close authority",
         accounts: [],
-        extensions: ['MintCloseAuthority']
+        extensions: ["MintCloseAuthority"],
       };
 
     case 32: // InitializeNonTransferableMint
       return {
-        type: 'token2022-initialize-non-transferable-mint',
-        instruction: 'Initialize non-transferable mint',
+        type: "token2022-initialize-non-transferable-mint",
+        instruction: "Initialize non-transferable mint",
         accounts: [],
-        extensions: ['NonTransferable']
+        extensions: ["NonTransferable"],
       };
 
     case 35: // InitializePermanentDelegate
       return {
-        type: 'token2022-initialize-permanent-delegate',
-        instruction: 'Initialize permanent delegate',
+        type: "token2022-initialize-permanent-delegate",
+        instruction: "Initialize permanent delegate",
         accounts: [],
-        extensions: ['PermanentDelegate']
+        extensions: ["PermanentDelegate"],
       };
 
     default:
       return {
-        type: 'token2022-unknown',
+        type: "token2022-unknown",
         instruction: `Unknown Token-2022 instruction (type: ${instructionType})`,
-        accounts: []
+        accounts: [],
       };
   }
 
   return {
-    type: 'token2022-unknown',
-    instruction: 'Unknown Token-2022 instruction',
-    accounts: []
+    type: "token2022-unknown",
+    instruction: "Unknown Token-2022 instruction",
+    accounts: [],
   };
 }
 
 // Standard SPL Token instruction decoders (similar to SPL Token)
-function decodeTransfer(instruction: any, programId: string): DecodedInstruction {
+function decodeTransfer(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   const data = instruction.data;
   if (data.length < 9) {
-    throw new Error('Invalid Transfer instruction: insufficient data');
+    throw new Error("Invalid Transfer instruction: insufficient data");
   }
 
   const amount = readU64LE(data, 1);
 
   return {
-    type: 'token2022-transfer',
+    type: "token2022-transfer",
     programId,
     data: {
       amount,
       source: instruction.accounts[0],
       destination: instruction.accounts[1],
-      authority: instruction.accounts[2]
+      authority: instruction.accounts[2],
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
 function decodeMintTo(instruction: any, programId: string): DecodedInstruction {
   const data = instruction.data;
   if (data.length < 9) {
-    throw new Error('Invalid MintTo instruction: insufficient data');
+    throw new Error("Invalid MintTo instruction: insufficient data");
   }
 
   const amount = readU64LE(data, 1);
 
   return {
-    type: 'token2022-mint-to',
+    type: "token2022-mint-to",
     programId,
     data: {
       amount,
       mint: instruction.accounts[0],
       destination: instruction.accounts[1],
-      authority: instruction.accounts[2]
+      authority: instruction.accounts[2],
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
 function decodeBurn(instruction: any, programId: string): DecodedInstruction {
   const data = instruction.data;
   if (data.length < 9) {
-    throw new Error('Invalid Burn instruction: insufficient data');
+    throw new Error("Invalid Burn instruction: insufficient data");
   }
 
   const amount = readU64LE(data, 1);
 
   return {
-    type: 'token2022-burn',
+    type: "token2022-burn",
     programId,
     data: {
       amount,
       account: instruction.accounts[0],
       mint: instruction.accounts[1],
-      authority: instruction.accounts[2]
+      authority: instruction.accounts[2],
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
-function decodeInitializeMint(instruction: any, programId: string): DecodedInstruction {
+function decodeInitializeMint(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   const data = instruction.data;
   if (data.length < 67) {
-    throw new Error('Invalid InitializeMint instruction: insufficient data');
+    throw new Error("Invalid InitializeMint instruction: insufficient data");
   }
 
   const decimals = data[1];
   const mintAuthority = bufferToBase58(data.slice(2, 34));
   const freezeAuthorityPresent = data[34] === 1;
-  const freezeAuthority = freezeAuthorityPresent ? bufferToBase58(data.slice(35, 67)) : null;
+  const freezeAuthority = freezeAuthorityPresent
+    ? bufferToBase58(data.slice(35, 67))
+    : null;
 
   return {
-    type: 'token2022-initialize-mint',
+    type: "token2022-initialize-mint",
     programId,
     data: {
       decimals,
       mintAuthority,
       freezeAuthority,
-      mint: instruction.accounts[0]
+      mint: instruction.accounts[0],
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
-function decodeInitializeAccount(instruction: any, programId: string): DecodedInstruction {
+function decodeInitializeAccount(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   return {
-    type: 'token2022-initialize-account',
+    type: "token2022-initialize-account",
     programId,
     data: {
       account: instruction.accounts[0],
       mint: instruction.accounts[1],
       owner: instruction.accounts[2],
-      rent: instruction.accounts[3]
+      rent: instruction.accounts[3],
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
-function decodeSetAuthority(instruction: any, programId: string): DecodedInstruction {
+function decodeSetAuthority(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   const data = instruction.data;
   if (data.length < 3) {
-    throw new Error('Invalid SetAuthority instruction: insufficient data');
+    throw new Error("Invalid SetAuthority instruction: insufficient data");
   }
 
   const authorityType = data[1];
   const newAuthorityPresent = data[2] === 1;
-  const newAuthority = newAuthorityPresent ? bufferToBase58(data.slice(3, 35)) : null;
+  const newAuthority = newAuthorityPresent
+    ? bufferToBase58(data.slice(3, 35))
+    : null;
 
   return {
-    type: 'token2022-set-authority',
+    type: "token2022-set-authority",
     programId,
     data: {
       authorityType: getAuthorityTypeName(authorityType),
       newAuthority,
-      currentAuthority: instruction.accounts[1]
+      currentAuthority: instruction.accounts[1],
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
-function decodeApprove(instruction: any, programId: string): DecodedInstruction {
+function decodeApprove(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   const data = instruction.data;
   if (data.length < 9) {
-    throw new Error('Invalid Approve instruction: insufficient data');
+    throw new Error("Invalid Approve instruction: insufficient data");
   }
 
   const amount = readU64LE(data, 1);
 
   return {
-    type: 'token2022-approve',
+    type: "token2022-approve",
     programId,
     data: {
       amount,
       source: instruction.accounts[0],
       delegate: instruction.accounts[1],
-      authority: instruction.accounts[2]
+      authority: instruction.accounts[2],
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
 function decodeRevoke(instruction: any, programId: string): DecodedInstruction {
   return {
-    type: 'token2022-revoke',
+    type: "token2022-revoke",
     programId,
     data: {
       source: instruction.accounts[0],
-      authority: instruction.accounts[1]
+      authority: instruction.accounts[1],
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
-function decodeCloseAccount(instruction: any, programId: string): DecodedInstruction {
+function decodeCloseAccount(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   return {
-    type: 'token2022-close-account',
+    type: "token2022-close-account",
     programId,
     data: {
       account: instruction.accounts[0],
       destination: instruction.accounts[1],
-      authority: instruction.accounts[2]
+      authority: instruction.accounts[2],
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
-function decodeFreezeAccount(instruction: any, programId: string): DecodedInstruction {
+function decodeFreezeAccount(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   return {
-    type: 'token2022-freeze-account',
+    type: "token2022-freeze-account",
     programId,
     data: {
       account: instruction.accounts[0],
       mint: instruction.accounts[1],
-      authority: instruction.accounts[2]
+      authority: instruction.accounts[2],
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
-function decodeThawAccount(instruction: any, programId: string): DecodedInstruction {
+function decodeThawAccount(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   return {
-    type: 'token2022-thaw-account',
+    type: "token2022-thaw-account",
     programId,
     data: {
       account: instruction.accounts[0],
       mint: instruction.accounts[1],
-      authority: instruction.accounts[2]
+      authority: instruction.accounts[2],
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
-function decodeTransferChecked(instruction: any, programId: string): DecodedInstruction {
+function decodeTransferChecked(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   const data = instruction.data;
   if (data.length < 10) {
-    throw new Error('Invalid TransferChecked instruction: insufficient data');
+    throw new Error("Invalid TransferChecked instruction: insufficient data");
   }
 
   const amount = readU64LE(data, 1);
   const decimals = data[9];
 
   return {
-    type: 'token2022-transfer-checked',
+    type: "token2022-transfer-checked",
     programId,
     data: {
       amount,
@@ -570,23 +624,26 @@ function decodeTransferChecked(instruction: any, programId: string): DecodedInst
       source: instruction.accounts[0],
       mint: instruction.accounts[1],
       destination: instruction.accounts[2],
-      authority: instruction.accounts[3]
+      authority: instruction.accounts[3],
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
-function decodeApproveChecked(instruction: any, programId: string): DecodedInstruction {
+function decodeApproveChecked(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   const data = instruction.data;
   if (data.length < 10) {
-    throw new Error('Invalid ApproveChecked instruction: insufficient data');
+    throw new Error("Invalid ApproveChecked instruction: insufficient data");
   }
 
   const amount = readU64LE(data, 1);
   const decimals = data[9];
 
   return {
-    type: 'token2022-approve-checked',
+    type: "token2022-approve-checked",
     programId,
     data: {
       amount,
@@ -594,220 +651,264 @@ function decodeApproveChecked(instruction: any, programId: string): DecodedInstr
       source: instruction.accounts[0],
       mint: instruction.accounts[1],
       delegate: instruction.accounts[2],
-      authority: instruction.accounts[3]
+      authority: instruction.accounts[3],
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
-function decodeMintToChecked(instruction: any, programId: string): DecodedInstruction {
+function decodeMintToChecked(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   const data = instruction.data;
   if (data.length < 10) {
-    throw new Error('Invalid MintToChecked instruction: insufficient data');
+    throw new Error("Invalid MintToChecked instruction: insufficient data");
   }
 
   const amount = readU64LE(data, 1);
   const decimals = data[9];
 
   return {
-    type: 'token2022-mint-to-checked',
+    type: "token2022-mint-to-checked",
     programId,
     data: {
       amount,
       decimals,
       mint: instruction.accounts[0],
       destination: instruction.accounts[1],
-      authority: instruction.accounts[2]
+      authority: instruction.accounts[2],
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
-function decodeBurnChecked(instruction: any, programId: string): DecodedInstruction {
+function decodeBurnChecked(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   const data = instruction.data;
   if (data.length < 10) {
-    throw new Error('Invalid BurnChecked instruction: insufficient data');
+    throw new Error("Invalid BurnChecked instruction: insufficient data");
   }
 
   const amount = readU64LE(data, 1);
   const decimals = data[9];
 
   return {
-    type: 'token2022-burn-checked',
+    type: "token2022-burn-checked",
     programId,
     data: {
       amount,
       decimals,
       account: instruction.accounts[0],
       mint: instruction.accounts[1],
-      authority: instruction.accounts[2]
+      authority: instruction.accounts[2],
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
-function decodeInitializeMint2(instruction: any, programId: string): DecodedInstruction {
+function decodeInitializeMint2(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   const data = instruction.data;
   if (data.length < 35) {
-    throw new Error('Invalid InitializeMint2 instruction: insufficient data');
+    throw new Error("Invalid InitializeMint2 instruction: insufficient data");
   }
 
   const decimals = data[1];
   const mintAuthority = bufferToBase58(data.slice(2, 34));
   const freezeAuthorityPresent = data[34] === 1;
-  const freezeAuthority = freezeAuthorityPresent ? bufferToBase58(data.slice(35, 67)) : null;
+  const freezeAuthority = freezeAuthorityPresent
+    ? bufferToBase58(data.slice(35, 67))
+    : null;
 
   return {
-    type: 'token2022-initialize-mint2',
+    type: "token2022-initialize-mint2",
     programId,
     data: {
       decimals,
       mintAuthority,
       freezeAuthority,
-      mint: instruction.accounts[0]
+      mint: instruction.accounts[0],
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
-function decodeInitializeAccount2(instruction: any, programId: string): DecodedInstruction {
+function decodeInitializeAccount2(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   const data = instruction.data;
   if (data.length < 33) {
-    throw new Error('Invalid InitializeAccount2 instruction: insufficient data');
+    throw new Error(
+      "Invalid InitializeAccount2 instruction: insufficient data",
+    );
   }
 
   const owner = bufferToBase58(data.slice(1, 33));
 
   return {
-    type: 'token2022-initialize-account2',
+    type: "token2022-initialize-account2",
     programId,
     data: {
       account: instruction.accounts[0],
       mint: instruction.accounts[1],
       owner,
-      rent: instruction.accounts[2]
+      rent: instruction.accounts[2],
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
-function decodeInitializeAccount3(instruction: any, programId: string): DecodedInstruction {
+function decodeInitializeAccount3(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   const data = instruction.data;
   if (data.length < 33) {
-    throw new Error('Invalid InitializeAccount3 instruction: insufficient data');
+    throw new Error(
+      "Invalid InitializeAccount3 instruction: insufficient data",
+    );
   }
 
   const owner = bufferToBase58(data.slice(1, 33));
 
   return {
-    type: 'token2022-initialize-account3',
+    type: "token2022-initialize-account3",
     programId,
     data: {
       account: instruction.accounts[0],
       mint: instruction.accounts[1],
-      owner
+      owner,
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
-function decodeSyncNative(instruction: any, programId: string): DecodedInstruction {
+function decodeSyncNative(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   return {
-    type: 'token2022-sync-native',
+    type: "token2022-sync-native",
     programId,
     data: {
-      account: instruction.accounts[0]
+      account: instruction.accounts[0],
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
 // Token-2022 specific instruction decoders
-function decodeGetAccountDataSize(instruction: any, programId: string): DecodedInstruction {
+function decodeGetAccountDataSize(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   return {
-    type: 'token2022-get-account-data-size',
+    type: "token2022-get-account-data-size",
     programId,
     data: {
-      mint: instruction.accounts[0]
+      mint: instruction.accounts[0],
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
-function decodeInitializeImmutableOwner(instruction: any, programId: string): DecodedInstruction {
+function decodeInitializeImmutableOwner(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   return {
-    type: 'token2022-initialize-immutable-owner',
+    type: "token2022-initialize-immutable-owner",
     programId,
     data: {
       account: instruction.accounts[0],
-      extension: 'ImmutableOwner'
+      extension: "ImmutableOwner",
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
-function decodeAmountToUiAmount(instruction: any, programId: string): DecodedInstruction {
+function decodeAmountToUiAmount(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   const data = instruction.data;
   if (data.length < 9) {
-    throw new Error('Invalid AmountToUiAmount instruction: insufficient data');
+    throw new Error("Invalid AmountToUiAmount instruction: insufficient data");
   }
 
   const amount = readU64LE(data, 1);
 
   return {
-    type: 'token2022-amount-to-ui-amount',
+    type: "token2022-amount-to-ui-amount",
     programId,
     data: {
       amount,
-      mint: instruction.accounts[0]
+      mint: instruction.accounts[0],
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
-function decodeUiAmountToAmount(instruction: any, programId: string): DecodedInstruction {
+function decodeUiAmountToAmount(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   const data = instruction.data;
   if (data.length < 9) {
-    throw new Error('Invalid UiAmountToAmount instruction: insufficient data');
+    throw new Error("Invalid UiAmountToAmount instruction: insufficient data");
   }
 
   const uiAmount = readU64LE(data, 1);
 
   return {
-    type: 'token2022-ui-amount-to-amount',
+    type: "token2022-ui-amount-to-amount",
     programId,
     data: {
       uiAmount,
-      mint: instruction.accounts[0]
+      mint: instruction.accounts[0],
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
-function decodeInitializeMintCloseAuthority(instruction: any, programId: string): DecodedInstruction {
+function decodeInitializeMintCloseAuthority(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   const data = instruction.data;
   if (data.length < 33) {
-    throw new Error('Invalid InitializeMintCloseAuthority instruction: insufficient data');
+    throw new Error(
+      "Invalid InitializeMintCloseAuthority instruction: insufficient data",
+    );
   }
 
   const closeAuthority = bufferToBase58(data.slice(1, 33));
 
   return {
-    type: 'token2022-initialize-mint-close-authority',
+    type: "token2022-initialize-mint-close-authority",
     programId,
     data: {
       mint: instruction.accounts[0],
       closeAuthority,
-      extension: 'MintCloseAuthority'
+      extension: "MintCloseAuthority",
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
-function decodeReallocate(instruction: any, programId: string): DecodedInstruction {
+function decodeReallocate(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   const data = instruction.data;
   if (data.length < 9) {
-    throw new Error('Invalid Reallocate instruction: insufficient data');
+    throw new Error("Invalid Reallocate instruction: insufficient data");
   }
 
   const extensionTypes = [];
@@ -816,77 +917,94 @@ function decodeReallocate(instruction: any, programId: string): DecodedInstructi
   }
 
   return {
-    type: 'token2022-reallocate',
+    type: "token2022-reallocate",
     programId,
     data: {
       account: instruction.accounts[0],
       payer: instruction.accounts[1],
       systemProgram: instruction.accounts[2],
-      extensionTypes
+      extensionTypes,
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
-function decodeCreateNativeMint(instruction: any, programId: string): DecodedInstruction {
+function decodeCreateNativeMint(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   return {
-    type: 'token2022-create-native-mint',
+    type: "token2022-create-native-mint",
     programId,
     data: {
       payer: instruction.accounts[0],
       nativeMint: instruction.accounts[1],
-      systemProgram: instruction.accounts[2]
+      systemProgram: instruction.accounts[2],
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
-function decodeInitializeNonTransferableMint(instruction: any, programId: string): DecodedInstruction {
+function decodeInitializeNonTransferableMint(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   return {
-    type: 'token2022-initialize-non-transferable-mint',
+    type: "token2022-initialize-non-transferable-mint",
     programId,
     data: {
       mint: instruction.accounts[0],
-      extension: 'NonTransferable'
+      extension: "NonTransferable",
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
-function decodeWithdrawExcessLamports(instruction: any, programId: string): DecodedInstruction {
+function decodeWithdrawExcessLamports(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   return {
-    type: 'token2022-withdraw-excess-lamports',
+    type: "token2022-withdraw-excess-lamports",
     programId,
     data: {
       source: instruction.accounts[0],
       destination: instruction.accounts[1],
-      authority: instruction.accounts[2]
+      authority: instruction.accounts[2],
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
-function decodeInitializePermanentDelegate(instruction: any, programId: string): DecodedInstruction {
+function decodeInitializePermanentDelegate(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   const data = instruction.data;
   if (data.length < 33) {
-    throw new Error('Invalid InitializePermanentDelegate instruction: insufficient data');
+    throw new Error(
+      "Invalid InitializePermanentDelegate instruction: insufficient data",
+    );
   }
 
   const delegate = bufferToBase58(data.slice(1, 33));
 
   return {
-    type: 'token2022-initialize-permanent-delegate',
+    type: "token2022-initialize-permanent-delegate",
     programId,
     data: {
       mint: instruction.accounts[0],
       delegate,
-      extension: 'PermanentDelegate'
+      extension: "PermanentDelegate",
     },
-    accounts: instruction.accounts ?? []
+    accounts: instruction.accounts ?? [],
   };
 }
 
-function decodeInitializeNFTMetadata(instruction: any, programId: string): DecodedInstruction {
+function decodeInitializeNFTMetadata(
+  instruction: any,
+  programId: string,
+): DecodedInstruction {
   const data = instruction.data;
 
   try {
@@ -897,7 +1015,11 @@ function decodeInitializeNFTMetadata(instruction: any, programId: string): Decod
     offset += 8;
 
     // Read name length (4 bytes, little-endian)
-    const nameLength = (data[offset] | (data[offset + 1] << 8) | (data[offset + 2] << 16) | (data[offset + 3] << 24));
+    const nameLength =
+      data[offset] |
+      (data[offset + 1] << 8) |
+      (data[offset + 2] << 16) |
+      (data[offset + 3] << 24);
     offset += 4;
 
     // Read name string
@@ -906,7 +1028,11 @@ function decodeInitializeNFTMetadata(instruction: any, programId: string): Decod
     offset += nameLength;
 
     // Read symbol length (4 bytes, little-endian)
-    const symbolLength = (data[offset] | (data[offset + 1] << 8) | (data[offset + 2] << 16) | (data[offset + 3] << 24));
+    const symbolLength =
+      data[offset] |
+      (data[offset + 1] << 8) |
+      (data[offset + 2] << 16) |
+      (data[offset + 3] << 24);
     offset += 4;
 
     // Read symbol string
@@ -915,7 +1041,11 @@ function decodeInitializeNFTMetadata(instruction: any, programId: string): Decod
     offset += symbolLength;
 
     // Read URI length (4 bytes, little-endian)
-    const uriLength = (data[offset] | (data[offset + 1] << 8) | (data[offset + 2] << 16) | (data[offset + 3] << 24));
+    const uriLength =
+      data[offset] |
+      (data[offset + 1] << 8) |
+      (data[offset + 2] << 16) |
+      (data[offset + 3] << 24);
     offset += 4;
 
     // Read URI string
@@ -923,31 +1053,31 @@ function decodeInitializeNFTMetadata(instruction: any, programId: string): Decod
     const uri = String.fromCharCode(...uriBytes);
 
     return {
-      type: 'token2022-initialize-nft-metadata',
+      type: "token2022-initialize-nft-metadata",
       programId,
       data: {
         mint: instruction.accounts[0],
         metadata: {
           name,
           symbol,
-          uri
+          uri,
         },
-        extension: 'NFTMetadata'
+        extension: "NFTMetadata",
       },
-      accounts: instruction.accounts ?? []
+      accounts: instruction.accounts ?? [],
     };
   } catch (error) {
     // Failed to parse NFT metadata
     return {
-      type: 'token2022-initialize-nft-metadata-error',
+      type: "token2022-initialize-nft-metadata-error",
       programId,
       data: {
         mint: instruction.accounts[0],
         error: (error as Error).message,
         rawData: Array.from(data),
-        extension: 'NFTMetadata'
+        extension: "NFTMetadata",
       },
-      accounts: instruction.accounts ?? []
+      accounts: instruction.accounts ?? [],
     };
   }
 }
@@ -967,24 +1097,38 @@ function readU64LE(buffer: Uint8Array | number[], offset: number): string {
 function bufferToBase58(buffer: Uint8Array | number[]): string {
   // This is a simplified version - in production, use proper base58 encoding
   const bytes = Array.isArray(buffer) ? buffer : Array.from(buffer);
-  return bytes.map(b => b.toString(16).padStart(2, '0')).join('');
+  return bytes.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 function getAuthorityTypeName(type: number): string {
   switch (type) {
-    case AuthorityType.MintTokens as number: return 'MintTokens';
-    case AuthorityType.FreezeAccount as number: return 'FreezeAccount';
-    case AuthorityType.AccountOwner as number: return 'AccountOwner';
-    case AuthorityType.CloseAccount as number: return 'CloseAccount';
-    case AuthorityType.TransferFeeConfig as number: return 'TransferFeeConfig';
-    case AuthorityType.WithheldWithdraw as number: return 'WithheldWithdraw';
-    case AuthorityType.CloseMint as number: return 'CloseMint';
-    case AuthorityType.InterestRate as number: return 'InterestRate';
-    case AuthorityType.PermanentDelegate as number: return 'PermanentDelegate';
-    case AuthorityType.ConfidentialTransferMint as number: return 'ConfidentialTransferMint';
-    case AuthorityType.TransferHookProgramId as number: return 'TransferHookProgramId';
-    case AuthorityType.ConfidentialTransferFeeConfig as number: return 'ConfidentialTransferFeeConfig';
-    case AuthorityType.MetadataPointer as number: return 'MetadataPointer';
-    default: return `Unknown (${type})`;
+    case AuthorityType.MintTokens as number:
+      return "MintTokens";
+    case AuthorityType.FreezeAccount as number:
+      return "FreezeAccount";
+    case AuthorityType.AccountOwner as number:
+      return "AccountOwner";
+    case AuthorityType.CloseAccount as number:
+      return "CloseAccount";
+    case AuthorityType.TransferFeeConfig as number:
+      return "TransferFeeConfig";
+    case AuthorityType.WithheldWithdraw as number:
+      return "WithheldWithdraw";
+    case AuthorityType.CloseMint as number:
+      return "CloseMint";
+    case AuthorityType.InterestRate as number:
+      return "InterestRate";
+    case AuthorityType.PermanentDelegate as number:
+      return "PermanentDelegate";
+    case AuthorityType.ConfidentialTransferMint as number:
+      return "ConfidentialTransferMint";
+    case AuthorityType.TransferHookProgramId as number:
+      return "TransferHookProgramId";
+    case AuthorityType.ConfidentialTransferFeeConfig as number:
+      return "ConfidentialTransferFeeConfig";
+    case AuthorityType.MetadataPointer as number:
+      return "MetadataPointer";
+    default:
+      return `Unknown (${type})`;
   }
 }

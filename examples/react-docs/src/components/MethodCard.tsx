@@ -1,18 +1,27 @@
-import React, { useState } from 'react'
-import { ChevronDownIcon, ChevronUpIcon, PlayIcon, ClipboardIcon, CheckIcon } from '@heroicons/react/24/outline'
-import ParameterInput from './ParameterInput'
-import ResultDisplay from './ResultDisplay'
-import { SDKMethod } from '../types/playground'
+import React, { useState } from "react";
+import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  PlayIcon,
+  ClipboardIcon,
+  CheckIcon,
+} from "@heroicons/react/24/outline";
+import ParameterInput from "./ParameterInput";
+import ResultDisplay from "./ResultDisplay";
+import { SDKMethod } from "../types/playground";
 
 interface MethodCardProps {
-  method: SDKMethod
-  isOpen: boolean
-  onToggle: () => void
-  onExecute: (method: SDKMethod, params: { [key: string]: string }) => Promise<any>
-  parameterValues: { [key: string]: string }
-  onParameterChange: (paramName: string, value: string) => void
-  result?: any
-  isLoading?: boolean
+  method: SDKMethod;
+  isOpen: boolean;
+  onToggle: () => void;
+  onExecute: (
+    method: SDKMethod,
+    params: { [key: string]: string },
+  ) => Promise<any>;
+  parameterValues: { [key: string]: string };
+  onParameterChange: (paramName: string, value: string) => void;
+  result?: any;
+  isLoading?: boolean;
 }
 
 const MethodCard: React.FC<MethodCardProps> = ({
@@ -23,102 +32,107 @@ const MethodCard: React.FC<MethodCardProps> = ({
   parameterValues,
   onParameterChange,
   result,
-  isLoading
+  isLoading,
 }) => {
-  const [showCode, setShowCode] = useState(false)
-  const [copied, setCopied] = useState(false)
+  const [showCode, setShowCode] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
-      case 'Core Operations':
-        return '⚡'
-      case 'Transaction Decoding':
-        return '🔍'
-      case 'Token Creation':
-        return '💎'
-      case 'Balance Management':
-        return '💰'
-      case 'RPC Operations':
-        return '🌐'
-      case 'Decoder Operations':
-        return '🔧'
+      case "Core Operations":
+        return "⚡";
+      case "Transaction Decoding":
+        return "🔍";
+      case "Token Creation":
+        return "💎";
+      case "Balance Management":
+        return "💰";
+      case "RPC Operations":
+        return "🌐";
+      case "Decoder Operations":
+        return "🔧";
       default:
-        return '📋'
+        return "📋";
     }
-  }
+  };
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case 'Core Operations':
-        return 'blue'
-      case 'Transaction Decoding':
-        return 'green'
-      case 'Token Creation':
-        return 'purple'
-      case 'Balance Management':
-        return 'yellow'
-      case 'RPC Operations':
-        return 'pink'
-      case 'Decoder Operations':
-        return 'gray'
+      case "Core Operations":
+        return "blue";
+      case "Transaction Decoding":
+        return "green";
+      case "Token Creation":
+        return "purple";
+      case "Balance Management":
+        return "yellow";
+      case "RPC Operations":
+        return "pink";
+      case "Decoder Operations":
+        return "gray";
       default:
-        return 'gray'
+        return "gray";
     }
-  }
+  };
 
   const generateCode = () => {
-    const args = method.parameters.map(param => {
-      const value = parameterValues[param.name] || param.default || ''
-      if (param.type === 'string') {
-        return `'${value}'`
-      } else if (param.type === 'number') {
-        return value
-      } else if (param.type === 'boolean') {
-        return value
-      } else if (param.type === 'object') {
-        return value
-      }
-      return value
-    }).filter(Boolean)
+    const args = method.parameters
+      .map((param) => {
+        const value = parameterValues[param.name] || param.default || "";
+        if (param.type === "string") {
+          return `'${value}'`;
+        } else if (param.type === "number") {
+          return value;
+        } else if (param.type === "boolean") {
+          return value;
+        } else if (param.type === "object") {
+          return value;
+        }
+        return value;
+      })
+      .filter(Boolean);
 
     if (method.parameters.length === 0) {
-      return `const result = await sdk.${method.name}()`
+      return `const result = await sdk.${method.name}()`;
     } else if (method.parameters.length === 1) {
-      return `const result = await sdk.${method.name}(${args[0]})`
+      return `const result = await sdk.${method.name}(${args[0]})`;
     } else {
-      const options = method.parameters.slice(1).map(param => {
-        const value = parameterValues[param.name] || param.default || ''
-        if (value && value !== param.default) {
-          return `  ${param.name}: ${param.type === 'string' ? `'${value}'` : value}`
-        }
-        return null
-      }).filter(Boolean)
+      const options = method.parameters
+        .slice(1)
+        .map((param) => {
+          const value = parameterValues[param.name] || param.default || "";
+          if (value && value !== param.default) {
+            return `  ${param.name}: ${param.type === "string" ? `'${value}'` : value}`;
+          }
+          return null;
+        })
+        .filter(Boolean);
 
       if (options.length > 0) {
         return `const result = await sdk.${method.name}(${args[0]}, {
-${options.join(',\n')}
-})`
+${options.join(",\n")}
+})`;
       } else {
-        return `const result = await sdk.${method.name}(${args[0]})`
+        return `const result = await sdk.${method.name}(${args[0]})`;
       }
     }
-  }
+  };
 
   const copyToClipboard = async (text: string) => {
     try {
-      await navigator.clipboard.writeText(text)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy: ', err)
+      console.error("Failed to copy: ", err);
     }
-  }
+  };
 
   const handleExecute = async () => {
-    await onExecute(method, parameterValues)
-  }
+    await onExecute(method, parameterValues);
+  };
 
-  const color = getCategoryColor(method.category)
+  const color = getCategoryColor(method.category);
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
@@ -135,14 +149,21 @@ ${options.join(',\n')}
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-            color === 'blue' ? 'bg-blue-100 text-blue-800' :
-            color === 'green' ? 'bg-green-100 text-green-800' :
-            color === 'purple' ? 'bg-purple-100 text-purple-800' :
-            color === 'yellow' ? 'bg-yellow-100 text-yellow-800' :
-            color === 'pink' ? 'bg-pink-100 text-pink-800' :
-            'bg-gray-100 text-gray-800'
-          }`}>
+          <span
+            className={`px-2 py-1 text-xs font-medium rounded-full ${
+              color === "blue"
+                ? "bg-blue-100 text-blue-800"
+                : color === "green"
+                  ? "bg-green-100 text-green-800"
+                  : color === "purple"
+                    ? "bg-purple-100 text-purple-800"
+                    : color === "yellow"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : color === "pink"
+                        ? "bg-pink-100 text-pink-800"
+                        : "bg-gray-100 text-gray-800"
+            }`}
+          >
             {method.category}
           </span>
           {isOpen ? (
@@ -164,7 +185,7 @@ ${options.join(',\n')}
                 <ParameterInput
                   key={param.name}
                   parameter={param}
-                  value={parameterValues[param.name] || param.default || ''}
+                  value={parameterValues[param.name] || param.default || ""}
                   onChange={(value) => onParameterChange(param.name, value)}
                 />
               ))}
@@ -177,12 +198,17 @@ ${options.join(',\n')}
               onClick={handleExecute}
               disabled={isLoading}
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                color === 'blue' ? 'bg-blue-600 hover:bg-blue-700' :
-                color === 'green' ? 'bg-green-600 hover:bg-green-700' :
-                color === 'purple' ? 'bg-purple-600 hover:bg-purple-700' :
-                color === 'yellow' ? 'bg-yellow-600 hover:bg-yellow-700' :
-                color === 'pink' ? 'bg-pink-600 hover:bg-pink-700' :
-                'bg-gray-600 hover:bg-gray-700'
+                color === "blue"
+                  ? "bg-blue-600 hover:bg-blue-700"
+                  : color === "green"
+                    ? "bg-green-600 hover:bg-green-700"
+                    : color === "purple"
+                      ? "bg-purple-600 hover:bg-purple-700"
+                      : color === "yellow"
+                        ? "bg-yellow-600 hover:bg-yellow-700"
+                        : color === "pink"
+                          ? "bg-pink-600 hover:bg-pink-700"
+                          : "bg-gray-600 hover:bg-gray-700"
               } text-white disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               {isLoading ? (
@@ -202,7 +228,7 @@ ${options.join(',\n')}
               onClick={() => setShowCode(!showCode)}
               className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
-              {showCode ? 'Hide Code' : 'Show Code'}
+              {showCode ? "Hide Code" : "Show Code"}
             </button>
           </div>
 
@@ -235,13 +261,11 @@ ${options.join(',\n')}
           )}
 
           {/* Result */}
-          {result && (
-            <ResultDisplay result={result} methodName={method.name} />
-          )}
+          {result && <ResultDisplay result={result} methodName={method.name} />}
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default MethodCard 
+export default MethodCard;

@@ -1,4 +1,9 @@
-import { SDKError, ErrorSeverity, ErrorCategory, type ErrorContext } from './base.js';
+import {
+  SDKError,
+  ErrorSeverity,
+  ErrorCategory,
+  type ErrorContext,
+} from "./base.js";
 
 /**
  * Instruction decoding failed
@@ -14,19 +19,20 @@ export class DecoderError extends SDKError {
     context: ErrorContext = {},
     options: {
       cause?: Error;
-    } = {}
+    } = {},
   ) {
     super(
       message,
-      'DECODER_ERROR',
+      "DECODER_ERROR",
       ErrorSeverity.MEDIUM,
       ErrorCategory.DECODER,
       { ...context, programId },
       {
         ...options,
         retryable: false,
-        solution: 'The instruction could not be decoded. This may indicate an unknown instruction type or corrupted data.'
-      }
+        solution:
+          "The instruction could not be decoded. This may indicate an unknown instruction type or corrupted data.",
+      },
     );
 
     this.instructionData = instructionData;
@@ -37,7 +43,7 @@ export class DecoderError extends SDKError {
     return {
       ...super.toJSON(),
       instructionData: this.instructionData,
-      programId: this.programId
+      programId: this.programId,
     };
   }
 }
@@ -53,19 +59,19 @@ export class DecoderNotFoundError extends SDKError {
     context: ErrorContext = {},
     options: {
       cause?: Error;
-    } = {}
+    } = {},
   ) {
     super(
       `No decoder found for program: ${programId}`,
-      'DECODER_NOT_FOUND',
+      "DECODER_NOT_FOUND",
       ErrorSeverity.LOW,
       ErrorCategory.DECODER,
       { ...context, programId },
       {
         ...options,
         retryable: false,
-        solution: `Register a decoder for program ${programId} using the DecoderRegistry.registerDecoder() method.`
-      }
+        solution: `Register a decoder for program ${programId} using the DecoderRegistry.registerDecoder() method.`,
+      },
     );
 
     this.programId = programId;
@@ -74,7 +80,7 @@ export class DecoderNotFoundError extends SDKError {
   override toJSON(): Record<string, unknown> {
     return {
       ...super.toJSON(),
-      programId: this.programId
+      programId: this.programId,
     };
   }
 }
@@ -92,23 +98,24 @@ export class InvalidInstructionDataError extends SDKError {
     context: ErrorContext = {},
     options: {
       cause?: Error;
-    } = {}
+    } = {},
   ) {
     const message = expectedFormat
       ? `Invalid instruction data format. Expected: ${expectedFormat}`
-      : 'Invalid instruction data format';
+      : "Invalid instruction data format";
 
     super(
       message,
-      'INVALID_INSTRUCTION_DATA',
+      "INVALID_INSTRUCTION_DATA",
       ErrorSeverity.MEDIUM,
       ErrorCategory.DECODER,
       context,
       {
         ...options,
         retryable: false,
-        solution: 'The instruction data format is invalid. Check that the data is properly encoded and matches the expected format.'
-      }
+        solution:
+          "The instruction data format is invalid. Check that the data is properly encoded and matches the expected format.",
+      },
     );
 
     this.instructionData = instructionData;
@@ -119,7 +126,7 @@ export class InvalidInstructionDataError extends SDKError {
     return {
       ...super.toJSON(),
       instructionData: this.instructionData,
-      expectedFormat: this.expectedFormat
+      expectedFormat: this.expectedFormat,
     };
   }
 }
@@ -138,19 +145,20 @@ export class TokenMetadataDecodingError extends SDKError {
     context: ErrorContext = {},
     options: {
       cause?: Error;
-    } = {}
+    } = {},
   ) {
     super(
       `Token metadata decoding failed: ${message}`,
-      'TOKEN_METADATA_DECODING_ERROR',
+      "TOKEN_METADATA_DECODING_ERROR",
       ErrorSeverity.MEDIUM,
       ErrorCategory.DECODER,
       { ...context, account: metadataAccount || mintAddress },
       {
         ...options,
         retryable: false,
-        solution: 'The token metadata could not be decoded. This may indicate an invalid metadata account or unsupported metadata format.'
-      }
+        solution:
+          "The token metadata could not be decoded. This may indicate an invalid metadata account or unsupported metadata format.",
+      },
     );
 
     this.mintAddress = mintAddress;
@@ -161,7 +169,7 @@ export class TokenMetadataDecodingError extends SDKError {
     return {
       ...super.toJSON(),
       mintAddress: this.mintAddress,
-      metadataAccount: this.metadataAccount
+      metadataAccount: this.metadataAccount,
     };
   }
 }
@@ -180,19 +188,20 @@ export class NFTMetadataDecodingError extends SDKError {
     context: ErrorContext = {},
     options: {
       cause?: Error;
-    } = {}
+    } = {},
   ) {
     super(
       `NFT metadata decoding failed: ${message}`,
-      'NFT_METADATA_DECODING_ERROR',
+      "NFT_METADATA_DECODING_ERROR",
       ErrorSeverity.MEDIUM,
       ErrorCategory.DECODER,
       { ...context, account: nftAddress },
       {
         ...options,
         retryable: false,
-        solution: 'The NFT metadata could not be decoded. Check that the metadata URI is accessible and contains valid JSON.'
-      }
+        solution:
+          "The NFT metadata could not be decoded. Check that the metadata URI is accessible and contains valid JSON.",
+      },
     );
 
     this.nftAddress = nftAddress;
@@ -203,7 +212,7 @@ export class NFTMetadataDecodingError extends SDKError {
     return {
       ...super.toJSON(),
       nftAddress: this.nftAddress,
-      metadataUri: this.metadataUri
+      metadataUri: this.metadataUri,
     };
   }
 }
@@ -222,19 +231,20 @@ export class AccountDataDecodingError extends SDKError {
     context: ErrorContext = {},
     options: {
       cause?: Error;
-    } = {}
+    } = {},
   ) {
     super(
       `Account data decoding failed: ${message}`,
-      'ACCOUNT_DATA_DECODING_ERROR',
+      "ACCOUNT_DATA_DECODING_ERROR",
       ErrorSeverity.MEDIUM,
       ErrorCategory.DECODER,
       { ...context, account: accountAddress },
       {
         ...options,
         retryable: false,
-        solution: 'The account data could not be decoded. This may indicate an unsupported account type or corrupted data.'
-      }
+        solution:
+          "The account data could not be decoded. This may indicate an unsupported account type or corrupted data.",
+      },
     );
 
     this.accountAddress = accountAddress;
@@ -245,7 +255,7 @@ export class AccountDataDecodingError extends SDKError {
     return {
       ...super.toJSON(),
       accountAddress: this.accountAddress,
-      accountType: this.accountType
+      accountType: this.accountType,
     };
   }
 }
@@ -264,19 +274,20 @@ export class SwapDecodingError extends SDKError {
     context: ErrorContext = {},
     options: {
       cause?: Error;
-    } = {}
+    } = {},
   ) {
     super(
       `Swap instruction decoding failed: ${message}`,
-      'SWAP_DECODING_ERROR',
+      "SWAP_DECODING_ERROR",
       ErrorSeverity.MEDIUM,
       ErrorCategory.DECODER,
       { ...context, programId: swapProgram },
       {
         ...options,
         retryable: false,
-        solution: 'The swap instruction could not be decoded. This may indicate an unsupported swap program or instruction format.'
-      }
+        solution:
+          "The swap instruction could not be decoded. This may indicate an unsupported swap program or instruction format.",
+      },
     );
 
     this.swapProgram = swapProgram;
@@ -287,7 +298,7 @@ export class SwapDecodingError extends SDKError {
     return {
       ...super.toJSON(),
       swapProgram: this.swapProgram,
-      swapType: this.swapType
+      swapType: this.swapType,
     };
   }
 }

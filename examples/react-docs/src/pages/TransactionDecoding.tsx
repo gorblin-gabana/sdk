@@ -1,22 +1,22 @@
-import { useState } from 'react'
-import CodeBlock from '../components/CodeBlock'
-import { 
+import { useState } from "react";
+import CodeBlock from "../components/CodeBlock";
+import {
   CodeBracketIcon,
   WifiIcon,
   ShieldCheckIcon,
-  DocumentDuplicateIcon
-} from '@heroicons/react/24/outline'
+  DocumentDuplicateIcon,
+} from "@heroicons/react/24/outline";
 
 export default function TransactionDecoding() {
-  const [copied, setCopied] = useState<{ [key: string]: boolean }>({})
+  const [copied, setCopied] = useState<{ [key: string]: boolean }>({});
 
   const copyToClipboard = (code: string, id: string) => {
-    navigator.clipboard.writeText(code)
-    setCopied(prev => ({ ...prev, [id]: true }))
+    navigator.clipboard.writeText(code);
+    setCopied((prev) => ({ ...prev, [id]: true }));
     setTimeout(() => {
-      setCopied(prev => ({ ...prev, [id]: false }))
-    }, 2000)
-  }
+      setCopied((prev) => ({ ...prev, [id]: false }));
+    }, 2000);
+  };
 
   const basicDecodingCode = `// Basic Transaction Decoding
 import { GorbchainSDK } from '@gorbchain-xyz/chaindecode'
@@ -46,7 +46,7 @@ transaction.instructions.forEach((instruction, index) => {
   if (instruction.data) {
     console.log('   Data:', instruction.data)
   }
-})`
+})`;
 
   const instructionDecodingCode = `// Individual Instruction Decoding
 // Decode a single instruction
@@ -80,7 +80,7 @@ if (decoded.success) {
   }
 } else {
   console.log('Raw data available:', decoded.rawData)
-}`
+}`;
 
   const decoderRegistryCode = `// Working with Decoder Registry
 const registry = sdk.decoders
@@ -104,7 +104,7 @@ registry.register('custom-program', 'YourCustomProgramId', customDecoder)
 
 // Check if a decoder exists for a program
 const hasDecoder = registry.hasDecoder('TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb')
-console.log('Has Token-2022 decoder:', hasDecoder) // true`
+console.log('Has Token-2022 decoder:', hasDecoder) // true`;
 
   const batchDecodingCode = `// Batch Transaction Decoding
 async function decodeMultipleTransactions(signatures: string[]) {
@@ -155,7 +155,7 @@ async function decodeMultipleTransactions(signatures: string[]) {
 
 // Usage
 const signatures = ['sig1...', 'sig2...', 'sig3...']
-const decodedTransactions = await decodeMultipleTransactions(signatures)`
+const decodedTransactions = await decodeMultipleTransactions(signatures)`;
 
   const advancedAnalysisCode = `// Advanced Transaction Analysis
 class TransactionAnalyzer {
@@ -309,100 +309,141 @@ class TransactionAnalyzer {
 // Usage
 const analyzer = new TransactionAnalyzer(sdk)
 const analysis = await analyzer.analyzeTransactionFlow('signature')
-console.log('Transaction Analysis:', analysis)`
+console.log('Transaction Analysis:', analysis)`;
 
   const supportedPrograms = [
     {
-      name: 'System Program',
-      id: '11111111111111111111111111111111',
-      category: 'Core',
-      instructions: ['createAccount', 'allocate', 'assign', 'transfer', 'createAccountWithSeed'],
-      description: 'Core Solana system operations'
+      name: "System Program",
+      id: "11111111111111111111111111111111",
+      category: "Core",
+      instructions: [
+        "createAccount",
+        "allocate",
+        "assign",
+        "transfer",
+        "createAccountWithSeed",
+      ],
+      description: "Core Solana system operations",
     },
     {
-      name: 'SPL Token',
-      id: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-      category: 'Token',
-      instructions: ['transfer', 'mintTo', 'burn', 'initializeMint', 'initializeAccount', 'approve'],
-      description: 'Standard SPL token operations'
+      name: "SPL Token",
+      id: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+      category: "Token",
+      instructions: [
+        "transfer",
+        "mintTo",
+        "burn",
+        "initializeMint",
+        "initializeAccount",
+        "approve",
+      ],
+      description: "Standard SPL token operations",
     },
     {
-      name: 'Token-2022',
-      id: 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
-      category: 'Token',
-      instructions: ['transfer', 'transferChecked', 'mintTo', 'burn', 'initializeMint', 'reallocate'],
-      description: 'Enhanced token program with additional features'
+      name: "Token-2022",
+      id: "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+      category: "Token",
+      instructions: [
+        "transfer",
+        "transferChecked",
+        "mintTo",
+        "burn",
+        "initializeMint",
+        "reallocate",
+      ],
+      description: "Enhanced token program with additional features",
     },
     {
-      name: 'Associated Token Account',
-      id: 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
-      category: 'Token',
-      instructions: ['create', 'createIdempotent'],
-      description: 'Associated token account management'
+      name: "Associated Token Account",
+      id: "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+      category: "Token",
+      instructions: ["create", "createIdempotent"],
+      description: "Associated token account management",
     },
     {
-      name: 'Metaplex Core',
-      id: 'MetaXBxVGQ65bF5QVWsRxYLVYxE8PFJrMLAojEbhUwz',
-      category: 'NFT',
-      instructions: ['createMetadata', 'updateMetadata', 'verifyCreator', 'createMasterEdition'],
-      description: 'NFT metadata and collection management'
+      name: "Metaplex Core",
+      id: "MetaXBxVGQ65bF5QVWsRxYLVYxE8PFJrMLAojEbhUwz",
+      category: "NFT",
+      instructions: [
+        "createMetadata",
+        "updateMetadata",
+        "verifyCreator",
+        "createMasterEdition",
+      ],
+      description: "NFT metadata and collection management",
     },
     {
-      name: 'Name Service',
-      id: 'namesLPneVptA9Z5rqUDD9tMTWEJwofgaYwp8cawRkX',
-      category: 'Identity',
-      instructions: ['create', 'update', 'transfer'],
-      description: 'Solana name service operations'
-    }
-  ]
+      name: "Name Service",
+      id: "namesLPneVptA9Z5rqUDD9tMTWEJwofgaYwp8cawRkX",
+      category: "Identity",
+      instructions: ["create", "update", "transfer"],
+      description: "Solana name service operations",
+    },
+  ];
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-docs-heading mb-4">Transaction Decoding</h1>
+        <h1 className="text-3xl font-bold text-docs-heading mb-4">
+          Transaction Decoding
+        </h1>
         <p className="text-lg text-gray-600 mb-6">
-          Learn how to decode blockchain transactions and understand instruction data using 
-          the Gorbchain SDK's comprehensive decoder registry.
+          Learn how to decode blockchain transactions and understand instruction
+          data using the Gorbchain SDK's comprehensive decoder registry.
         </p>
-        
+
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <h3 className="font-semibold text-blue-900 mb-2">🔍 Rich Transaction Analysis</h3>
+          <h3 className="font-semibold text-blue-900 mb-2">
+            🔍 Rich Transaction Analysis
+          </h3>
           <p className="text-sm text-blue-800">
-            The SDK automatically decodes instructions from 12+ programs, providing human-readable 
-            descriptions, parsed data, and account relationships for comprehensive transaction analysis.
+            The SDK automatically decodes instructions from 12+ programs,
+            providing human-readable descriptions, parsed data, and account
+            relationships for comprehensive transaction analysis.
           </p>
         </div>
       </div>
 
       {/* Overview */}
       <div className="docs-card">
-        <h2 className="text-xl font-semibold text-docs-heading mb-4">How Transaction Decoding Works</h2>
+        <h2 className="text-xl font-semibold text-docs-heading mb-4">
+          How Transaction Decoding Works
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="text-center">
             <div className="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
               <WifiIcon className="w-8 h-8 text-blue-600" />
             </div>
-            <h3 className="font-semibold text-docs-heading mb-2">1. Fetch Transaction</h3>
+            <h3 className="font-semibold text-docs-heading mb-2">
+              1. Fetch Transaction
+            </h3>
             <p className="text-sm text-gray-600">
-              Retrieve transaction data from the blockchain with all instructions and metadata
+              Retrieve transaction data from the blockchain with all
+              instructions and metadata
             </p>
           </div>
           <div className="text-center">
             <div className="w-16 h-16 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
               <CodeBracketIcon className="w-8 h-8 text-green-600" />
             </div>
-            <h3 className="font-semibold text-docs-heading mb-2">2. Decode Instructions</h3>
+            <h3 className="font-semibold text-docs-heading mb-2">
+              2. Decode Instructions
+            </h3>
             <p className="text-sm text-gray-600">
-              Use program-specific decoders to parse instruction data into human-readable format
+              Use program-specific decoders to parse instruction data into
+              human-readable format
             </p>
           </div>
           <div className="text-center">
             <div className="w-16 h-16 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
               <ShieldCheckIcon className="w-8 h-8 text-purple-600" />
             </div>
-            <h3 className="font-semibold text-docs-heading mb-2">3. Enrich Metadata</h3>
+            <h3 className="font-semibold text-docs-heading mb-2">
+              3. Enrich Metadata
+            </h3>
             <p className="text-sm text-gray-600">
-              Add token metadata, account relationships, and program identification
+              Add token metadata, account relationships, and program
+              identification
             </p>
           </div>
         </div>
@@ -410,7 +451,9 @@ console.log('Transaction Analysis:', analysis)`
 
       {/* Basic Decoding */}
       <div className="docs-card">
-        <h2 className="text-xl font-semibold text-docs-heading mb-4">Basic Transaction Decoding</h2>
+        <h2 className="text-xl font-semibold text-docs-heading mb-4">
+          Basic Transaction Decoding
+        </h2>
         <p className="text-gray-600 mb-4">
           Start with the main decoding function to analyze any transaction:
         </p>
@@ -418,11 +461,11 @@ console.log('Transaction Analysis:', analysis)`
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-lg font-semibold text-docs-heading">Example</h3>
             <button
-              onClick={() => copyToClipboard(basicDecodingCode, 'basic')}
+              onClick={() => copyToClipboard(basicDecodingCode, "basic")}
               className="flex items-center space-x-2 px-3 py-1 text-sm text-blue-600 hover:text-blue-700 border border-blue-200 rounded-md"
             >
               <DocumentDuplicateIcon className="w-4 h-4" />
-              <span>{copied['basic'] ? 'Copied!' : 'Copy'}</span>
+              <span>{copied["basic"] ? "Copied!" : "Copy"}</span>
             </button>
           </div>
           <CodeBlock
@@ -430,15 +473,17 @@ console.log('Transaction Analysis:', analysis)`
             language="typescript"
             title="Basic Transaction Decoding"
             id="basic-decoding"
-            onCopy={() => copyToClipboard(basicDecodingCode, 'basic')}
-            copied={copied['basic'] || false}
+            onCopy={() => copyToClipboard(basicDecodingCode, "basic")}
+            copied={copied["basic"] || false}
           />
         </div>
       </div>
 
       {/* Instruction Decoding */}
       <div className="docs-card">
-        <h2 className="text-xl font-semibold text-docs-heading mb-4">Individual Instruction Decoding</h2>
+        <h2 className="text-xl font-semibold text-docs-heading mb-4">
+          Individual Instruction Decoding
+        </h2>
         <p className="text-gray-600 mb-4">
           Decode specific instructions for detailed analysis:
         </p>
@@ -446,11 +491,13 @@ console.log('Transaction Analysis:', analysis)`
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-lg font-semibold text-docs-heading">Example</h3>
             <button
-              onClick={() => copyToClipboard(instructionDecodingCode, 'instruction')}
+              onClick={() =>
+                copyToClipboard(instructionDecodingCode, "instruction")
+              }
               className="flex items-center space-x-2 px-3 py-1 text-sm text-blue-600 hover:text-blue-700 border border-blue-200 rounded-md"
             >
               <DocumentDuplicateIcon className="w-4 h-4" />
-              <span>{copied['instruction'] ? 'Copied!' : 'Copy'}</span>
+              <span>{copied["instruction"] ? "Copied!" : "Copy"}</span>
             </button>
           </div>
           <CodeBlock
@@ -458,41 +505,61 @@ console.log('Transaction Analysis:', analysis)`
             language="typescript"
             title="Instruction Decoding"
             id="instruction-decoding"
-            onCopy={() => copyToClipboard(instructionDecodingCode, 'instruction')}
-            copied={copied['instruction'] || false}
+            onCopy={() =>
+              copyToClipboard(instructionDecodingCode, "instruction")
+            }
+            copied={copied["instruction"] || false}
           />
         </div>
       </div>
 
       {/* Supported Programs */}
       <div className="docs-card">
-        <h2 className="text-xl font-semibold text-docs-heading mb-6">Supported Programs</h2>
+        <h2 className="text-xl font-semibold text-docs-heading mb-6">
+          Supported Programs
+        </h2>
         <p className="text-gray-600 mb-6">
           The SDK includes built-in decoders for these Solana programs:
         </p>
         <div className="space-y-4">
           {supportedPrograms.map((program) => (
-            <div key={program.id} className="border border-gray-200 rounded-lg p-4">
+            <div
+              key={program.id}
+              className="border border-gray-200 rounded-lg p-4"
+            >
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <h3 className="font-semibold text-docs-heading">{program.name}</h3>
+                  <h3 className="font-semibold text-docs-heading">
+                    {program.name}
+                  </h3>
                   <p className="text-sm text-gray-600">{program.description}</p>
                 </div>
-                <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  program.category === 'Core' ? 'bg-blue-100 text-blue-800' :
-                  program.category === 'Token' ? 'bg-green-100 text-green-800' :
-                  program.category === 'NFT' ? 'bg-purple-100 text-purple-800' :
-                  'bg-gray-100 text-gray-800'
-                }`}>
+                <div
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    program.category === "Core"
+                      ? "bg-blue-100 text-blue-800"
+                      : program.category === "Token"
+                        ? "bg-green-100 text-green-800"
+                        : program.category === "NFT"
+                          ? "bg-purple-100 text-purple-800"
+                          : "bg-gray-100 text-gray-800"
+                  }`}
+                >
                   {program.category}
                 </div>
               </div>
               <div className="mb-3">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Program ID:</h4>
-                <code className="text-xs bg-gray-100 px-2 py-1 rounded">{program.id}</code>
+                <h4 className="text-sm font-medium text-gray-700 mb-2">
+                  Program ID:
+                </h4>
+                <code className="text-xs bg-gray-100 px-2 py-1 rounded">
+                  {program.id}
+                </code>
               </div>
               <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Supported Instructions:</h4>
+                <h4 className="text-sm font-medium text-gray-700 mb-2">
+                  Supported Instructions:
+                </h4>
                 <div className="flex flex-wrap gap-2">
                   {program.instructions.map((instruction) => (
                     <span
@@ -511,19 +578,23 @@ console.log('Transaction Analysis:', analysis)`
 
       {/* Decoder Registry */}
       <div className="docs-card">
-        <h2 className="text-xl font-semibold text-docs-heading mb-4">Decoder Registry</h2>
+        <h2 className="text-xl font-semibold text-docs-heading mb-4">
+          Decoder Registry
+        </h2>
         <p className="text-gray-600 mb-4">
           Manage decoders and add support for custom programs:
         </p>
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-lg font-semibold text-docs-heading">Registry Management</h3>
+            <h3 className="text-lg font-semibold text-docs-heading">
+              Registry Management
+            </h3>
             <button
-              onClick={() => copyToClipboard(decoderRegistryCode, 'registry')}
+              onClick={() => copyToClipboard(decoderRegistryCode, "registry")}
               className="flex items-center space-x-2 px-3 py-1 text-sm text-blue-600 hover:text-blue-700 border border-blue-200 rounded-md"
             >
               <DocumentDuplicateIcon className="w-4 h-4" />
-              <span>{copied['registry'] ? 'Copied!' : 'Copy'}</span>
+              <span>{copied["registry"] ? "Copied!" : "Copy"}</span>
             </button>
           </div>
           <CodeBlock
@@ -531,27 +602,31 @@ console.log('Transaction Analysis:', analysis)`
             language="typescript"
             title="Decoder Registry"
             id="decoder-registry"
-            onCopy={() => copyToClipboard(decoderRegistryCode, 'registry')}
-            copied={copied['registry'] || false}
+            onCopy={() => copyToClipboard(decoderRegistryCode, "registry")}
+            copied={copied["registry"] || false}
           />
         </div>
       </div>
 
       {/* Batch Decoding */}
       <div className="docs-card">
-        <h2 className="text-xl font-semibold text-docs-heading mb-4">Batch Transaction Decoding</h2>
+        <h2 className="text-xl font-semibold text-docs-heading mb-4">
+          Batch Transaction Decoding
+        </h2>
         <p className="text-gray-600 mb-4">
           Efficiently decode multiple transactions with rate limiting:
         </p>
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-lg font-semibold text-docs-heading">Batch Processing</h3>
+            <h3 className="text-lg font-semibold text-docs-heading">
+              Batch Processing
+            </h3>
             <button
-              onClick={() => copyToClipboard(batchDecodingCode, 'batch')}
+              onClick={() => copyToClipboard(batchDecodingCode, "batch")}
               className="flex items-center space-x-2 px-3 py-1 text-sm text-blue-600 hover:text-blue-700 border border-blue-200 rounded-md"
             >
               <DocumentDuplicateIcon className="w-4 h-4" />
-              <span>{copied['batch'] ? 'Copied!' : 'Copy'}</span>
+              <span>{copied["batch"] ? "Copied!" : "Copy"}</span>
             </button>
           </div>
           <CodeBlock
@@ -559,27 +634,31 @@ console.log('Transaction Analysis:', analysis)`
             language="typescript"
             title="Batch Decoding"
             id="batch-decoding"
-            onCopy={() => copyToClipboard(batchDecodingCode, 'batch')}
-            copied={copied['batch'] || false}
+            onCopy={() => copyToClipboard(batchDecodingCode, "batch")}
+            copied={copied["batch"] || false}
           />
         </div>
       </div>
 
       {/* Advanced Analysis */}
       <div className="docs-card">
-        <h2 className="text-xl font-semibold text-docs-heading mb-4">Advanced Transaction Analysis</h2>
+        <h2 className="text-xl font-semibold text-docs-heading mb-4">
+          Advanced Transaction Analysis
+        </h2>
         <p className="text-gray-600 mb-4">
           Build comprehensive transaction analysis tools:
         </p>
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-lg font-semibold text-docs-heading">Transaction Analyzer Class</h3>
+            <h3 className="text-lg font-semibold text-docs-heading">
+              Transaction Analyzer Class
+            </h3>
             <button
-              onClick={() => copyToClipboard(advancedAnalysisCode, 'advanced')}
+              onClick={() => copyToClipboard(advancedAnalysisCode, "advanced")}
               className="flex items-center space-x-2 px-3 py-1 text-sm text-blue-600 hover:text-blue-700 border border-blue-200 rounded-md"
             >
               <DocumentDuplicateIcon className="w-4 h-4" />
-              <span>{copied['advanced'] ? 'Copied!' : 'Copy'}</span>
+              <span>{copied["advanced"] ? "Copied!" : "Copy"}</span>
             </button>
           </div>
           <CodeBlock
@@ -587,25 +666,32 @@ console.log('Transaction Analysis:', analysis)`
             language="typescript"
             title="Advanced Analysis"
             id="advanced-analysis"
-            onCopy={() => copyToClipboard(advancedAnalysisCode, 'advanced')}
-            copied={copied['advanced'] || false}
+            onCopy={() => copyToClipboard(advancedAnalysisCode, "advanced")}
+            copied={copied["advanced"] || false}
           />
         </div>
         <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
-          <h4 className="font-medium text-purple-900 mb-2">🚀 Production-Ready Pattern</h4>
+          <h4 className="font-medium text-purple-900 mb-2">
+            🚀 Production-Ready Pattern
+          </h4>
           <p className="text-sm text-purple-800">
-            This analyzer class demonstrates how to build comprehensive transaction analysis tools 
-            suitable for blockchain explorers, portfolio trackers, and compliance systems.
+            This analyzer class demonstrates how to build comprehensive
+            transaction analysis tools suitable for blockchain explorers,
+            portfolio trackers, and compliance systems.
           </p>
         </div>
       </div>
 
       {/* Best Practices */}
       <div className="docs-card">
-        <h2 className="text-xl font-semibold text-docs-heading mb-4">Best Practices</h2>
+        <h2 className="text-xl font-semibold text-docs-heading mb-4">
+          Best Practices
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <h3 className="font-semibold text-docs-heading mb-3">Performance</h3>
+            <h3 className="font-semibold text-docs-heading mb-3">
+              Performance
+            </h3>
             <ul className="text-sm text-gray-600 space-y-2">
               <li>• Use batch processing for multiple transactions</li>
               <li>• Cache decoded results for repeated analysis</li>
@@ -614,7 +700,9 @@ console.log('Transaction Analysis:', analysis)`
             </ul>
           </div>
           <div>
-            <h3 className="font-semibold text-docs-heading mb-3">Error Handling</h3>
+            <h3 className="font-semibold text-docs-heading mb-3">
+              Error Handling
+            </h3>
             <ul className="text-sm text-gray-600 space-y-2">
               <li>• Handle TransactionNotFoundError gracefully</li>
               <li>• Fall back to raw data when decoders fail</li>
@@ -623,7 +711,9 @@ console.log('Transaction Analysis:', analysis)`
             </ul>
           </div>
           <div>
-            <h3 className="font-semibold text-docs-heading mb-3">Custom Decoders</h3>
+            <h3 className="font-semibold text-docs-heading mb-3">
+              Custom Decoders
+            </h3>
             <ul className="text-sm text-gray-600 space-y-2">
               <li>• Register decoders early in application lifecycle</li>
               <li>• Validate instruction data before parsing</li>
@@ -632,7 +722,9 @@ console.log('Transaction Analysis:', analysis)`
             </ul>
           </div>
           <div>
-            <h3 className="font-semibold text-docs-heading mb-3">Data Quality</h3>
+            <h3 className="font-semibold text-docs-heading mb-3">
+              Data Quality
+            </h3>
             <ul className="text-sm text-gray-600 space-y-2">
               <li>• Verify transaction finality before analysis</li>
               <li>• Handle failed transactions appropriately</li>
@@ -649,18 +741,18 @@ console.log('Transaction Analysis:', analysis)`
           🔧 Ready to Decode?
         </h2>
         <p className="text-gray-600 text-center mb-6">
-          Start building transaction analysis tools with the comprehensive decoding capabilities 
-          of the Gorbchain SDK.
+          Start building transaction analysis tools with the comprehensive
+          decoding capabilities of the Gorbchain SDK.
         </p>
         <div className="flex justify-center space-x-4">
-          <a 
-            href="/playground" 
+          <a
+            href="/playground"
             className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             <span>Try in Playground</span>
           </a>
-          <a 
-            href="/examples" 
+          <a
+            href="/examples"
             className="inline-flex items-center px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
           >
             <span>View More Examples</span>
@@ -668,5 +760,5 @@ console.log('Transaction Analysis:', analysis)`
         </div>
       </div>
     </div>
-  )
-} 
+  );
+}

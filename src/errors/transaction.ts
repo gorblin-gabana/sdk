@@ -1,4 +1,9 @@
-import { SDKError, ErrorSeverity, ErrorCategory, type ErrorContext } from './base.js';
+import {
+  SDKError,
+  ErrorSeverity,
+  ErrorCategory,
+  type ErrorContext,
+} from "./base.js";
 
 /**
  * Transaction not found
@@ -11,19 +16,20 @@ export class TransactionNotFoundError extends SDKError {
     context: ErrorContext = {},
     options: {
       cause?: Error;
-    } = {}
+    } = {},
   ) {
     super(
       `Transaction not found: ${signature}`,
-      'TRANSACTION_NOT_FOUND',
+      "TRANSACTION_NOT_FOUND",
       ErrorSeverity.MEDIUM,
       ErrorCategory.TRANSACTION,
       { ...context, transactionSignature: signature },
       {
         ...options,
         retryable: true,
-        solution: 'The transaction may not have been processed yet. Try again in a few seconds, or check if the signature is correct.'
-      }
+        solution:
+          "The transaction may not have been processed yet. Try again in a few seconds, or check if the signature is correct.",
+      },
     );
 
     this.signature = signature;
@@ -32,7 +38,7 @@ export class TransactionNotFoundError extends SDKError {
   override toJSON(): Record<string, unknown> {
     return {
       ...super.toJSON(),
-      signature: this.signature
+      signature: this.signature,
     };
   }
 }
@@ -53,19 +59,20 @@ export class TransactionFailedError extends SDKError {
     context: ErrorContext = {},
     options: {
       cause?: Error;
-    } = {}
+    } = {},
   ) {
     super(
       message,
-      'TRANSACTION_FAILED',
+      "TRANSACTION_FAILED",
       ErrorSeverity.HIGH,
       ErrorCategory.TRANSACTION,
       { ...context, transactionSignature: signature },
       {
         ...options,
         retryable: false,
-        solution: 'The transaction failed during execution. Check the transaction logs for more details about the failure.'
-      }
+        solution:
+          "The transaction failed during execution. Check the transaction logs for more details about the failure.",
+      },
     );
 
     this.signature = signature;
@@ -78,7 +85,7 @@ export class TransactionFailedError extends SDKError {
       ...super.toJSON(),
       signature: this.signature,
       errorCode: this.errorCode,
-      logs: this.logs
+      logs: this.logs,
     };
   }
 }
@@ -94,19 +101,20 @@ export class InvalidTransactionSignatureError extends SDKError {
     context: ErrorContext = {},
     options: {
       cause?: Error;
-    } = {}
+    } = {},
   ) {
     super(
       `Invalid transaction signature format: ${signature}`,
-      'INVALID_TRANSACTION_SIGNATURE',
+      "INVALID_TRANSACTION_SIGNATURE",
       ErrorSeverity.MEDIUM,
       ErrorCategory.VALIDATION,
       { ...context, transactionSignature: signature },
       {
         ...options,
         retryable: false,
-        solution: 'The transaction signature is not in the correct format. It should be a base58-encoded string.'
-      }
+        solution:
+          "The transaction signature is not in the correct format. It should be a base58-encoded string.",
+      },
     );
 
     this.signature = signature;
@@ -115,7 +123,7 @@ export class InvalidTransactionSignatureError extends SDKError {
   override toJSON(): Record<string, unknown> {
     return {
       ...super.toJSON(),
-      signature: this.signature
+      signature: this.signature,
     };
   }
 }
@@ -133,19 +141,20 @@ export class TransactionTimeoutError extends SDKError {
     context: ErrorContext = {},
     options: {
       cause?: Error;
-    } = {}
+    } = {},
   ) {
     super(
       `Transaction processing timed out after ${timeoutMs}ms`,
-      'TRANSACTION_TIMEOUT',
+      "TRANSACTION_TIMEOUT",
       ErrorSeverity.MEDIUM,
       ErrorCategory.TIMEOUT,
       { ...context, transactionSignature: signature },
       {
         ...options,
         retryable: true,
-        solution: 'The transaction is taking longer than expected to process. It may still complete successfully.'
-      }
+        solution:
+          "The transaction is taking longer than expected to process. It may still complete successfully.",
+      },
     );
 
     this.signature = signature;
@@ -156,7 +165,7 @@ export class TransactionTimeoutError extends SDKError {
     return {
       ...super.toJSON(),
       signature: this.signature,
-      timeoutMs: this.timeoutMs
+      timeoutMs: this.timeoutMs,
     };
   }
 }
@@ -175,19 +184,20 @@ export class TransactionSimulationError extends SDKError {
     context: ErrorContext = {},
     options: {
       cause?: Error;
-    } = {}
+    } = {},
   ) {
     super(
       `Transaction simulation failed: ${message}`,
-      'TRANSACTION_SIMULATION_ERROR',
+      "TRANSACTION_SIMULATION_ERROR",
       ErrorSeverity.MEDIUM,
       ErrorCategory.TRANSACTION,
       context,
       {
         ...options,
         retryable: false,
-        solution: 'The transaction simulation failed. Check the transaction parameters and account states.'
-      }
+        solution:
+          "The transaction simulation failed. Check the transaction parameters and account states.",
+      },
     );
 
     this.error = error;
@@ -198,7 +208,7 @@ export class TransactionSimulationError extends SDKError {
     return {
       ...super.toJSON(),
       error: this.error,
-      logs: this.logs
+      logs: this.logs,
     };
   }
 }
@@ -218,23 +228,25 @@ export class InsufficientFundsError extends SDKError {
     context: ErrorContext = {},
     options: {
       cause?: Error;
-    } = {}
+    } = {},
   ) {
-    const message = required && available
-      ? `Insufficient funds. Required: ${required}, Available: ${available}`
-      : 'Insufficient funds for transaction';
+    const message =
+      required && available
+        ? `Insufficient funds. Required: ${required}, Available: ${available}`
+        : "Insufficient funds for transaction";
 
     super(
       message,
-      'INSUFFICIENT_FUNDS',
+      "INSUFFICIENT_FUNDS",
       ErrorSeverity.MEDIUM,
       ErrorCategory.TRANSACTION,
       { ...context, account },
       {
         ...options,
         retryable: false,
-        solution: 'Ensure the account has sufficient funds to cover the transaction cost and any token transfers.'
-      }
+        solution:
+          "Ensure the account has sufficient funds to cover the transaction cost and any token transfers.",
+      },
     );
 
     this.required = required;
@@ -247,7 +259,7 @@ export class InsufficientFundsError extends SDKError {
       ...super.toJSON(),
       required: this.required,
       available: this.available,
-      account: this.account
+      account: this.account,
     };
   }
 }
@@ -265,23 +277,25 @@ export class TransactionTooLargeError extends SDKError {
     context: ErrorContext = {},
     options: {
       cause?: Error;
-    } = {}
+    } = {},
   ) {
-    const message = size && maxSize
-      ? `Transaction too large. Size: ${size} bytes, Max: ${maxSize} bytes`
-      : 'Transaction exceeds maximum size limit';
+    const message =
+      size && maxSize
+        ? `Transaction too large. Size: ${size} bytes, Max: ${maxSize} bytes`
+        : "Transaction exceeds maximum size limit";
 
     super(
       message,
-      'TRANSACTION_TOO_LARGE',
+      "TRANSACTION_TOO_LARGE",
       ErrorSeverity.MEDIUM,
       ErrorCategory.TRANSACTION,
       context,
       {
         ...options,
         retryable: false,
-        solution: 'Reduce the number of instructions or accounts in the transaction, or split it into multiple transactions.'
-      }
+        solution:
+          "Reduce the number of instructions or accounts in the transaction, or split it into multiple transactions.",
+      },
     );
 
     this.size = size;
@@ -292,7 +306,7 @@ export class TransactionTooLargeError extends SDKError {
     return {
       ...super.toJSON(),
       size: this.size,
-      maxSize: this.maxSize
+      maxSize: this.maxSize,
     };
   }
 }

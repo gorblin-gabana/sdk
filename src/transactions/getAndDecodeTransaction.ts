@@ -1,9 +1,12 @@
 // Fetch and decode a transaction by signature using the registry
 // This belongs in the SDK transaction utilities, not in the app
-import { PROGRAM_IDS } from '../utils/gorbchainConfig.js';
-import { ensureFallbackDecoders } from '../utils/ensureFallbackDecoders.js';
-import { fetchTransactionBySignature } from '../rpc/fetchTransactionBySignature.js';
-import type { DecoderRegistry, DecodedInstruction } from '../decoders/registry.js';
+import { PROGRAM_IDS } from "../utils/gorbchainConfig.js";
+import { ensureFallbackDecoders } from "../utils/ensureFallbackDecoders.js";
+import { fetchTransactionBySignature } from "../rpc/fetchTransactionBySignature.js";
+import type {
+  DecoderRegistry,
+  DecodedInstruction,
+} from "../decoders/registry.js";
 
 interface TransactionInstruction {
   programIdIndex: number;
@@ -26,48 +29,57 @@ interface TransactionData {
 export async function getAndDecodeTransaction({
   signature,
   registry,
-  connection
+  connection,
 }: {
   signature: string;
   registry: DecoderRegistry;
   connection: unknown; // Connection type varies by implementation
 }): Promise<{ decoded: DecodedInstruction[]; meta: unknown }> {
-  const tx = await fetchTransactionBySignature(connection, signature) as TransactionData | null;
+  const tx = (await fetchTransactionBySignature(
+    connection,
+    signature,
+  )) as TransactionData | null;
   if (!tx?.transaction?.message?.instructions) {
     return { decoded: [], meta: null };
   }
-  const mapped = tx.transaction.message.instructions.map((ix: TransactionInstruction, i: number) => {
-    const programId = tx.transaction.message.accountKeys[ix.programIdIndex];
-    let type = 'raw';
-    if (programId === PROGRAM_IDS.token2022) type = 'token2022';
-    else if (programId === PROGRAM_IDS.ata) type = 'ata';
-    else if (programId === PROGRAM_IDS.metaplex) type = 'metaplex';
-    else type = `unknown${  i}`;
-    return { ...ix, type, programId };
-  });
+  const mapped = tx.transaction.message.instructions.map(
+    (ix: TransactionInstruction, i: number) => {
+      const programId = tx.transaction.message.accountKeys[ix.programIdIndex];
+      let type = "raw";
+      if (programId === PROGRAM_IDS.token2022) type = "token2022";
+      else if (programId === PROGRAM_IDS.ata) type = "ata";
+      else if (programId === PROGRAM_IDS.metaplex) type = "metaplex";
+      else type = `unknown${i}`;
+      return { ...ix, type, programId };
+    },
+  );
   ensureFallbackDecoders(mapped, registry);
-  const decoded = mapped.map((ix: TransactionInstruction & { type: string; programId: string }) => {
-    try {
-      // Convert instruction to the format expected by registry
-      const instructionForRegistry = {
-        programId: ix.programId,
-        data: ix.data,
-        accounts: (ix.accounts ?? []).map((accountIndex: number) =>
-          tx.transaction.message.accountKeys[accountIndex] ?? 'unknown'
-        )
-      };
-      return registry.decode(instructionForRegistry);
-    } catch (e: unknown) {
-      return {
-        type: 'error',
-        programId: ix.programId,
-        data: { error: e instanceof Error ? e.message : String(e) },
-        accounts: (ix.accounts ?? []).map((accountIndex: number) =>
-          tx.transaction.message.accountKeys[accountIndex] ?? 'unknown'
-        ),
-        raw: ix as unknown as Record<string, unknown>
-      };
-    }
-  });
+  const decoded = mapped.map(
+    (ix: TransactionInstruction & { type: string; programId: string }) => {
+      try {
+        // Convert instruction to the format expected by registry
+        const instructionForRegistry = {
+          programId: ix.programId,
+          data: ix.data,
+          accounts: (ix.accounts ?? []).map(
+            (accountIndex: number) =>
+              tx.transaction.message.accountKeys[accountIndex] ?? "unknown",
+          ),
+        };
+        return registry.decode(instructionForRegistry);
+      } catch (e: unknown) {
+        return {
+          type: "error",
+          programId: ix.programId,
+          data: { error: e instanceof Error ? e.message : String(e) },
+          accounts: (ix.accounts ?? []).map(
+            (accountIndex: number) =>
+              tx.transaction.message.accountKeys[accountIndex] ?? "unknown",
+          ),
+          raw: ix as unknown as Record<string, unknown>,
+        };
+      }
+    },
+  );
   return { decoded, meta: tx.meta };
 }

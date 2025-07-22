@@ -1,4 +1,9 @@
-import { SDKError, ErrorSeverity, ErrorCategory, type ErrorContext } from './base.js';
+import {
+  SDKError,
+  ErrorSeverity,
+  ErrorCategory,
+  type ErrorContext,
+} from "./base.js";
 
 /**
  * Invalid address format
@@ -13,7 +18,7 @@ export class InvalidAddressError extends SDKError {
     context: ErrorContext = {},
     options: {
       cause?: Error;
-    } = {}
+    } = {},
   ) {
     const message = expectedFormat
       ? `Invalid address format: ${address}. Expected: ${expectedFormat}`
@@ -21,7 +26,7 @@ export class InvalidAddressError extends SDKError {
 
     super(
       message,
-      'INVALID_ADDRESS',
+      "INVALID_ADDRESS",
       ErrorSeverity.MEDIUM,
       ErrorCategory.VALIDATION,
       context,
@@ -30,8 +35,8 @@ export class InvalidAddressError extends SDKError {
         retryable: false,
         solution: expectedFormat
           ? `Ensure the address is in the correct format: ${expectedFormat}`
-          : 'Ensure the address is a valid base58-encoded public key.'
-      }
+          : "Ensure the address is a valid base58-encoded public key.",
+      },
     );
 
     this.address = address;
@@ -42,7 +47,7 @@ export class InvalidAddressError extends SDKError {
     return {
       ...super.toJSON(),
       address: this.address,
-      expectedFormat: this.expectedFormat
+      expectedFormat: this.expectedFormat,
     };
   }
 }
@@ -62,7 +67,7 @@ export class InvalidParameterError extends SDKError {
     context: ErrorContext = {},
     options: {
       cause?: Error;
-    } = {}
+    } = {},
   ) {
     const message = expectedType
       ? `Invalid parameter '${parameterName}': ${parameterValue}. Expected: ${expectedType}`
@@ -70,7 +75,7 @@ export class InvalidParameterError extends SDKError {
 
     super(
       message,
-      'INVALID_PARAMETER',
+      "INVALID_PARAMETER",
       ErrorSeverity.MEDIUM,
       ErrorCategory.VALIDATION,
       context,
@@ -79,8 +84,8 @@ export class InvalidParameterError extends SDKError {
         retryable: false,
         solution: expectedType
           ? `Ensure the parameter '${parameterName}' is of type: ${expectedType}`
-          : `Check the parameter '${parameterName}' value and format.`
-      }
+          : `Check the parameter '${parameterName}' value and format.`,
+      },
     );
 
     this.parameterName = parameterName;
@@ -93,7 +98,7 @@ export class InvalidParameterError extends SDKError {
       ...super.toJSON(),
       parameterName: this.parameterName,
       parameterValue: this.parameterValue,
-      expectedType: this.expectedType
+      expectedType: this.expectedType,
     };
   }
 }
@@ -109,19 +114,19 @@ export class MissingParameterError extends SDKError {
     context: ErrorContext = {},
     options: {
       cause?: Error;
-    } = {}
+    } = {},
   ) {
     super(
       `Missing required parameter: ${parameterName}`,
-      'MISSING_PARAMETER',
+      "MISSING_PARAMETER",
       ErrorSeverity.MEDIUM,
       ErrorCategory.VALIDATION,
       context,
       {
         ...options,
         retryable: false,
-        solution: `Provide the required parameter: ${parameterName}`
-      }
+        solution: `Provide the required parameter: ${parameterName}`,
+      },
     );
 
     this.parameterName = parameterName;
@@ -130,7 +135,7 @@ export class MissingParameterError extends SDKError {
   override toJSON(): Record<string, unknown> {
     return {
       ...super.toJSON(),
-      parameterName: this.parameterName
+      parameterName: this.parameterName,
     };
   }
 }
@@ -149,19 +154,20 @@ export class InvalidConfigurationError extends SDKError {
     context: ErrorContext = {},
     options: {
       cause?: Error;
-    } = {}
+    } = {},
   ) {
     super(
       message,
-      'INVALID_CONFIGURATION',
+      "INVALID_CONFIGURATION",
       ErrorSeverity.HIGH,
       ErrorCategory.CONFIGURATION,
       context,
       {
         ...options,
         retryable: false,
-        solution: 'Check the SDK configuration and ensure all required fields are properly set.'
-      }
+        solution:
+          "Check the SDK configuration and ensure all required fields are properly set.",
+      },
     );
 
     this.configField = configField;
@@ -172,7 +178,7 @@ export class InvalidConfigurationError extends SDKError {
     return {
       ...super.toJSON(),
       configField: this.configField,
-      configValue: this.configValue
+      configValue: this.configValue,
     };
   }
 }
@@ -190,19 +196,20 @@ export class InvalidTokenAmountError extends SDKError {
     context: ErrorContext = {},
     options: {
       cause?: Error;
-    } = {}
+    } = {},
   ) {
     super(
       `Invalid token amount: ${amount}`,
-      'INVALID_TOKEN_AMOUNT',
+      "INVALID_TOKEN_AMOUNT",
       ErrorSeverity.MEDIUM,
       ErrorCategory.VALIDATION,
       context,
       {
         ...options,
         retryable: false,
-        solution: 'Ensure the token amount is a positive number and within the valid range.'
-      }
+        solution:
+          "Ensure the token amount is a positive number and within the valid range.",
+      },
     );
 
     this.amount = amount;
@@ -213,7 +220,7 @@ export class InvalidTokenAmountError extends SDKError {
     return {
       ...super.toJSON(),
       amount: this.amount,
-      mintAddress: this.mintAddress
+      mintAddress: this.mintAddress,
     };
   }
 }
@@ -229,19 +236,20 @@ export class InvalidPublicKeyError extends SDKError {
     context: ErrorContext = {},
     options: {
       cause?: Error;
-    } = {}
+    } = {},
   ) {
     super(
       `Invalid public key: ${publicKey}`,
-      'INVALID_PUBLIC_KEY',
+      "INVALID_PUBLIC_KEY",
       ErrorSeverity.MEDIUM,
       ErrorCategory.VALIDATION,
       context,
       {
         ...options,
         retryable: false,
-        solution: 'Ensure the public key is a valid base58-encoded 32-byte public key.'
-      }
+        solution:
+          "Ensure the public key is a valid base58-encoded 32-byte public key.",
+      },
     );
 
     this.publicKey = publicKey;
@@ -250,7 +258,7 @@ export class InvalidPublicKeyError extends SDKError {
   override toJSON(): Record<string, unknown> {
     return {
       ...super.toJSON(),
-      publicKey: this.publicKey
+      publicKey: this.publicKey,
     };
   }
 }
@@ -266,19 +274,19 @@ export class InvalidProgramIdError extends SDKError {
     context: ErrorContext = {},
     options: {
       cause?: Error;
-    } = {}
+    } = {},
   ) {
     super(
       `Invalid program ID: ${programId}`,
-      'INVALID_PROGRAM_ID',
+      "INVALID_PROGRAM_ID",
       ErrorSeverity.MEDIUM,
       ErrorCategory.VALIDATION,
       context,
       {
         ...options,
         retryable: false,
-        solution: 'Ensure the program ID is a valid base58-encoded public key.'
-      }
+        solution: "Ensure the program ID is a valid base58-encoded public key.",
+      },
     );
 
     this.programId = programId;
@@ -287,7 +295,7 @@ export class InvalidProgramIdError extends SDKError {
   override toJSON(): Record<string, unknown> {
     return {
       ...super.toJSON(),
-      programId: this.programId
+      programId: this.programId,
     };
   }
 }
@@ -305,15 +313,15 @@ export class InvalidDataFormatError extends SDKError {
     context: ErrorContext = {},
     options: {
       cause?: Error;
-    } = {}
+    } = {},
   ) {
     const message = expectedFormat
       ? `Invalid data format. Expected: ${expectedFormat}`
-      : 'Invalid data format';
+      : "Invalid data format";
 
     super(
       message,
-      'INVALID_DATA_FORMAT',
+      "INVALID_DATA_FORMAT",
       ErrorSeverity.MEDIUM,
       ErrorCategory.VALIDATION,
       context,
@@ -322,8 +330,8 @@ export class InvalidDataFormatError extends SDKError {
         retryable: false,
         solution: expectedFormat
           ? `Ensure the data is in the expected format: ${expectedFormat}`
-          : 'Check the data format and ensure it matches the expected structure.'
-      }
+          : "Check the data format and ensure it matches the expected structure.",
+      },
     );
 
     this.data = data;
@@ -334,7 +342,7 @@ export class InvalidDataFormatError extends SDKError {
     return {
       ...super.toJSON(),
       data: this.data,
-      expectedFormat: this.expectedFormat
+      expectedFormat: this.expectedFormat,
     };
   }
 }

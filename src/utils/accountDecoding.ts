@@ -5,7 +5,7 @@
  * from the blockchain, including token accounts, mint accounts, and metadata.
  */
 
-import { bytesToBase58, normalizeDataToUint8Array } from './dataProcessing.js';
+import { bytesToBase58, normalizeDataToUint8Array } from "./dataProcessing.js";
 
 /**
  * Decode token account data
@@ -54,30 +54,34 @@ export async function decodeTokenAccount(data: any): Promise<any> {
       }
 
       return {
-        type: 'token-account',
+        type: "token-account",
         data: {
           mint,
           owner,
           amount: amount.toString(),
           delegate,
-          state: isInitialized ? 'initialized' : isFrozen ? 'frozen' : 'uninitialized',
+          state: isInitialized
+            ? "initialized"
+            : isFrozen
+              ? "frozen"
+              : "uninitialized",
           delegatedAmount: delegatedAmount.toString(),
           closeAuthority,
-          isNative: amount === BigInt(0) // Simplified check
+          isNative: amount === BigInt(0), // Simplified check
         },
-        dataLength: bytes.length
+        dataLength: bytes.length,
       };
     }
 
     return {
-      type: 'token-account',
-      error: 'Invalid token account data length',
-      dataLength: bytes.length
+      type: "token-account",
+      error: "Invalid token account data length",
+      dataLength: bytes.length,
     };
   } catch (_error) {
     return {
-      type: 'token-account',
-      error: `Failed to decode: ${_error}`
+      type: "token-account",
+      error: `Failed to decode: ${_error}`,
     };
   }
 }
@@ -119,27 +123,27 @@ export async function decodeMintAccount(data: any): Promise<any> {
       }
 
       return {
-        type: 'mint-account',
+        type: "mint-account",
         data: {
           mintAuthority,
           supply: supply.toString(),
           decimals,
           isInitialized,
-          freezeAuthority
+          freezeAuthority,
         },
-        dataLength: bytes.length
+        dataLength: bytes.length,
       };
     }
 
     return {
-      type: 'mint-account',
-      error: 'Invalid mint account data length',
-      dataLength: bytes.length
+      type: "mint-account",
+      error: "Invalid mint account data length",
+      dataLength: bytes.length,
     };
   } catch (_error) {
     return {
-      type: 'mint-account',
-      error: `Failed to decode: ${_error}`
+      type: "mint-account",
+      error: `Failed to decode: ${_error}`,
     };
   }
 }
@@ -147,12 +151,16 @@ export async function decodeMintAccount(data: any): Promise<any> {
 /**
  * Decode account data based on account type
  */
-export async function decodeAccountData(account: string, accountInfo: any, isMint: boolean): Promise<any> {
+export async function decodeAccountData(
+  account: string,
+  accountInfo: any,
+  isMint: boolean,
+): Promise<any> {
   if (!accountInfo?.data) {
     return {
-      type: 'unknown-account',
-      error: 'No account data available',
-      address: account
+      type: "unknown-account",
+      error: "No account data available",
+      address: account,
     };
   }
 
@@ -164,9 +172,9 @@ export async function decodeAccountData(account: string, accountInfo: any, isMin
     }
   } catch (error) {
     return {
-      type: 'account-decode-error',
+      type: "account-decode-error",
       error: `Failed to decode account: ${error}`,
-      address: account
+      address: account,
     };
   }
 }

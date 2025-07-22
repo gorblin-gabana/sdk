@@ -1,4 +1,9 @@
-import { SDKError, ErrorSeverity, ErrorCategory, type ErrorContext } from './base.js';
+import {
+  SDKError,
+  ErrorSeverity,
+  ErrorCategory,
+  type ErrorContext,
+} from "./base.js";
 
 /**
  * Network connection failed
@@ -14,19 +19,20 @@ export class NetworkConnectionError extends SDKError {
     context: ErrorContext = {},
     options: {
       cause?: Error;
-    } = {}
+    } = {},
   ) {
     super(
       message,
-      'NETWORK_CONNECTION_ERROR',
+      "NETWORK_CONNECTION_ERROR",
       ErrorSeverity.HIGH,
       ErrorCategory.NETWORK,
       { ...context, rpcEndpoint: endpoint, network: networkType },
       {
         ...options,
         retryable: true,
-        solution: 'Check your internet connection and verify the network endpoint is accessible.'
-      }
+        solution:
+          "Check your internet connection and verify the network endpoint is accessible.",
+      },
     );
 
     this.endpoint = endpoint;
@@ -37,7 +43,7 @@ export class NetworkConnectionError extends SDKError {
     return {
       ...super.toJSON(),
       endpoint: this.endpoint,
-      networkType: this.networkType
+      networkType: this.networkType,
     };
   }
 }
@@ -55,19 +61,20 @@ export class NetworkTimeoutError extends SDKError {
     context: ErrorContext = {},
     options: {
       cause?: Error;
-    } = {}
+    } = {},
   ) {
     super(
       `Network request timed out after ${timeoutMs}ms`,
-      'NETWORK_TIMEOUT',
+      "NETWORK_TIMEOUT",
       ErrorSeverity.MEDIUM,
       ErrorCategory.TIMEOUT,
       { ...context, rpcEndpoint: endpoint },
       {
         ...options,
         retryable: true,
-        solution: 'The network request timed out. This may be due to slow network conditions or server issues.'
-      }
+        solution:
+          "The network request timed out. This may be due to slow network conditions or server issues.",
+      },
     );
 
     this.timeoutMs = timeoutMs;
@@ -78,7 +85,7 @@ export class NetworkTimeoutError extends SDKError {
     return {
       ...super.toJSON(),
       timeoutMs: this.timeoutMs,
-      endpoint: this.endpoint
+      endpoint: this.endpoint,
     };
   }
 }
@@ -94,19 +101,22 @@ export class NetworkUnavailableError extends SDKError {
     context: ErrorContext = {},
     options: {
       cause?: Error;
-    } = {}
+    } = {},
   ) {
     super(
-      networkType ? `Network ${networkType} is unavailable` : 'Network is unavailable',
-      'NETWORK_UNAVAILABLE',
+      networkType
+        ? `Network ${networkType} is unavailable`
+        : "Network is unavailable",
+      "NETWORK_UNAVAILABLE",
       ErrorSeverity.HIGH,
       ErrorCategory.NETWORK,
       { ...context, network: networkType },
       {
         ...options,
         retryable: true,
-        solution: 'The network is currently unavailable. Please try again later or switch to a different network.'
-      }
+        solution:
+          "The network is currently unavailable. Please try again later or switch to a different network.",
+      },
     );
 
     this.networkType = networkType;
@@ -115,7 +125,7 @@ export class NetworkUnavailableError extends SDKError {
   override toJSON(): Record<string, unknown> {
     return {
       ...super.toJSON(),
-      networkType: this.networkType
+      networkType: this.networkType,
     };
   }
 }
@@ -133,15 +143,15 @@ export class UnsupportedNetworkError extends SDKError {
     context: ErrorContext = {},
     options: {
       cause?: Error;
-    } = {}
+    } = {},
   ) {
     const message = supportedNetworks
-      ? `Unsupported network: ${networkType}. Supported networks: ${supportedNetworks.join(', ')}`
+      ? `Unsupported network: ${networkType}. Supported networks: ${supportedNetworks.join(", ")}`
       : `Unsupported network: ${networkType}`;
 
     super(
       message,
-      'UNSUPPORTED_NETWORK',
+      "UNSUPPORTED_NETWORK",
       ErrorSeverity.HIGH,
       ErrorCategory.NETWORK,
       { ...context, network: networkType },
@@ -149,9 +159,9 @@ export class UnsupportedNetworkError extends SDKError {
         ...options,
         retryable: false,
         solution: supportedNetworks
-          ? `Use one of the supported networks: ${supportedNetworks.join(', ')}`
-          : 'Switch to a supported network type.'
-      }
+          ? `Use one of the supported networks: ${supportedNetworks.join(", ")}`
+          : "Switch to a supported network type.",
+      },
     );
 
     this.networkType = networkType;
@@ -162,7 +172,7 @@ export class UnsupportedNetworkError extends SDKError {
     return {
       ...super.toJSON(),
       networkType: this.networkType,
-      supportedNetworks: this.supportedNetworks
+      supportedNetworks: this.supportedNetworks,
     };
   }
 }
@@ -180,15 +190,15 @@ export class NetworkCongestionError extends SDKError {
     context: ErrorContext = {},
     options: {
       cause?: Error;
-    } = {}
+    } = {},
   ) {
     const message = congestionLevel
       ? `Network congestion detected: ${congestionLevel}`
-      : 'Network congestion detected';
+      : "Network congestion detected";
 
     super(
       message,
-      'NETWORK_CONGESTION',
+      "NETWORK_CONGESTION",
       ErrorSeverity.MEDIUM,
       ErrorCategory.NETWORK,
       context,
@@ -197,8 +207,8 @@ export class NetworkCongestionError extends SDKError {
         retryable: true,
         solution: estimatedDelay
           ? `Network is congested. Estimated delay: ${estimatedDelay}ms. The request will be retried.`
-          : 'Network is congested. The request will be retried with backoff.'
-      }
+          : "Network is congested. The request will be retried with backoff.",
+      },
     );
 
     this.congestionLevel = congestionLevel;
@@ -209,7 +219,7 @@ export class NetworkCongestionError extends SDKError {
     return {
       ...super.toJSON(),
       congestionLevel: this.congestionLevel,
-      estimatedDelay: this.estimatedDelay
+      estimatedDelay: this.estimatedDelay,
     };
   }
 }

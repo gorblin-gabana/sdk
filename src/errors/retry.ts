@@ -1,4 +1,4 @@
-import { SDKError } from './base.js';
+import { SDKError } from "./base.js";
 
 /**
  * Retry configuration options
@@ -32,16 +32,16 @@ export const DEFAULT_RETRY_OPTIONS: Required<RetryOptions> = {
   retryCondition: (error) => error instanceof SDKError && error.isRetryable(),
   onRetry: () => {
     // Default no-op
-  }
+  },
 };
 
 /**
  * Circuit breaker states
  */
 export enum CircuitBreakerState {
-  CLOSED = 'closed',
-  OPEN = 'open',
-  HALF_OPEN = 'half-open'
+  CLOSED = "closed",
+  OPEN = "open",
+  HALF_OPEN = "half-open",
 }
 
 /**
@@ -61,12 +61,13 @@ export interface CircuitBreakerOptions {
 /**
  * Default circuit breaker options
  */
-export const DEFAULT_CIRCUIT_BREAKER_OPTIONS: Required<CircuitBreakerOptions> = {
-  failureThreshold: 5,
-  resetTimeout: 60000,
-  successThreshold: 2,
-  monitoringWindow: 60000
-};
+export const DEFAULT_CIRCUIT_BREAKER_OPTIONS: Required<CircuitBreakerOptions> =
+  {
+    failureThreshold: 5,
+    resetTimeout: 60000,
+    successThreshold: 2,
+    monitoringWindow: 60000,
+  };
 
 /**
  * Circuit breaker implementation
@@ -88,7 +89,7 @@ export class CircuitBreaker {
   async execute<T>(fn: () => Promise<T>): Promise<T> {
     if (this.state === CircuitBreakerState.OPEN) {
       if (Date.now() - this.lastFailureTime < this.options.resetTimeout) {
-        throw new Error('Circuit breaker is open');
+        throw new Error("Circuit breaker is open");
       }
       this.state = CircuitBreakerState.HALF_OPEN;
       this.successCount = 0;
@@ -148,7 +149,7 @@ export class CircuitBreaker {
  */
 export async function retry<T>(
   fn: () => Promise<T>,
-  options: RetryOptions = {}
+  options: RetryOptions = {},
 ): Promise<T> {
   const config = { ...DEFAULT_RETRY_OPTIONS, ...options };
   let lastError: Error;
@@ -189,8 +190,12 @@ export async function retry<T>(
 /**
  * Calculate retry delay with exponential backoff
  */
-function calculateDelay(attempt: number, options: Required<RetryOptions>): number {
-  const exponentialDelay = options.initialDelay * Math.pow(options.backoffMultiplier, attempt - 1);
+function calculateDelay(
+  attempt: number,
+  options: Required<RetryOptions>,
+): number {
+  const exponentialDelay =
+    options.initialDelay * Math.pow(options.backoffMultiplier, attempt - 1);
   const delay = Math.min(exponentialDelay, options.maxDelay);
 
   if (options.jitter) {
@@ -207,7 +212,7 @@ function calculateDelay(attempt: number, options: Required<RetryOptions>): numbe
  * Sleep for the specified number of milliseconds
  */
 function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -216,7 +221,7 @@ function sleep(ms: number): Promise<void> {
 export async function retryWithCircuitBreaker<T>(
   fn: () => Promise<T>,
   circuitBreaker: CircuitBreaker,
-  retryOptions: RetryOptions = {}
+  retryOptions: RetryOptions = {},
 ): Promise<T> {
   return circuitBreaker.execute(async () => {
     return retry(fn, retryOptions);
@@ -232,9 +237,13 @@ export async function batchRetry<T>(
     retryOptions?: RetryOptions;
     circuitBreakerOptions?: CircuitBreakerOptions;
     maxConcurrency?: number;
-  } = {}
+  } = {},
 ): Promise<T[]> {
-  const { retryOptions = {}, circuitBreakerOptions = {}, maxConcurrency = 5 } = options;
+  const {
+    retryOptions = {},
+    circuitBreakerOptions = {},
+    maxConcurrency = 5,
+  } = options;
   const circuitBreaker = new CircuitBreaker(circuitBreakerOptions);
 
   // Limit concurrency
@@ -243,7 +252,9 @@ export async function batchRetry<T>(
 
   for (const chunk of chunks) {
     const chunkResults = await Promise.all(
-      chunk.map(op => retryWithCircuitBreaker(op, circuitBreaker, retryOptions))
+      chunk.map((op) =>
+        retryWithCircuitBreaker(op, circuitBreaker, retryOptions),
+      ),
     );
     results.push(...chunkResults);
   }
@@ -269,7 +280,7 @@ export function Retryable(options: RetryOptions = {}) {
   return function <T extends (...args: any[]) => Promise<any>>(
     target: any,
     propertyKey: string,
-    descriptor: TypedPropertyDescriptor<T>
+    descriptor: TypedPropertyDescriptor<T>,
   ) {
     const originalMethod = descriptor.value;
 
@@ -292,7 +303,7 @@ export function WithCircuitBreaker(options: CircuitBreakerOptions = {}) {
   return function <T extends (...args: any[]) => Promise<any>>(
     target: any,
     propertyKey: string,
-    descriptor: TypedPropertyDescriptor<T>
+    descriptor: TypedPropertyDescriptor<T>,
   ) {
     const originalMethod = descriptor.value;
 
@@ -316,21 +327,33 @@ export class RetryManager {
 
   constructor(
     defaultRetryOptions: RetryOptions = {},
-    defaultCircuitBreakerOptions: CircuitBreakerOptions = {}
+    defaultCircuitBreakerOptions: CircuitBreakerOptions = {},
   ) {
-    this.defaultRetryOptions = { ...DEFAULT_RETRY_OPTIONS, ...defaultRetryOptions };
-    this.defaultCircuitBreakerOptions = { ...DEFAULT_CIRCUIT_BREAKER_OPTIONS, ...defaultCircuitBreakerOptions };
+    this.defaultRetryOptions = {
+      ...DEFAULT_RETRY_OPTIONS,
+      ...defaultRetryOptions,
+    };
+    this.defaultCircuitBreakerOptions = {
+      ...DEFAULT_CIRCUIT_BREAKER_OPTIONS,
+      ...defaultCircuitBreakerOptions,
+    };
   }
 
   /**
    * Get or create circuit breaker for a specific key
    */
-  getCircuitBreaker(key: string, options?: CircuitBreakerOptions): CircuitBreaker {
+  getCircuitBreaker(
+    key: string,
+    options?: CircuitBreakerOptions,
+  ): CircuitBreaker {
     if (!this.circuitBreakers.has(key)) {
-      this.circuitBreakers.set(key, new CircuitBreaker({
-        ...this.defaultCircuitBreakerOptions,
-        ...options
-      }));
+      this.circuitBreakers.set(
+        key,
+        new CircuitBreaker({
+          ...this.defaultCircuitBreakerOptions,
+          ...options,
+        }),
+      );
     }
     return this.circuitBreakers.get(key)!;
   }
@@ -344,10 +367,16 @@ export class RetryManager {
     options: {
       retryOptions?: RetryOptions;
       circuitBreakerOptions?: CircuitBreakerOptions;
-    } = {}
+    } = {},
   ): Promise<T> {
-    const circuitBreaker = this.getCircuitBreaker(key, options.circuitBreakerOptions);
-    const retryOptions = { ...this.defaultRetryOptions, ...options.retryOptions };
+    const circuitBreaker = this.getCircuitBreaker(
+      key,
+      options.circuitBreakerOptions,
+    );
+    const retryOptions = {
+      ...this.defaultRetryOptions,
+      ...options.retryOptions,
+    };
 
     return retryWithCircuitBreaker(fn, circuitBreaker, retryOptions);
   }
@@ -366,7 +395,7 @@ export class RetryManager {
    * Reset all circuit breakers
    */
   resetAll(): void {
-    Array.from(this.circuitBreakers.values()).forEach(circuitBreaker => {
+    Array.from(this.circuitBreakers.values()).forEach((circuitBreaker) => {
       circuitBreaker.reset();
     });
   }
@@ -376,9 +405,11 @@ export class RetryManager {
    */
   getStatus(): Record<string, CircuitBreakerState> {
     const status: Record<string, CircuitBreakerState> = {};
-    Array.from(this.circuitBreakers.entries()).forEach(([key, circuitBreaker]) => {
-      status[key] = circuitBreaker.getState();
-    });
+    Array.from(this.circuitBreakers.entries()).forEach(
+      ([key, circuitBreaker]) => {
+        status[key] = circuitBreaker.getState();
+      },
+    );
     return status;
   }
 }

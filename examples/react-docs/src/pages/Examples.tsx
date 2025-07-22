@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import CodeBlock from '../components/CodeBlock'
-import { 
+import { useState } from "react";
+import CodeBlock from "../components/CodeBlock";
+import {
   CubeIcon,
   WalletIcon,
   ChartBarIcon,
@@ -8,25 +8,25 @@ import {
   BeakerIcon,
   ChevronDownIcon,
   ChevronRightIcon,
-  DocumentDuplicateIcon
-} from '@heroicons/react/24/outline'
+  DocumentDuplicateIcon,
+} from "@heroicons/react/24/outline";
 
 export default function ExamplesV1() {
-  const [copied, setCopied] = useState<{ [key: string]: boolean }>({})
-  const [openSection, setOpenSection] = useState<string | null>('basic')
+  const [copied, setCopied] = useState<{ [key: string]: boolean }>({});
+  const [openSection, setOpenSection] = useState<string | null>("basic");
 
   const copyToClipboard = (code: string, id: string) => {
-    navigator.clipboard.writeText(code)
-    setCopied(prev => ({ ...prev, [id]: true }))
+    navigator.clipboard.writeText(code);
+    setCopied((prev) => ({ ...prev, [id]: true }));
     setTimeout(() => {
-      setCopied(prev => ({ ...prev, [id]: false }))
-    }, 2000)
-  }
+      setCopied((prev) => ({ ...prev, [id]: false }));
+    }, 2000);
+  };
 
   // Only one section open at a time for clarity
   const toggleSection = (sectionId: string) => {
-    setOpenSection(prev => prev === sectionId ? null : sectionId)
-  }
+    setOpenSection((prev) => (prev === sectionId ? null : sectionId));
+  };
 
   const basicUsageCode = `/**
  * GorbchainSDK V1 - Basic Usage Example
@@ -93,7 +93,7 @@ async function basicUsageExample() {
   console.log('\\n✨ Ready to build super apps with GorbchainSDK V1!');
 }
 
-export { basicUsageExample };`
+export { basicUsageExample };`;
 
   const richTokenAnalysisCode = `/**
  * GorbchainSDK V1 - Rich Token Analysis Example
@@ -176,7 +176,7 @@ async function richTokenAnalysisExample() {
   console.log('\\n✨ Portfolio analysis complete!');
 }
 
-export { richTokenAnalysisExample };`
+export { richTokenAnalysisExample };`;
 
   const transactionAnalysisCode = `/**
  * GorbchainSDK V1 - Rich Transaction Analysis Example
@@ -268,7 +268,7 @@ async function richTransactionAnalysisExample() {
   console.log('\\n✨ Transaction analysis examples complete!');
 }
 
-export { richTransactionAnalysisExample };`
+export { richTransactionAnalysisExample };`;
 
   const walletIntegrationCode = `/**
  * GorbchainSDK V1 - Universal Wallet Integration Example
@@ -367,7 +367,7 @@ async function walletIntegrationExample() {
   console.log('\\n✨ Wallet integration example complete!');
 }
 
-export { walletIntegrationExample };`
+export { walletIntegrationExample };`;
 
   const advancedPortfolioCode = `/**
  * GorbchainSDK V1 - Advanced Portfolio Management Example
@@ -477,55 +477,84 @@ async function advancedPortfolioExample() {
   console.log('\\n🚀 Ready to build comprehensive portfolio management features!');
 }
 
-export { advancedPortfolioExample };`
+export { advancedPortfolioExample };`;
 
   const examples = [
     {
-      id: 'basic',
-      title: 'Basic SDK Setup & Usage',
-      description: 'Initialize GorbchainSDK V1 and explore core capabilities',
+      id: "basic",
+      title: "Basic SDK Setup & Usage",
+      description: "Initialize GorbchainSDK V1 and explore core capabilities",
       icon: <CubeIcon className="w-5 h-5" />,
-      color: 'blue',
+      color: "blue",
       code: basicUsageCode,
-      features: ['SDK initialization', 'Network health monitoring', 'Capability detection', 'Direct RPC access']
+      features: [
+        "SDK initialization",
+        "Network health monitoring",
+        "Capability detection",
+        "Direct RPC access",
+      ],
     },
     {
-      id: 'tokens',
-      title: 'Rich Token Portfolio Analysis',
-      description: 'Analyze token portfolios with complete metadata and insights',
+      id: "tokens",
+      title: "Rich Token Portfolio Analysis",
+      description:
+        "Analyze token portfolios with complete metadata and insights",
       icon: <ChartBarIcon className="w-5 h-5" />,
-      color: 'emerald',
+      color: "emerald",
       code: richTokenAnalysisCode,
-      features: ['Portfolio metadata', 'Token categorization', 'Diversity scoring', 'Performance optimization']
+      features: [
+        "Portfolio metadata",
+        "Token categorization",
+        "Diversity scoring",
+        "Performance optimization",
+      ],
     },
     {
-      id: 'transactions',
-      title: 'Enhanced Transaction Analysis',
-      description: 'Decode transactions with human-readable context and token metadata',
+      id: "transactions",
+      title: "Enhanced Transaction Analysis",
+      description:
+        "Decode transactions with human-readable context and token metadata",
       icon: <MagnifyingGlassIcon className="w-5 h-5" />,
-      color: 'purple',
+      color: "purple",
       code: transactionAnalysisCode,
-      features: ['Rich transaction decoding', 'Token operation analysis', 'Balance change tracking', 'Context resolution']
+      features: [
+        "Rich transaction decoding",
+        "Token operation analysis",
+        "Balance change tracking",
+        "Context resolution",
+      ],
     },
     {
-      id: 'wallets',
-      title: 'Universal Wallet Integration',
-      description: 'Connect to all Solana wallets with auto-discovery and portfolio analysis',
+      id: "wallets",
+      title: "Universal Wallet Integration",
+      description:
+        "Connect to all Solana wallets with auto-discovery and portfolio analysis",
       icon: <WalletIcon className="w-5 h-5" />,
-      color: 'orange',
+      color: "orange",
       code: walletIntegrationCode,
-      features: ['Universal wallet support', 'Auto-discovery', 'Portfolio integration', 'Event-driven management']
+      features: [
+        "Universal wallet support",
+        "Auto-discovery",
+        "Portfolio integration",
+        "Event-driven management",
+      ],
     },
     {
-      id: 'portfolio',
-      title: 'Advanced Portfolio Management',
-      description: 'Compare portfolios, analyze risk, and generate actionable insights',
+      id: "portfolio",
+      title: "Advanced Portfolio Management",
+      description:
+        "Compare portfolios, analyze risk, and generate actionable insights",
       icon: <BeakerIcon className="w-5 h-5" />,
-      color: 'pink',
+      color: "pink",
       code: advancedPortfolioCode,
-      features: ['Portfolio comparison', 'Risk analysis', 'Diversification insights', 'Actionable recommendations']
-    }
-  ]
+      features: [
+        "Portfolio comparison",
+        "Risk analysis",
+        "Diversification insights",
+        "Actionable recommendations",
+      ],
+    },
+  ];
 
   return (
     <div className="space-y-8">
@@ -534,19 +563,53 @@ export { advancedPortfolioExample };`
           GorbchainSDK V1 Examples 🚀
         </h1>
         <p className="text-lg text-gray-600 mb-6">
-          Explore practical, production-ready examples for the GorbchainSDK V1. Each section below is organized by use-case and references the official SDK documentation for deeper learning.<br />
-          <span className="font-medium">See:</span> <a href="/api-reference" className="text-blue-700 underline">API Reference</a>, <a href="/docs/overview" className="text-blue-700 underline">Overview</a>, <a href="/docs/quick-reference" className="text-blue-700 underline">Quick Reference</a>
+          Explore practical, production-ready examples for the GorbchainSDK V1.
+          Each section below is organized by use-case and references the
+          official SDK documentation for deeper learning.
+          <br />
+          <span className="font-medium">See:</span>{" "}
+          <a href="/api-reference" className="text-blue-700 underline">
+            API Reference
+          </a>
+          ,{" "}
+          <a href="/docs/overview" className="text-blue-700 underline">
+            Overview
+          </a>
+          ,{" "}
+          <a href="/docs/quick-reference" className="text-blue-700 underline">
+            Quick Reference
+          </a>
         </p>
 
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6 mb-8">
-          <h3 className="font-semibold text-blue-900 mb-3">✨ Key Features from SDK Docs</h3>
+          <h3 className="font-semibold text-blue-900 mb-3">
+            ✨ Key Features from SDK Docs
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-800">
             <div>
               <div className="font-medium mb-2">🎯 Rich Functions</div>
               <ul className="space-y-1 ml-4">
-                <li>• Portfolio analysis with full metadata (see <a href="/docs/token-analysis" className="underline">Token Analysis</a>)</li>
-                <li>• Transaction decoding with context (<a href="/docs/transaction-analysis" className="underline">Transaction Analysis</a>)</li>
-                <li>• Universal wallet integration (<a href="/docs/wallet-integration" className="underline">Wallet Integration</a>)</li>
+                <li>
+                  • Portfolio analysis with full metadata (see{" "}
+                  <a href="/docs/token-analysis" className="underline">
+                    Token Analysis
+                  </a>
+                  )
+                </li>
+                <li>
+                  • Transaction decoding with context (
+                  <a href="/docs/transaction-analysis" className="underline">
+                    Transaction Analysis
+                  </a>
+                  )
+                </li>
+                <li>
+                  • Universal wallet integration (
+                  <a href="/docs/wallet-integration" className="underline">
+                    Wallet Integration
+                  </a>
+                  )
+                </li>
               </ul>
             </div>
             <div>
@@ -562,62 +625,110 @@ export { advancedPortfolioExample };`
       </div>
 
       {examples.map((example) => {
-        const isOpen = openSection === example.id
-        
+        const isOpen = openSection === example.id;
+
         return (
           <div key={example.id} className="docs-card">
             <button
               onClick={() => toggleSection(example.id)}
-              className={`w-full flex items-center justify-between p-4 text-left rounded-lg border border-gray-200 bg-white hover:shadow transition-all ${isOpen ? 'ring-2 ring-blue-200' : ''}`}
+              className={`w-full flex items-center justify-between p-4 text-left rounded-lg border border-gray-200 bg-white hover:shadow transition-all ${isOpen ? "ring-2 ring-blue-200" : ""}`}
               aria-expanded={isOpen}
             >
               <div className="flex items-center space-x-4">
-                <div className={`w-12 h-12 bg-${example.color}-100 rounded-lg flex items-center justify-center shadow-sm border border-${example.color}-200`}>
+                <div
+                  className={`w-12 h-12 bg-${example.color}-100 rounded-lg flex items-center justify-center shadow-sm border border-${example.color}-200`}
+                >
                   {example.icon}
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-docs-heading">{example.title}</h2>
+                  <h2 className="text-xl font-semibold text-docs-heading">
+                    {example.title}
+                  </h2>
                   <p className="text-gray-600">{example.description}</p>
-                  {example.id === 'basic' && (
-                    <p className="text-xs text-blue-700 mt-1">Reference: <a href="/docs/basic-usage" className="underline">docs/basic-usage.md</a></p>
+                  {example.id === "basic" && (
+                    <p className="text-xs text-blue-700 mt-1">
+                      Reference:{" "}
+                      <a href="/docs/basic-usage" className="underline">
+                        docs/basic-usage.md
+                      </a>
+                    </p>
                   )}
-                  {example.id === 'tokens' && (
-                    <p className="text-xs text-emerald-700 mt-1">Reference: <a href="/docs/token-analysis" className="underline">docs/token-analysis.md</a></p>
+                  {example.id === "tokens" && (
+                    <p className="text-xs text-emerald-700 mt-1">
+                      Reference:{" "}
+                      <a href="/docs/token-analysis" className="underline">
+                        docs/token-analysis.md
+                      </a>
+                    </p>
                   )}
-                  {example.id === 'transactions' && (
-                    <p className="text-xs text-purple-700 mt-1">Reference: <a href="/docs/transaction-analysis" className="underline">docs/transaction-analysis.md</a></p>
+                  {example.id === "transactions" && (
+                    <p className="text-xs text-purple-700 mt-1">
+                      Reference:{" "}
+                      <a
+                        href="/docs/transaction-analysis"
+                        className="underline"
+                      >
+                        docs/transaction-analysis.md
+                      </a>
+                    </p>
                   )}
-                  {example.id === 'wallets' && (
-                    <p className="text-xs text-orange-700 mt-1">Reference: <a href="/docs/wallet-integration" className="underline">docs/wallet-integration.md</a></p>
+                  {example.id === "wallets" && (
+                    <p className="text-xs text-orange-700 mt-1">
+                      Reference:{" "}
+                      <a href="/docs/wallet-integration" className="underline">
+                        docs/wallet-integration.md
+                      </a>
+                    </p>
                   )}
-                  {example.id === 'portfolio' && (
-                    <p className="text-xs text-pink-700 mt-1">Reference: <a href="/docs/portfolio-management" className="underline">docs/portfolio-management.md</a></p>
+                  {example.id === "portfolio" && (
+                    <p className="text-xs text-pink-700 mt-1">
+                      Reference:{" "}
+                      <a
+                        href="/docs/portfolio-management"
+                        className="underline"
+                      >
+                        docs/portfolio-management.md
+                      </a>
+                    </p>
                   )}
                   <div className="flex items-center space-x-2 mt-2">
                     {example.features.slice(0, 2).map((feature, index) => (
-                      <span key={index} className={`px-2 py-1 bg-${example.color}-50 text-${example.color}-700 rounded text-xs font-medium border border-${example.color}-200`}>{feature}</span>
+                      <span
+                        key={index}
+                        className={`px-2 py-1 bg-${example.color}-50 text-${example.color}-700 rounded text-xs font-medium border border-${example.color}-200`}
+                      >
+                        {feature}
+                      </span>
                     ))}
                   </div>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <div className={`px-3 py-1 bg-${example.color}-100 text-${example.color}-800 rounded-full text-sm font-medium border border-${example.color}-200`}>V1</div>
-                <span className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
+                <div
+                  className={`px-3 py-1 bg-${example.color}-100 text-${example.color}-800 rounded-full text-sm font-medium border border-${example.color}-200`}
+                >
+                  V1
+                </div>
+                <span
+                  className={`transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                >
                   <ChevronDownIcon className="w-5 h-5 text-gray-400" />
                 </span>
               </div>
             </button>
-            
+
             {isOpen && (
               <div className="mt-6 rounded-lg border border-gray-100 bg-gray-50 p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-docs-heading">Complete Implementation</h3>
+                  <h3 className="text-lg font-semibold text-docs-heading">
+                    Complete Implementation
+                  </h3>
                   <button
                     onClick={() => copyToClipboard(example.code, example.id)}
                     className={`flex items-center space-x-2 px-3 py-1 text-sm font-medium text-blue-600 hover:text-blue-700 border border-blue-200 rounded-md hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300`}
                   >
                     <DocumentDuplicateIcon className="w-4 h-4" />
-                    <span>{copied[example.id] ? 'Copied!' : 'Copy Code'}</span>
+                    <span>{copied[example.id] ? "Copied!" : "Copy Code"}</span>
                   </button>
                 </div>
                 <div className="mb-4">
@@ -631,11 +742,18 @@ export { advancedPortfolioExample };`
                   />
                 </div>
                 {/* Feature highlights */}
-                <div className={`mt-4 p-4 bg-${example.color}-50 border border-${example.color}-200 rounded-lg`}>
-                  <h4 className={`font-medium text-${example.color}-900 mb-2`}>✨ Key Features</h4>
+                <div
+                  className={`mt-4 p-4 bg-${example.color}-50 border border-${example.color}-200 rounded-lg`}
+                >
+                  <h4 className={`font-medium text-${example.color}-900 mb-2`}>
+                    ✨ Key Features
+                  </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {example.features.map((feature, index) => (
-                      <div key={index} className={`text-sm text-${example.color}-800 flex items-center`}>
+                      <div
+                        key={index}
+                        className={`text-sm text-${example.color}-800 flex items-center`}
+                      >
                         <span className="w-2 h-2 bg-current rounded-full mr-2 opacity-60"></span>
                         {feature}
                       </div>
@@ -643,34 +761,65 @@ export { advancedPortfolioExample };`
                   </div>
                 </div>
                 {/* Example-specific tips */}
-                {example.id === 'basic' && (
+                {example.id === "basic" && (
                   <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <h4 className="font-medium text-green-900 mb-2">🎯 Getting Started Tips</h4>
+                    <h4 className="font-medium text-green-900 mb-2">
+                      🎯 Getting Started Tips
+                    </h4>
                     <ul className="text-sm text-green-800 space-y-1">
-                      <li>• Replace the example RPC endpoint with your preferred provider</li>
-                      <li>• Network health checks help ensure reliable connections</li>
-                      <li>• Use capability detection to adapt to different RPC providers</li>
+                      <li>
+                        • Replace the example RPC endpoint with your preferred
+                        provider
+                      </li>
+                      <li>
+                        • Network health checks help ensure reliable connections
+                      </li>
+                      <li>
+                        • Use capability detection to adapt to different RPC
+                        providers
+                      </li>
                     </ul>
                   </div>
                 )}
-                {example.id === 'tokens' && (
+                {example.id === "tokens" && (
                   <div className="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
-                    <h4 className="font-medium text-emerald-900 mb-2">📊 Portfolio Analysis Power</h4>
+                    <h4 className="font-medium text-emerald-900 mb-2">
+                      📊 Portfolio Analysis Power
+                    </h4>
                     <ul className="text-sm text-emerald-800 space-y-1">
-                      <li>• Automatically fetches metadata for all tokens and NFTs</li>
-                      <li>• Provides diversity scoring for portfolio risk assessment</li>
-                      <li>• Supports concurrent requests for optimal performance</li>
-                      <li>• Includes market data integration (when API keys provided)</li>
+                      <li>
+                        • Automatically fetches metadata for all tokens and NFTs
+                      </li>
+                      <li>
+                        • Provides diversity scoring for portfolio risk
+                        assessment
+                      </li>
+                      <li>
+                        • Supports concurrent requests for optimal performance
+                      </li>
+                      <li>
+                        • Includes market data integration (when API keys
+                        provided)
+                      </li>
                     </ul>
                   </div>
                 )}
-                {example.id === 'wallets' && (
+                {example.id === "wallets" && (
                   <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                    <h4 className="font-medium text-orange-900 mb-2">🔗 Wallet Integration Benefits</h4>
+                    <h4 className="font-medium text-orange-900 mb-2">
+                      🔗 Wallet Integration Benefits
+                    </h4>
                     <ul className="text-sm text-orange-800 space-y-1">
-                      <li>• Works with Phantom, Solflare, Backpack, and 15+ other wallets</li>
-                      <li>• Auto-discovery handles wallet detection automatically</li>
-                      <li>• Includes portfolio analysis for connected wallets</li>
+                      <li>
+                        • Works with Phantom, Solflare, Backpack, and 15+ other
+                        wallets
+                      </li>
+                      <li>
+                        • Auto-discovery handles wallet detection automatically
+                      </li>
+                      <li>
+                        • Includes portfolio analysis for connected wallets
+                      </li>
                       <li>• Event-driven architecture for real-time updates</li>
                     </ul>
                   </div>
@@ -678,24 +827,33 @@ export { advancedPortfolioExample };`
               </div>
             )}
           </div>
-        )
+        );
       })}
 
       {/* Quick Start Section */}
       <div className="docs-card">
-        <h2 className="text-xl font-semibold text-docs-heading mb-4">🚀 Quick Start Guide</h2>
+        <h2 className="text-xl font-semibold text-docs-heading mb-4">
+          🚀 Quick Start Guide
+        </h2>
         <div className="space-y-6">
           <div>
-            <h3 className="text-lg font-semibold text-docs-heading mb-3">1. Installation</h3>
+            <h3 className="text-lg font-semibold text-docs-heading mb-3">
+              1. Installation
+            </h3>
             <div className="code-block">
-              <pre><code>{`npm install @gorbchain-xyz/chaindecode`}</code></pre>
+              <pre>
+                <code>{`npm install @gorbchain-xyz/chaindecode`}</code>
+              </pre>
             </div>
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold text-docs-heading mb-3">2. Basic Setup</h3>
+            <h3 className="text-lg font-semibold text-docs-heading mb-3">
+              2. Basic Setup
+            </h3>
             <div className="code-block">
-              <pre><code>{`import { GorbchainSDK } from '@gorbchain-xyz/chaindecode'
+              <pre>
+                <code>{`import { GorbchainSDK } from '@gorbchain-xyz/chaindecode'
 
 const sdk = new GorbchainSDK({
   rpcEndpoint: 'https://rpc.gorbchain.xyz',
@@ -723,7 +881,8 @@ const transaction = await sdk.getRichTransaction(signature, {
 
 // Universal wallet integration
 const walletManager = sdk.createWalletManager()
-const wallet = await walletManager.autoConnect()`}</code></pre>
+const wallet = await walletManager.autoConnect()`}</code>
+              </pre>
             </div>
           </div>
         </div>
@@ -735,24 +894,25 @@ const wallet = await walletManager.autoConnect()`}</code></pre>
           ✨ Build Super Apps with GorbchainSDK V1
         </h2>
         <p className="text-gray-600 text-center mb-6">
-          These examples provide the foundation for building the next generation of Solana applications.
-          Rich functions, performance optimization, and universal wallet support - everything you need is here.
+          These examples provide the foundation for building the next generation
+          of Solana applications. Rich functions, performance optimization, and
+          universal wallet support - everything you need is here.
         </p>
         <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-          <a 
-            href="/playground" 
+          <a
+            href="/playground"
             className="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             <span>Try Interactive Playground</span>
           </a>
-          <a 
-            href="/api-reference" 
+          <a
+            href="/api-reference"
             className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
           >
             <span>View Full API Reference</span>
           </a>
-          <a 
-            href="https://github.com/gorbchain-xyz/chaindecode" 
+          <a
+            href="https://github.com/gorbchain-xyz/chaindecode"
             className="inline-flex items-center justify-center px-6 py-3 border border-purple-300 text-purple-700 rounded-lg hover:bg-purple-50 transition-colors"
             target="_blank"
             rel="noopener noreferrer"
@@ -762,5 +922,5 @@ const wallet = await walletManager.autoConnect()`}</code></pre>
         </div>
       </div>
     </div>
-  )
+  );
 }

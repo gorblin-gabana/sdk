@@ -1,5 +1,5 @@
 // RPC Account Methods - Our own implementation based on Solana RPC specs
-import { getGorbchainConfig } from '../utils/gorbchainConfig.js';
+import { getGorbchainConfig } from "../utils/gorbchainConfig.js";
 
 export interface AccountInfo {
   executable: boolean;
@@ -25,26 +25,26 @@ export interface RpcResponse<T> {
 export async function getAccountInfo(
   connection: any,
   pubkey: string,
-  options?: { encoding?: string; commitment?: string }
+  options?: { encoding?: string; commitment?: string },
 ): Promise<AccountInfo | null> {
   const config = getGorbchainConfig();
-  const rpcUrl = config.rpcUrl ?? 'https://rpc.gorbchain.xyz';
+  const rpcUrl = config.rpcUrl ?? "https://rpc.gorbchain.xyz";
 
   const response = await fetch(rpcUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      jsonrpc: '2.0',
+      jsonrpc: "2.0",
       id: 1,
-      method: 'getAccountInfo',
+      method: "getAccountInfo",
       params: [
         pubkey,
         {
-          encoding: options?.encoding ?? 'base64',
-          commitment: options?.commitment ?? 'finalized'
-        }
-      ]
-    })
+          encoding: options?.encoding ?? "base64",
+          commitment: options?.commitment ?? "finalized",
+        },
+      ],
+    }),
   });
 
   const data: RpcResponse<{ value: AccountInfo }> = await response.json();
@@ -57,29 +57,30 @@ export async function getAccountInfo(
 export async function getMultipleAccounts(
   connection: any,
   pubkeys: string[],
-  options?: { encoding?: string; commitment?: string }
+  options?: { encoding?: string; commitment?: string },
 ): Promise<(AccountInfo | null)[]> {
   const config = getGorbchainConfig();
-  const rpcUrl = config.rpcUrl ?? 'https://rpc.gorbchain.xyz';
+  const rpcUrl = config.rpcUrl ?? "https://rpc.gorbchain.xyz";
 
   const response = await fetch(rpcUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      jsonrpc: '2.0',
+      jsonrpc: "2.0",
       id: 1,
-      method: 'getMultipleAccounts',
+      method: "getMultipleAccounts",
       params: [
         pubkeys,
         {
-          encoding: options?.encoding ?? 'base64',
-          commitment: options?.commitment ?? 'finalized'
-        }
-      ]
-    })
+          encoding: options?.encoding ?? "base64",
+          commitment: options?.commitment ?? "finalized",
+        },
+      ],
+    }),
   });
 
-  const data: RpcResponse<{ value: (AccountInfo | null)[] }> = await response.json();
+  const data: RpcResponse<{ value: (AccountInfo | null)[] }> =
+    await response.json();
   return data.result?.value ?? [];
 }
 
@@ -96,30 +97,31 @@ export async function getProgramAccounts(
       memcmp?: { offset: number; bytes: string };
       dataSize?: number;
     }>;
-  }
+  },
 ): Promise<Array<{ pubkey: string; account: AccountInfo }>> {
   const config = getGorbchainConfig();
-  const rpcUrl = config.rpcUrl ?? 'https://rpc.gorbchain.xyz';
+  const rpcUrl = config.rpcUrl ?? "https://rpc.gorbchain.xyz";
 
   const response = await fetch(rpcUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      jsonrpc: '2.0',
+      jsonrpc: "2.0",
       id: 1,
-      method: 'getProgramAccounts',
+      method: "getProgramAccounts",
       params: [
         programId,
         {
-          encoding: options?.encoding ?? 'base64',
-          commitment: options?.commitment ?? 'finalized',
-          filters: options?.filters || []
-        }
-      ]
-    })
+          encoding: options?.encoding ?? "base64",
+          commitment: options?.commitment ?? "finalized",
+          filters: options?.filters || [],
+        },
+      ],
+    }),
   });
 
-  const data: RpcResponse<Array<{ pubkey: string; account: AccountInfo }>> = await response.json();
+  const data: RpcResponse<Array<{ pubkey: string; account: AccountInfo }>> =
+    await response.json();
   return data.result ?? [];
 }
 
@@ -129,25 +131,25 @@ export async function getProgramAccounts(
 export async function getBalance(
   connection: any,
   pubkey: string,
-  commitment?: string
+  commitment?: string,
 ): Promise<number> {
   const config = getGorbchainConfig();
-  const rpcUrl = config.rpcUrl ?? 'https://rpc.gorbchain.xyz';
+  const rpcUrl = config.rpcUrl ?? "https://rpc.gorbchain.xyz";
 
   const response = await fetch(rpcUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      jsonrpc: '2.0',
+      jsonrpc: "2.0",
       id: 1,
-      method: 'getBalance',
+      method: "getBalance",
       params: [
         pubkey,
         {
-          commitment: commitment ?? 'finalized'
-        }
-      ]
-    })
+          commitment: commitment ?? "finalized",
+        },
+      ],
+    }),
   });
 
   const data: RpcResponse<{ value: number }> = await response.json();

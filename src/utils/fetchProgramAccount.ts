@@ -1,9 +1,9 @@
 // Generic fetcher for any Solana account (program, mint, etc)
 // Usage: await fetchProgramAccount(address)
 
-import { getGorbchainConfig } from './gorbchainConfig.js';
-import type { DecodedMintAccount } from './decodeMintAccount.js';
-import { decodeMintAccount } from './decodeMintAccount.js';
+import { getGorbchainConfig } from "./gorbchainConfig.js";
+import type { DecodedMintAccount } from "./decodeMintAccount.js";
+import { decodeMintAccount } from "./decodeMintAccount.js";
 
 export interface ProgramAccountInfo {
   pubkey: string;
@@ -15,17 +15,19 @@ export interface ProgramAccountInfo {
   raw?: Uint8Array;
 }
 
-export async function fetchProgramAccount(address: string): Promise<ProgramAccountInfo | null> {
+export async function fetchProgramAccount(
+  address: string,
+): Promise<ProgramAccountInfo | null> {
   // Use the public Solana RPC (or allow override via config)
-  const res = await fetch('https://rpc.gorbchain.xyz', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+  const res = await fetch("https://rpc.gorbchain.xyz", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      jsonrpc: '2.0',
+      jsonrpc: "2.0",
       id: 1,
-      method: 'getAccountInfo',
-      params: [address, { encoding: 'base64' }]
-    })
+      method: "getAccountInfo",
+      params: [address, { encoding: "base64" }],
+    }),
   });
   const data = await res.json();
   if (!data?.result?.value) return null;
@@ -37,11 +39,13 @@ export async function fetchProgramAccount(address: string): Promise<ProgramAccou
     executable: info.executable,
     rentEpoch: info.rentEpoch,
     data: info.data[0], // base64
-    raw: Uint8Array.from(atob(info.data[0]), c => c.charCodeAt(0))
+    raw: Uint8Array.from(atob(info.data[0]), (c) => c.charCodeAt(0)),
   };
 }
 
-export async function fetchMintAccountFromRpc(mint: string): Promise<DecodedMintAccount | null> {
+export async function fetchMintAccountFromRpc(
+  mint: string,
+): Promise<DecodedMintAccount | null> {
   const acct = await fetchProgramAccount(mint);
   if (!acct?.data) return null;
   // Use all known token program IDs from config
@@ -51,17 +55,17 @@ export async function fetchMintAccountFromRpc(mint: string): Promise<DecodedMint
     config.programIds?.token,
     config.programIds?.splToken,
     config.programIds?.mainnetToken,
-    'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' // fallback SPL Token
+    "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", // fallback SPL Token
   ].filter(Boolean);
   if (acct.raw && acct.raw.length < 82) return null;
   if (!TOKEN_PROGRAMS.includes(acct.owner)) return null;
   try {
     // Try to decode as base64
-    return decodeMintAccount(acct.data, { encoding: 'base64' });
+    return decodeMintAccount(acct.data, { encoding: "base64" });
   } catch (_e) {
     // fallback: try as hex
     try {
-      return decodeMintAccount(acct.data, { encoding: 'hex' });
+      return decodeMintAccount(acct.data, { encoding: "hex" });
     } catch (_e2) {
       return null;
     }
