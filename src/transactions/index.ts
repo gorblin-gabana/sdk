@@ -27,7 +27,10 @@ export async function createTransaction({
   signers: CryptoKeyPair[];
 }): Promise<Transaction> {
   const result = await connection.request("getLatestBlockhash", []);
-  const { blockhash, lastValidBlockHeight } = result;
+  const { blockhash, lastValidBlockHeight } = result as { 
+    blockhash: string; 
+    lastValidBlockHeight: number; 
+  };
   const msg = pipe(
     createTransactionMessage({ version: 0 }),
     (m) =>

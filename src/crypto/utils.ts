@@ -14,7 +14,9 @@ import {
 } from "../utils/base58.js";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import nacl from "tweetnacl";
-import { Buffer } from "buffer";
+// Use Node.js Buffer directly without polyfill imports
+import * as BufferModule from "buffer";
+const { Buffer } = BufferModule;
 
 // Constants
 export const ENCRYPTION_ALGORITHM = "aes-256-gcm";
