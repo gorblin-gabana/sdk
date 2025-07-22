@@ -45,16 +45,15 @@ const transaction = await client.getTransaction(signature, {
 // Get multiple accounts
 const accounts = await client.getMultipleAccounts([pubkey1, pubkey2])`;
 
-  const connectionPoolCode = `const client = new RpcClient('https://rpc.gorbchain.xyz', {
-  // Connection pool configuration
-  maxConnections: 10,
-  connectionTimeout: 5000,
-  idleTimeout: 30000,
+  const advancedConfigCode = `const client = new RpcClient('https://rpc.gorbchain.xyz', {
+  // Connection configuration
+  timeout: 30000,
   
   // Retry configuration
   retryAttempts: 3,
   retryDelay: 1000,
   retryBackoffMultiplier: 2,
+  jitter: true,
   
   // Circuit breaker configuration
   circuitBreakerThreshold: 5,
@@ -62,15 +61,24 @@ const accounts = await client.getMultipleAccounts([pubkey1, pubkey2])`;
   circuitBreakerResetTimeout: 30000
 })`;
 
-  const multipleEndpointsCode = `// Load balancing across multiple RPC endpoints
-const client = new RpcClient([
-  'https://rpc.gorbchain.xyz',
-  'https://rpc2.gorbchain.xyz',
-  'https://rpc3.gorbchain.xyz'
-], {
-  loadBalancingStrategy: 'round-robin', // or 'random'
-  healthCheckInterval: 30000
-})`;
+  const endpointSwitchingCode = `// Manual endpoint switching for failover
+const client = new RpcClient('https://rpc.gorbchain.xyz', {
+  timeout: 30000,
+  retryAttempts: 3
+});
+
+// Switch to backup endpoint on failure
+try {
+  const result = await client.getAccountInfo(publicKey);
+} catch (error) {
+  if (error instanceof NetworkError) {
+    console.log('Primary endpoint failed, switching to backup');
+    client.setRpcUrl('https://backup-rpc.gorbchain.xyz');
+    
+    // Retry with backup endpoint
+    const result = await client.getAccountInfo(publicKey);
+  }
+}`;
 
   const errorHandlingCode = `try {
   const accountInfo = await client.getAccountInfo(publicKey)
@@ -126,17 +134,17 @@ const client = new RpcClient([
           <div className="flex items-start space-x-3">
             <WifiIcon className="w-5 h-5 text-purple-600 mt-0.5" />
             <div>
-              <h4 className="font-semibold text-sm">Connection Pooling</h4>
+              <h4 className="font-semibold text-sm">Connection Timeout</h4>
               <p className="text-xs text-gray-600">
-                Efficient resource management
+                Configurable request timeouts
               </p>
             </div>
           </div>
           <div className="flex items-start space-x-3">
             <ServerIcon className="w-5 h-5 text-orange-600 mt-0.5" />
             <div>
-              <h4 className="font-semibold text-sm">Load Balancing</h4>
-              <p className="text-xs text-gray-600">Multiple endpoint support</p>
+              <h4 className="font-semibold text-sm">Manual Failover</h4>
+              <p className="text-xs text-gray-600">Switch endpoints programmatically</p>
             </div>
           </div>
         </div>
@@ -290,29 +298,32 @@ const client = new RpcClient([
         <div className="space-y-4">
           <div>
             <h3 className="text-lg font-semibold text-docs-heading mb-3">
-              Connection Pool Settings
+              Advanced Configuration
             </h3>
             <CodeBlock
-              code={connectionPoolCode}
-              id="connection-pool"
-              title="Connection Pool Settings"
+              code={advancedConfigCode}
+              id="advanced-config"
+              title="Advanced RPC Configuration"
               language="typescript"
-              onCopy={() => copyToClipboard(connectionPoolCode, "connection-pool")}
-              copied={copied["connection-pool"] || false}
+              onCopy={() => copyToClipboard(advancedConfigCode, "advanced-config")}
+              copied={copied["advanced-config"] || false}
             />
           </div>
 
           <div>
             <h3 className="text-lg font-semibold text-docs-heading mb-3">
-              Multiple Endpoints
+              Endpoint Switching
             </h3>
+            <p className="text-gray-600 mb-4">
+              Manual endpoint switching for failover scenarios:
+            </p>
             <CodeBlock
-              code={multipleEndpointsCode}
-              id="multiple-endpoints"
-              title="Multiple Endpoints"
+              code={endpointSwitchingCode}
+              id="endpoint-switching"
+              title="Manual Endpoint Switching"
               language="typescript"
-              onCopy={() => copyToClipboard(multipleEndpointsCode, "multiple-endpoints")}
-              copied={copied["multiple-endpoints"] || false}
+              onCopy={() => copyToClipboard(endpointSwitchingCode, "endpoint-switching")}
+              copied={copied["endpoint-switching"] || false}
             />
           </div>
         </div>
@@ -366,6 +377,46 @@ const client = new RpcClient([
         </div>
       </div>
 
+      {/* Future Enhancements */}
+      <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-purple-900 mb-4">
+          🚀 Planned Enhancements
+        </h3>
+        <p className="text-purple-800 mb-4">
+          The following features are planned for future versions of the SDK:
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div>
+            <h4 className="font-semibold text-purple-800 mb-2">
+              Automatic Load Balancing
+            </h4>
+            <ul className="text-purple-700 space-y-1">
+              <li>• Multiple RPC endpoints as array</li>
+              <li>• Round-robin and weighted strategies</li>
+              <li>• Automatic failover on endpoint failure</li>
+              <li>• Health monitoring and recovery</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-semibold text-purple-800 mb-2">
+              Advanced Features
+            </h4>
+            <ul className="text-purple-700 space-y-1">
+              <li>• Connection pooling and reuse</li>
+              <li>• Request caching and deduplication</li>
+              <li>• Geographic endpoint selection</li>
+              <li>• Real-time performance metrics</li>
+            </ul>
+          </div>
+        </div>
+        <div className="mt-4 p-3 bg-white/70 rounded border border-purple-300">
+          <p className="text-sm text-purple-800">
+            <strong>Note:</strong> For now, implement failover manually using the <code>setRpcUrl()</code> method 
+            as shown in the endpoint switching example above.
+          </p>
+        </div>
+      </div>
+
       {/* Performance Tips */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
         <h3 className="text-lg font-semibold text-blue-900 mb-4">
@@ -383,11 +434,11 @@ const client = new RpcClient([
           </div>
           <div>
             <h4 className="font-semibold text-blue-800 mb-2">
-              Connection Reuse
+              Client Reuse
             </h4>
             <p className="text-blue-700">
-              Reuse the same client instance across your application to benefit
-              from connection pooling.
+              Reuse the same client instance across your application for
+              consistent configuration and error handling.
             </p>
           </div>
           <div>
