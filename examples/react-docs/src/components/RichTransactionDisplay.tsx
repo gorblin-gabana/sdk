@@ -64,7 +64,7 @@ const RichTransactionDisplay: React.FC<RichTransactionDisplayProps> = ({
         };
 
         // Decode based on program type
-        if (programId === "FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn") {
+        if (programId === "G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6") {
           // Token-2022 program
           const decoded = await decodeToken2022Instruction(instruction.data);
           enhancedInst = {
@@ -271,7 +271,7 @@ const RichTransactionDisplay: React.FC<RichTransactionDisplayProps> = ({
 
   const getProgramName = (programId: string): string => {
     switch (programId) {
-      case "FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn":
+      case "G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6":
         return "Token-2022";
       case "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA":
         return "SPL Token";

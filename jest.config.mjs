@@ -42,6 +42,9 @@ export default {
     '**/test/error-handling.test.ts',
     '**/test/decoders.test.ts',
     
+    // Token balance tests
+    '**/test/token-balances.test.ts',
+    
     // Temporarily exclude hanging tests
     // '**/test/crypto-collaboration-scenarios.test.ts',
     // '**/test/crypto-performance-stress.test.ts'

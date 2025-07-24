@@ -7,7 +7,7 @@ function getToken2022ProgramId(): string {
   const config = getGorbchainConfig();
   return (
     config.programIds?.token2022 ??
-    "FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn"
+    "G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6"
   );
 }
 

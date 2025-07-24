@@ -51,7 +51,7 @@ const sdk = new GorbchainSDK({
   retries: 3,
   programIds: {
     splToken: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
-    token2022: 'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn'
+    token2022: 'G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6'
   },
   richDecoding: {
     enabled: true,

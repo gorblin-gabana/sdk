@@ -394,7 +394,7 @@ class TokenHoldingsAnalyzer {
       // Also get Token-2022 accounts
       const token2022Accounts = await this.rpcClient.getTokenAccountsByOwner(
         walletAddress,
-        { programId: 'FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn' }, // Token-2022 Program
+        { programId: 'G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6' }, // Token-2022 Program
         'confirmed'
       )
 

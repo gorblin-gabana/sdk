@@ -27,7 +27,7 @@
 
 import { RpcClient } from "../rpc/client.js";
 import { EnhancedRpcClient } from "../rpc/enhancedClient.js";
-import { AdvancedTokenHoldings } from "../tokens/advancedHoldings.js";
+// Removed complex AdvancedTokenHoldings - using simple direct approach
 import type { NetworkConfig } from "../config/networks.js";
 import {
   getNetworkConfig,
@@ -37,6 +37,7 @@ import {
 import type { DecoderRegistry } from "../decoders/registry.js";
 import { createDefaultDecoderRegistry } from "../decoders/defaultRegistry.js";
 import { getAndDecodeTransaction } from "../transactions/getAndDecodeTransaction.js";
+import { TOKEN_PROGRAMS } from "../tokens/simpleTokenBalance.js";
 import { UniversalWalletManager } from "../rich/walletIntegration.js";
 import type { GorbchainSDKConfig } from "./types.js";
 
@@ -52,7 +53,6 @@ export class GorbchainSDK {
   public config: GorbchainSDKConfig; // Made public for v1 compatibility
   private rpcClient: RpcClient;
   private enhancedRpcClient: EnhancedRpcClient;
-  private tokenAnalyzer: AdvancedTokenHoldings;
   private networkConfig: NetworkConfig | null;
   public decoders: DecoderRegistry;
 
@@ -113,8 +113,7 @@ export class GorbchainSDK {
       this.enhancedRpcClient.setNetworkConfig(this.networkConfig);
     }
 
-    // Initialize token analyzer
-    this.tokenAnalyzer = new AdvancedTokenHoldings(this.enhancedRpcClient);
+    // Removed complex token analyzer - using simple direct approach
 
     // Initialize decoder registry with default decoders
     this.decoders = createDefaultDecoderRegistry();
@@ -273,7 +272,7 @@ export class GorbchainSDK {
   }
 
   /**
-   * Get comprehensive token holdings (v2 enhanced method)
+   * Get comprehensive token holdings (simplified implementation)
    */
   async getAllTokenHoldings(
     walletAddress: string,
@@ -284,57 +283,191 @@ export class GorbchainSDK {
       customPrograms?: string[];
     },
   ) {
-    const config = {
-      includeStandardTokens:
-        options?.includeStandardTokens ??
-        this.supportsFeature("standardTokens"),
-      includeToken2022: false, // Can be enabled based on network support
-      customPrograms: options?.customPrograms,
-      maxConcurrentRequests:
-        this.config.tokenAnalysis?.maxConcurrentRequests ?? 5,
-    };
+    // Use simple direct RPC approach
+    const programs = [
+      ...(options?.includeStandardTokens !== false ? [TOKEN_PROGRAMS.SPL_TOKEN] : []),
+      TOKEN_PROGRAMS.TOKEN_2022, // Default include Token-2022
+      ...(options?.customPrograms || [])
+    ];
 
-    return this.tokenAnalyzer.getAllTokens(walletAddress, config);
+    // Get all token accounts from specified programs
+    const allHoldings = [];
+    for (const programId of programs) {
+      try {
+        const response = await this.rpcClient.request<{
+          value: Array<{
+            pubkey: string;
+            account: {
+              data: {
+                parsed: {
+                  info: {
+                    mint: string;
+                    owner: string;
+                    tokenAmount: {
+                      amount: string;
+                      decimals: number;
+                      uiAmount: number;
+                      uiAmountString: string;
+                    };
+                    state: string;
+                  };
+                };
+                program: string;
+              };
+            };
+          }>;
+        }>("getTokenAccountsByOwner", [
+          walletAddress,
+          { programId },
+          { encoding: "jsonParsed" },
+        ]);
+
+        // Transform to expected format
+        const holdings = response.value.map((account: any) => {
+          const info = account.account.data.parsed.info;
+          return {
+            mint: info.mint,
+            owner: info.owner,
+            tokenAccount: account.pubkey,
+            balance: {
+              raw: info.tokenAmount.amount,
+              decimal: info.tokenAmount.uiAmount,
+              formatted: info.tokenAmount.uiAmountString,
+            },
+            decimals: info.tokenAmount.decimals,
+            isNFT: info.tokenAmount.decimals === 0 && info.tokenAmount.amount === "1",
+            programId,
+            frozen: info.state === "frozen",
+          };
+        });
+
+        allHoldings.push(...holdings);
+      } catch (error) {
+        // Skip failed programs
+        console.warn(`Failed to get tokens for program ${programId}:`, error);
+      }
+    }
+
+    // Return in expected format
+    return {
+      holdings: allHoldings,
+      summary: {
+        totalTokens: allHoldings.length,
+        uniqueMints: new Set(allHoldings.map(h => h.mint)).size,
+        nonZeroBalance: allHoldings.filter(h => parseFloat(h.balance.raw) > 0).length,
+      },
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Get balance for a specific token mint
+   */
+  async getTokenBalanceForMint(
+    walletAddress: string,
+    mintAddress: string,
+    programId?: string,
+  ) {
+    const holdings = await this.getAllTokenHoldings(walletAddress, {
+      customPrograms: programId ? [programId] : undefined,
+    });
+    
+    return holdings.holdings.find(h => h.mint === mintAddress) || null;
+  }
+
+  /**
+   * Check if a wallet has any tokens
+   */
+  async hasTokens(walletAddress: string): Promise<boolean> {
+    try {
+      const holdings = await this.getAllTokenHoldings(walletAddress);
+      return holdings.holdings.length > 0;
+    } catch {
+      return false;
+    }
   }
 
   /**
    * Get tokens from specific program
    */
   async getCustomProgramTokens(walletAddress: string, programId: string) {
-    return this.tokenAnalyzer.getCustomProgramTokens(walletAddress, programId);
+    const holdings = await this.getAllTokenHoldings(walletAddress, {
+      customPrograms: [programId],
+    });
+    return holdings.holdings.filter(h => h.programId === programId);
   }
 
   /**
-   * Analyze portfolio for insights
+   * Analyze portfolio for insights (simplified)
    */
   async analyzePortfolio(walletAddress: string) {
     const portfolio = await this.getAllTokenHoldings(walletAddress);
-    return this.tokenAnalyzer.analyzePortfolio(portfolio.holdings);
+    return {
+      totalTokens: portfolio.holdings.length,
+      uniqueMints: portfolio.summary.uniqueMints,
+      nonZeroBalances: portfolio.summary.nonZeroBalance,
+      timestamp: portfolio.timestamp,
+    };
   }
 
   /**
-   * Get tokens by category
+   * Get tokens by category (simplified)
    */
   async getTokensByCategory(walletAddress: string) {
-    return this.tokenAnalyzer.getTokensByCategory(walletAddress);
+    const holdings = await this.getAllTokenHoldings(walletAddress);
+    const nfts = holdings.holdings.filter(h => h.isNFT);
+    const tokens = holdings.holdings.filter(h => !h.isNFT);
+    
+    return {
+      nfts,
+      tokens,
+      categorized: {
+        totalNFTs: nfts.length,
+        totalTokens: tokens.length,
+      }
+    };
   }
 
   /**
-   * Get top holdings by balance
+   * Get top holdings by balance (simplified)
    */
   async getTopHoldings(walletAddress: string, limit: number = 10) {
-    return this.tokenAnalyzer.getTopHoldings(walletAddress, limit);
+    const holdings = await this.getAllTokenHoldings(walletAddress);
+    return holdings.holdings
+      .sort((a, b) => parseFloat(b.balance.raw) - parseFloat(a.balance.raw))
+      .slice(0, limit);
   }
 
   /**
-   * Compare two portfolios
+   * Compare two portfolios (simplified)
    */
   async comparePortfolios(walletAddress1: string, walletAddress2: string) {
-    return this.tokenAnalyzer.comparePortfolios(walletAddress1, walletAddress2);
+    const [portfolio1, portfolio2] = await Promise.all([
+      this.getAllTokenHoldings(walletAddress1),
+      this.getAllTokenHoldings(walletAddress2),
+    ]);
+    
+    return {
+      wallet1: {
+        address: walletAddress1,
+        totalTokens: portfolio1.holdings.length,
+        uniqueMints: portfolio1.summary.uniqueMints,
+      },
+      wallet2: {
+        address: walletAddress2,
+        totalTokens: portfolio2.holdings.length,
+        uniqueMints: portfolio2.summary.uniqueMints,
+      },
+      comparison: {
+        commonTokens: portfolio1.holdings.filter(h1 => 
+          portfolio2.holdings.some(h2 => h2.mint === h1.mint)
+        ).length,
+      }
+    };
   }
 
   /**
-   * Batch analyze multiple wallets
+   * Batch analyze multiple wallets (simplified)
    */
   async batchAnalyzeWallets(
     walletAddresses: string[],
@@ -343,12 +476,37 @@ export class GorbchainSDK {
       customPrograms?: string[];
     },
   ) {
-    const config = {
-      maxConcurrentRequests: options?.maxConcurrentRequests ?? 3,
-      customPrograms: options?.customPrograms,
-    };
-
-    return this.tokenAnalyzer.batchAnalyzeWallets(walletAddresses, config);
+    const maxConcurrent = options?.maxConcurrentRequests ?? 3;
+    const results = [];
+    
+    // Process wallets in batches
+    for (let i = 0; i < walletAddresses.length; i += maxConcurrent) {
+      const batch = walletAddresses.slice(i, i + maxConcurrent);
+      const batchResults = await Promise.all(
+        batch.map(async (address) => {
+          try {
+            const holdings = await this.getAllTokenHoldings(address, {
+              customPrograms: options?.customPrograms,
+            });
+            return {
+              walletAddress: address,
+              totalTokens: holdings.holdings.length,
+              uniqueMints: holdings.summary.uniqueMints,
+              success: true,
+            };
+          } catch (error) {
+            return {
+              walletAddress: address,
+              error: error instanceof Error ? error.message : "Unknown error",
+              success: false,
+            };
+          }
+        })
+      );
+      results.push(...batchResults);
+    }
+    
+    return results;
   }
 
   /**

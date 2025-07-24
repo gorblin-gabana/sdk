@@ -66,9 +66,10 @@ describe("Real User Journey Tests", () => {
       const categorized = await sdk.getTokensByCategory(walletAddress);
 
       expect(categorized).toHaveProperty("nfts");
-      expect(categorized).toHaveProperty("fungibleTokens");
+      expect(categorized).toHaveProperty("tokens");
+      expect(categorized).toHaveProperty("categorized");
       console.log(
-        `   🎭 NFT breakdown: ${categorized.nfts.length} NFTs, ${categorized.fungibleTokens.length} fungible tokens`,
+        `   🎭 NFT breakdown: ${categorized.nfts.length} NFTs, ${categorized.tokens.length} fungible tokens`,
       );
 
       // Step 4: Analyze specific NFT if available
@@ -147,21 +148,19 @@ describe("Real User Journey Tests", () => {
       console.log(`   📊 Portfolio size: ${holdings.holdings.length} holdings`);
       console.log(`   📈 Summary:`, holdings.summary);
 
-      // Step 2: Analyze portfolio for DeFi insights
+      // Step 2: Analyze portfolio for DeFi insights (simplified)
       const analysis = await sdk.analyzePortfolio(walletAddress);
 
-      expect(analysis).toHaveProperty("diversification");
-      expect(analysis).toHaveProperty("tokenTypes");
-      expect(analysis).toHaveProperty("balanceDistribution");
+      expect(analysis).toHaveProperty("totalTokens");
+      expect(analysis).toHaveProperty("uniqueMints");
+      expect(analysis).toHaveProperty("nonZeroBalances");
+      expect(analysis).toHaveProperty("timestamp");
 
       console.log(`   🎯 Portfolio Analysis:`, {
-        totalTokens: analysis.diversification.mintCount,
-        concentrationRisk: analysis.diversification.concentrationRisk,
-        fungibleTokens: analysis.tokenTypes.fungibleTokens,
-        riskLevel:
-          Number(analysis.diversification.concentrationRisk) > 0.5
-            ? "High"
-            : "Moderate",
+        totalTokens: analysis.totalTokens,
+        uniqueMints: analysis.uniqueMints,
+        nonZeroBalances: analysis.nonZeroBalances,
+        riskLevel: analysis.uniqueMints > 5 ? "Diversified" : "Concentrated",
       });
 
       // Step 3: Get top holdings for asset allocation analysis
@@ -177,9 +176,9 @@ describe("Real User Journey Tests", () => {
       });
 
       // Step 4: Check for rebalancing opportunities
-      if (Number(analysis.diversification.concentrationRisk) > 0.7) {
+      if (analysis.uniqueMints < 3) {
         console.log(
-          "   ⚠️  High concentration risk detected - consider rebalancing",
+          "   ⚠️  Low diversification detected - consider adding more tokens",
         );
       } else {
         console.log("   ✅ Portfolio diversification looks healthy");
@@ -204,22 +203,22 @@ describe("Real User Journey Tests", () => {
 
       const comparison = await sdk.comparePortfolios(wallet1, wallet2);
 
-      expect(comparison).toHaveProperty("commonTokens");
-      expect(comparison).toHaveProperty("uniqueToWallet1");
-      expect(comparison).toHaveProperty("uniqueToWallet2");
-      expect(comparison).toHaveProperty("similarity");
-      expect(typeof comparison.similarity).toBe("number");
+      expect(comparison).toHaveProperty("wallet1");
+      expect(comparison).toHaveProperty("wallet2");
+      expect(comparison).toHaveProperty("comparison");
+      expect(typeof comparison.comparison.commonTokens).toBe("number");
 
       console.log(`   📊 Portfolio Comparison Results:`, {
-        commonTokens: comparison.commonTokens.length,
-        uniqueToWallet1: comparison.uniqueToWallet1.length,
-        uniqueToWallet2: comparison.uniqueToWallet2.length,
-        similarity: `${(comparison.similarity * 100).toFixed(1)}%`,
+        wallet1Tokens: comparison.wallet1.totalTokens,
+        wallet2Tokens: comparison.wallet2.totalTokens,
+        commonTokens: comparison.comparison.commonTokens,
       });
 
-      if (comparison.similarity > 0.7) {
+      const similarity = comparison.comparison.commonTokens / Math.max(comparison.wallet1.uniqueMints, comparison.wallet2.uniqueMints);
+      
+      if (similarity > 0.7) {
         console.log("   🤝 Portfolios are very similar");
-      } else if (comparison.similarity > 0.3) {
+      } else if (similarity > 0.3) {
         console.log("   📈 Portfolios have moderate overlap");
       } else {
         console.log(

@@ -180,13 +180,16 @@ describe("Wallet V2 Real Scenarios Tests", () => {
       );
 
       expect(categorized).toHaveProperty("nfts");
-      expect(categorized).toHaveProperty("fungibleTokens");
+      expect(categorized).toHaveProperty("tokens");
+      expect(categorized).toHaveProperty("categorized");
       expect(Array.isArray(categorized.nfts)).toBe(true);
-      expect(Array.isArray(categorized.fungibleTokens)).toBe(true);
+      expect(Array.isArray(categorized.tokens)).toBe(true);
 
       console.log(`✅ Token categories:`, {
         nfts: categorized.nfts.length,
-        fungible: categorized.fungibleTokens.length,
+        tokens: categorized.tokens.length,
+        totalNFTs: categorized.categorized.totalNFTs,
+        totalTokens: categorized.categorized.totalTokens,
       });
     }, 15000);
   });
@@ -195,15 +198,16 @@ describe("Wallet V2 Real Scenarios Tests", () => {
     test("should analyze wallet portfolio", async () => {
       const analysis = await sdk.analyzePortfolio(realData.wallets.primary);
 
-      expect(analysis).toHaveProperty("diversification");
-      expect(analysis).toHaveProperty("tokenTypes");
-      expect(analysis).toHaveProperty("balanceDistribution");
+      expect(analysis).toHaveProperty("totalTokens");
+      expect(analysis).toHaveProperty("uniqueMints");
+      expect(analysis).toHaveProperty("nonZeroBalances");
+      expect(analysis).toHaveProperty("timestamp");
 
       console.log(`✅ Portfolio analysis:`, {
-        totalTokens: analysis.diversification.mintCount,
-        concentrationRisk: analysis.diversification.concentrationRisk,
-        fungibleTokens: analysis.tokenTypes.fungibleTokens,
-        nfts: analysis.tokenTypes.nfts,
+        totalTokens: analysis.totalTokens,
+        uniqueMints: analysis.uniqueMints,
+        nonZeroBalances: analysis.nonZeroBalances,
+        riskLevel: analysis.uniqueMints > 5 ? "Diversified" : "Concentrated",
       });
     }, 20000);
 
@@ -227,17 +231,15 @@ describe("Wallet V2 Real Scenarios Tests", () => {
         realData.wallets.secondary,
       );
 
-      expect(comparison).toHaveProperty("commonTokens");
-      expect(comparison).toHaveProperty("uniqueToWallet1");
-      expect(comparison).toHaveProperty("uniqueToWallet2");
-      expect(comparison).toHaveProperty("similarity");
-      expect(typeof comparison.similarity).toBe("number");
+      expect(comparison).toHaveProperty("wallet1");
+      expect(comparison).toHaveProperty("wallet2");
+      expect(comparison).toHaveProperty("comparison");
+      expect(typeof comparison.comparison.commonTokens).toBe("number");
 
       console.log(`✅ Portfolio comparison:`, {
-        commonTokens: comparison.commonTokens.length,
-        uniqueToWallet1: comparison.uniqueToWallet1.length,
-        uniqueToWallet2: comparison.uniqueToWallet2.length,
-        similarity: comparison.similarity,
+        wallet1Tokens: comparison.wallet1.totalTokens,
+        wallet2Tokens: comparison.wallet2.totalTokens,
+        commonTokens: comparison.comparison.commonTokens,
       });
     }, 25000);
   });

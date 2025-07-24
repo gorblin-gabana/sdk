@@ -157,7 +157,7 @@ export const NETWORK_CONFIGS: Record<string, NetworkConfig> = {
       // Standard SPL tokens are supported but not commonly used
       spl: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
       // Custom Gorbchain token program
-      custom: ["FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn"],
+      custom: ["G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6"],
     },
     supportedMethods: [
       "getBalance",

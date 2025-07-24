@@ -849,7 +849,7 @@ export default function InteractivePlayground() {
             // ===== WORKING APPROACH: Direct RPC call =====
             const rpcClient = sdk.getRpcClient();
             const TOKEN_2022_PROGRAM =
-              "FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn";
+              "G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6";
 
             console.log(
               "🎯 Using WORKING direct RPC getProgramAccounts method...",

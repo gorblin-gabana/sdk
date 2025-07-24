@@ -173,7 +173,7 @@ The primary class that provides all SDK functionality.
 ### Supported Programs:
 - **System Program**: `11111111111111111111111111111111`
 - **SPL Token**: `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`
-- **Token-2022**: `FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn`
+- **Token-2022**: `G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6`
 - **Associated Token Account**: `4YpYoLVTQ8bxcne9GneN85RUXeN7pqGTwgPcY71ZL5gX`
 - **Metaplex Core**: `BvoSmPBF6mBRxBMY9FPguw1zUoUg3xrc5CaWf7y5ACkc`
 

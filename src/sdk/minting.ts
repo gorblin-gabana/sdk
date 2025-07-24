@@ -32,7 +32,7 @@ import { walletAdapterIdentity } from "@metaplex-foundation/umi-signer-wallet-ad
 
 // Token22 Program ID for Gorbchain
 const TOKEN22_PROGRAM = new PublicKey(
-  "FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn",
+  "G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6",
 );
 const ASSOCIATED_TOKEN_PROGRAM = new PublicKey(
   "4YpYoLVTQ8bxcne9GneN85RUXeN7pqGTwgPcY71ZL5gX",

@@ -73,6 +73,22 @@ export type {
   TokenMetadata as AdvancedTokenMetadata,
 } from "./tokens/advancedHoldings.js";
 
+/**
+ * Simple Token Balance Operations (Recommended)
+ * 
+ * Direct RPC approach using getTokenAccountsByOwner with jsonParsed encoding.
+ * This is the simplest and most reliable way to get token balances.
+ */
+export {
+  getSimpleTokenBalances,
+  getAllTokenBalances,
+  getTokenBalanceForMint,
+  hasTokens,
+  TOKEN_PROGRAMS,
+  type SimpleTokenAccount,
+  type TokenBalanceResponse,
+} from "./tokens/simpleTokenBalance.js";
+
 // ============================================
 // Enhanced RPC & Network Configuration
 // ============================================

@@ -495,17 +495,19 @@ describe("Rich Functions Integration Tests", () => {
         }
       }
 
-      // Test portfolio analysis integration
+      // Test simplified portfolio analysis integration
       const portfolioAnalysis = await sdk.analyzePortfolio(walletAddress);
 
-      expect(portfolioAnalysis).toHaveProperty("diversification");
-      expect(portfolioAnalysis).toHaveProperty("tokenTypes");
+      expect(portfolioAnalysis).toHaveProperty("totalTokens");
+      expect(portfolioAnalysis).toHaveProperty("uniqueMints");
+      expect(portfolioAnalysis).toHaveProperty("nonZeroBalances");
+      expect(portfolioAnalysis).toHaveProperty("timestamp");
 
       console.log(
-        `   📈 Portfolio analysis: ${portfolioAnalysis.diversification.mintCount} unique tokens`,
+        `   📈 Portfolio analysis: ${portfolioAnalysis.uniqueMints} unique tokens, ${portfolioAnalysis.totalTokens} total accounts`,
       );
       console.log(
-        "   ✅ Integration with existing functionality works correctly",
+        "   ✅ Integration with simplified functionality works correctly",
       );
     });
   });

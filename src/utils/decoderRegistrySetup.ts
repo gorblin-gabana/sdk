@@ -96,7 +96,7 @@ export function createDecoderRegistry(
   // Register Token-2022 decoder
   const token2022ProgramId =
     config.programIds?.token2022 ||
-    "FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn";
+    "G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6";
   registry.register(
     "token-2022",
     token2022ProgramId,
@@ -159,7 +159,7 @@ export function getProgramName(programId: string): string {
   const programNames: Record<string, string> = {
     "11111111111111111111111111111111": "System",
     TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA: "SPL Token",
-    FGyzDo6bhE7gFmSYymmFnJ3SZZu3xWGBA7sNHXR7QQsn: "Token-2022",
+    G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6: "Token-2022",
     "4YpYoLVTQ8bxcne9GneN85RUXeN7pqGTwgPcY71ZL5gX": "ATA",
     BvoSmPBF6mBRxBMY9FPguw1zUoUg3xrc5CaWf7y5ACkc: "Metaplex",
     // Add more program mappings as needed
